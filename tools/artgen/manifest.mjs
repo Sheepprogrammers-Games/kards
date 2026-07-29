@@ -974,6 +974,7 @@ export const MANIFEST = [
   {
     id: 'ratchet-flail',
     category: 'equipment',
+    slot: 'weapon',
     subject:
       'a short flail whose striking head is a ratchet wheel of blackened steel, three ' +
       'stubby chain links, worn leather grip wrapped in brass wire',
@@ -981,6 +982,7 @@ export const MANIFEST = [
   {
     id: 'verdigris-fang',
     category: 'equipment',
+    slot: 'weapon',
     subject:
       'a curved dagger cast as a single copper fang, thick green verdigris crusting the ' +
       'blade edge, a bead of dull venom hanging at the tip',
@@ -988,6 +990,7 @@ export const MANIFEST = [
   {
     id: 'hour-hand-cleaver',
     category: 'equipment',
+    slot: 'weapon',
     subject:
       'a heavy cleaver forged from an oversized clock hour hand, the counterweight butt ' +
       'still bearing its mounting hole, edge ground razor thin',
@@ -995,6 +998,7 @@ export const MANIFEST = [
   {
     id: 'siphon-edge',
     category: 'equipment',
+    slot: 'weapon',
     subject:
       'a slender sword with a hollow fuller running its length, warm amber light drawn ' +
       'along the channel toward the pommel reservoir',
@@ -1002,6 +1006,7 @@ export const MANIFEST = [
   {
     id: 'tolling-brand',
     category: 'equipment',
+    slot: 'weapon',
     subject:
       'a branding iron shaped as a small bell, the bell mouth ringed with raised sigils, ' +
       'the metal still glowing dull orange',
@@ -1009,6 +1014,7 @@ export const MANIFEST = [
   {
     id: 'bellhouse-cuirass',
     category: 'equipment',
+    slot: 'armor',
     subject:
       'a brass breastplate hammered into the shape of a bell housing, wide flared skirt, ' +
       'reinforcing ribs radiating from a central boss',
@@ -1016,6 +1022,7 @@ export const MANIFEST = [
   {
     id: 'thorncase-mail',
     category: 'equipment',
+    slot: 'armor',
     subject:
       'a mail shirt woven from barbed links, short iron thorns standing out from every ' +
       'ring, leather shoulder straps buckled at the front',
@@ -1023,6 +1030,7 @@ export const MANIFEST = [
   {
     id: 'deadfall-mantle',
     category: 'equipment',
+    slot: 'armor',
     subject:
       'a heavy shoulder mantle of stiff grey cloth hung with small stopped pocket watches, ' +
       'the fabric falling in frozen motionless folds',
@@ -1030,6 +1038,7 @@ export const MANIFEST = [
   {
     id: 'pendulum-harness',
     category: 'equipment',
+    slot: 'armor',
     subject:
       'a leather torso harness carrying a polished pendulum bob on a short rod at the ' +
       'chest, brass buckles and adjustment slides',
@@ -1037,6 +1046,7 @@ export const MANIFEST = [
   {
     id: 'null-hour-carapace',
     category: 'equipment',
+    slot: 'armor',
     subject:
       'a segmented shell of dark plate with no seams or fasteners visible, faint violet ' +
       'light bleeding from the joints between segments',
@@ -1044,6 +1054,7 @@ export const MANIFEST = [
   {
     id: 'hollow-cog-charm',
     category: 'equipment',
+    slot: 'trinket',
     subject:
       'a small pendant made from a single hollowed gear, the empty hub strung on a fine ' +
       'chain, tooth edges worn smooth by handling',
@@ -1051,6 +1062,7 @@ export const MANIFEST = [
   {
     id: 'pocket-sundial',
     category: 'equipment',
+    slot: 'trinket',
     subject:
       'a folding brass pocket sundial opened flat, a hair-thin gnomon casting a sharp ' +
       'shadow across the engraved hour scale',
@@ -1058,6 +1070,7 @@ export const MANIFEST = [
   {
     id: 'cinder-locket',
     category: 'equipment',
+    slot: 'trinket',
     subject:
       'a soot-blackened locket hanging open, live embers glowing inside the bezel instead ' +
       'of a portrait',
@@ -1065,6 +1078,7 @@ export const MANIFEST = [
   {
     id: 'pawnbroker-fob',
     category: 'equipment',
+    slot: 'trinket',
     subject:
       'a watch fob heavy with pawn tickets and three brass tokens, the watch itself missing ' +
       'and only the empty swivel clip remaining',
@@ -1072,6 +1086,7 @@ export const MANIFEST = [
   {
     id: 'metronome-scepter',
     category: 'equipment',
+    slot: 'trinket',
     subject:
       'a short scepter topped with an upright metronome, the weighted arm caught mid-swing, ' +
       'tapered handle bound in dark cord',
@@ -1079,6 +1094,7 @@ export const MANIFEST = [
   {
     id: 'overwound-core',
     category: 'equipment',
+    slot: 'core',
     subject:
       'a clockwork movement wound past its limit, the mainspring bulging against a cracked ' +
       'barrel, gear teeth splayed under the strain',
@@ -1086,6 +1102,7 @@ export const MANIFEST = [
   {
     id: 'ember-core',
     category: 'equipment',
+    slot: 'core',
     subject:
       'a compact movement whose mainspring barrel burns from within, heat shimmer above the ' +
       'plate and scorch marks radiating outward',
@@ -1093,6 +1110,7 @@ export const MANIFEST = [
   {
     id: 'recurrence-coil',
     category: 'equipment',
+    slot: 'core',
     subject:
       'a movement built around four nested hairsprings of decreasing size, each coil ' +
       'trailing a faint duplicate of the one outside it',
@@ -1100,6 +1118,7 @@ export const MANIFEST = [
   {
     id: 'frostbound-core',
     category: 'equipment',
+    slot: 'core',
     subject:
       'a movement sheathed in clear ice, the escapement locked mid-tick, frost crystals ' +
       'growing along the bridge and jewel settings',
@@ -1107,8 +1126,446 @@ export const MANIFEST = [
   {
     id: 'paradox-core',
     category: 'equipment',
+    slot: 'core',
     subject:
       'a movement whose gear train loops back into itself in an impossible closed circuit, ' +
       'one wheel driving and being driven at once',
+  },
+
+  // card · 织：穿透、吸血、荆棘与赌注，沿用垂直中轴与自下而上的收拢
+  {
+    id: 'awl-thread',
+    category: 'card',
+    subject:
+      'a needle-thin golden awl driven straight up through a stack of brass plates, the plates ' +
+      'left uncracked around each puncture, one taut thread following the awl through every hole',
+  },
+  {
+    id: 'needle-run',
+    category: 'card',
+    subject:
+      'a sewing needle stitching a vertical seam through a dark iron plate, three fresh punctures ' +
+      'glowing in a rising line, the thread behind the needle pulled tight and still humming',
+  },
+  {
+    id: 'siphon-weft',
+    category: 'card',
+    subject:
+      'a weft thread drawing warm amber light out of a torn dark cloth below and carrying it ' +
+      'upward into a small brass reservoir, the cloth dimming where the light leaves it',
+  },
+  {
+    id: 'crimson-spindle',
+    category: 'card',
+    subject:
+      'a brass spindle winding a thread that runs deep red where it leaves the wound below and ' +
+      'turns to clean warm gold by the time it reaches the bobbin at the top',
+  },
+  {
+    id: 'barb-mail',
+    category: 'card',
+    subject:
+      'an upright panel of tightly woven golden thread bristling with fine outward-pointing ' +
+      'barbs along every row, the barbs sharpest at the panel edge nearest the viewer',
+  },
+  {
+    id: 'bramble-bulwark',
+    category: 'card',
+    subject:
+      'a vertical bulwark of layered brass plates overgrown by thorned golden wire, the wire ' +
+      'lashing the plates together and standing proud of the surface in dense spurs',
+  },
+  {
+    id: 'shell-winding',
+    category: 'card',
+    subject:
+      'a golden thread winding tightly around a standing brass shell in even layers, each higher ' +
+      'ring drawn thinner than the one below it, the topmost turn still being laid',
+  },
+  {
+    id: 'terminal-tick',
+    category: 'card',
+    subject:
+      'the lowest mark on a vertical brass hour scale burning white hot while every mark above ' +
+      'it stays dark and cold, a single thread drawn down to that final notch',
+  },
+  {
+    id: 'guillotine-hour',
+    category: 'card',
+    subject:
+      'a heavy blade held at the top of a tall brass frame above an engraved clock dial, one ' +
+      'golden thread holding the blade up, that thread already frayed halfway through',
+  },
+  {
+    id: 'chain-cleave',
+    category: 'card',
+    subject:
+      'a vertical cut driven through the front brass dial of a stacked row of dials, the same cut ' +
+      'carrying on into the dial behind it, both cut faces glowing along the shared line',
+  },
+  {
+    id: 'hedged-thread',
+    category: 'card',
+    subject:
+      'an upright shield braced by a taut golden guy-line, the far end of the line running off ' +
+      'above and ending in a small hooked brass weight held back under tension',
+  },
+  {
+    id: 'grace-period',
+    category: 'card',
+    subject:
+      'an upright hourglass fitted with a shield-shaped brass guard, warm amber light pooled in ' +
+      'the lower bulb behind a closed valve, the upper bulb almost empty',
+  },
+  {
+    id: 'stake-the-spool',
+    category: 'card',
+    subject:
+      'a brass spool set on a raised stone plinth as a wager, one thread already flung upward out ' +
+      'of frame, the remaining winding straining visibly against the spool flanges',
+  },
+  {
+    id: 'slow-fortune',
+    category: 'card',
+    subject:
+      'an upright ratchet winding a heavy spring tooth by tooth behind a standing shield plate, ' +
+      'the spring visibly thicker and tighter at each higher coil',
+  },
+  {
+    id: 'covered-call',
+    category: 'card',
+    subject:
+      'a shield of layered gold plate with a second polished mirror plate folded flat behind it, ' +
+      'the hidden plate hinged and ready to swing up into place',
+  },
+  {
+    id: 'interest-accrues',
+    category: 'card',
+    subject:
+      'green verdigris creeping upward along a taut golden thread, each higher segment eaten ' +
+      'deeper than the one below, flakes of corroded metal drifting off the worst of it',
+  },
+  {
+    id: 'all-or-nothing',
+    category: 'card',
+    subject:
+      'one golden thread hauling an enormous brass counterweight up a narrow vertical shaft, the ' +
+      'thread drawn down to a hair at its midpoint and beginning to unravel there',
+  },
+  {
+    id: 'borrowed-hour',
+    category: 'card',
+    subject:
+      'a thread drawn up out of a dark well, bright clean gold where it clears the rim and ' +
+      'stained green and slick along the length still hanging below the waterline',
+  },
+  {
+    id: 'pawn-the-hour',
+    category: 'card',
+    subject:
+      'a pocket watch laid onto the upper pan of a pawnbroker scale in exchange for a rising ' +
+      'column of amber light, the empty watch chain hanging slack over the lower pan',
+  },
+  {
+    id: 'mirror-stance',
+    category: 'card',
+    subject:
+      'an upright polished brass mirror plate held in a frame of taut thread, one incoming amber ' +
+      'ray leaving it back along the exact path it arrived on',
+  },
+  {
+    id: 'recoil-plate',
+    category: 'card',
+    subject:
+      'a thick vertical armor plate mounted on compressed brass springs, a fresh impact dent at ' +
+      'its center, the springs already driving the plate back outward toward the viewer',
+  },
+
+  // card · 引：引爆的取用范围与回报，沿用单点透视与由内向外的扩张
+  {
+    id: 'hollow-toll',
+    category: 'card',
+    subject:
+      'a small bell with no clapper inside it releasing one needle-straight amber ray forward ' +
+      'through a brass wall, the wall unmarked except for the single clean bore',
+  },
+  {
+    id: 'noon-verdict',
+    category: 'card',
+    subject:
+      'a clock dial at high noon discharging all twelve hour marks at once, every beam bending ' +
+      'inward and merging into one white-gold blade aimed straight at the viewer',
+  },
+  {
+    id: 'spill-hour',
+    category: 'card',
+    subject:
+      'an overfilled brass basin spilling amber light forward over its lowest rim, the overflow ' +
+      'running on past the near edge instead of pooling',
+  },
+  {
+    id: 'bell-shell',
+    category: 'card',
+    subject:
+      'a bell struck from the inside, the expanding rings of light hardening into nested ' +
+      'translucent shells that stay standing around it after the sound has passed',
+  },
+  {
+    id: 'mirror-cascade',
+    category: 'card',
+    subject:
+      'concentric rings of amber light meeting a ring of angled brass mirrors and turning back ' +
+      'inward as a second set of rings running against the first',
+  },
+  {
+    id: 'relight',
+    category: 'card',
+    subject:
+      'a cold burnt-out ember catching again at the center of a brass ring, one fresh ring of ' +
+      'light leaving it while a thin plate of light closes over the ember from the front',
+  },
+
+  // card · 扰：轨道操作与摹刻，沿用强对角线与偏离中轴的构图
+  {
+    id: 'bait-the-blow',
+    category: 'card',
+    subject:
+      'a brass throat plate turned open along a diagonal to expose what is behind it, a row of ' +
+      'short spikes standing out along its hidden underside',
+  },
+  {
+    id: 'set-shell',
+    category: 'card',
+    subject:
+      'a diagonal brass bar dropped across a running gear train while a curved shell plate seats ' +
+      'itself down over the stalled mechanism',
+  },
+  {
+    id: 'blood-wedge',
+    category: 'card',
+    subject:
+      'an iron wedge driven diagonally into a brass housing, a narrow channel cut down its spine ' +
+      'carrying warm light back out toward the hand that drove it',
+  },
+  {
+    id: 'bared-throat',
+    category: 'card',
+    subject:
+      'a diagonal gap opened in a dark chest plate, a polished mirror surface set directly behind ' +
+      'the gap throwing the light back out through it',
+  },
+  {
+    id: 'write-off',
+    category: 'card',
+    subject:
+      'a ruled ledger struck through with one diagonal stroke of gold, the last row sliding off ' +
+      'the page edge and burning away as it goes',
+  },
+  {
+    id: 'settle-early',
+    category: 'card',
+    subject:
+      'a brass tap opened at a diagonal on the side of a full reservoir, a short burst of amber ' +
+      'light released forward, the reservoir behind it already drained empty',
+  },
+  {
+    id: 'ledger-lock',
+    category: 'card',
+    subject:
+      'a heavy diagonal clasp locked across a brass ledger cover, two extra tokens sealed under ' +
+      'the lid, frost rimed along the whole length of the clasp',
+  },
+  {
+    id: 'traced-blade',
+    category: 'card',
+    subject:
+      'a blade drawn along a diagonal in thin golden outline, the outline filled in and solid ' +
+      'only along the cutting edge, the rest of the shape still hollow line work',
+  },
+  {
+    id: 'traced-ward',
+    category: 'card',
+    subject:
+      'a shield drawn along a diagonal in golden outline, the drawn line thickened into real ' +
+      'plate around the whole rim while the center remains empty line work',
+  },
+  {
+    id: 'traced-hex',
+    category: 'card',
+    subject:
+      'a hex sigil copied diagonally onto a dark plate, the freshly traced lines still wet and ' +
+      'running downhill, the original sigil faint underneath',
+  },
+  {
+    id: 'light-fingers',
+    category: 'card',
+    subject:
+      'a gloved hand lifting a brass hour hand diagonally out of a foreign mechanism, a faint ' +
+      'golden duplicate of that hand left behind in the empty mount',
+  },
+  {
+    id: 'crib-the-move',
+    category: 'card',
+    subject:
+      'a sheet of tracing vellum laid diagonally across an engraved shield boss, the boss pattern ' +
+      'coming through onto the vellum in gold as it is rubbed',
+  },
+  {
+    id: 'armory-raid',
+    category: 'card',
+    subject:
+      'a wall rack of brass arms with two pieces pulled away along a diagonal, two empty hook ' +
+      'silhouettes left glowing where they hung',
+  },
+  {
+    id: 'pattern-theft',
+    category: 'card',
+    subject:
+      'a gear stopped dead mid-turn under a diagonal pin while a rubbing of its tooth profile ' +
+      'peels away from its face as a thin golden sheet',
+  },
+  {
+    id: 'dissect-pattern',
+    category: 'card',
+    subject:
+      'a foreign sigil plate cut open along a diagonal and splayed apart into separated layers, ' +
+      'its inner light draining out through the exposed seam',
+  },
+  {
+    id: 'take-over',
+    category: 'card',
+    subject:
+      'a gloved hand catching a swinging brass hand mid-arc along a diagonal and forcing it down ' +
+      'to land early, half its light already shed behind the stroke',
+  },
+  {
+    id: 'deep-study',
+    category: 'card',
+    subject:
+      'a captured foreign mechanism clamped diagonally under a brass lens, its plates opened and ' +
+      'its parts already re-mounted into a different frame beside it',
+  },
+  {
+    id: 'borrowed-form',
+    category: 'card',
+    subject:
+      'two brass masks crossing past each other along a diagonal as they exchange places, one of ' +
+      'them trailing a third faint duplicate of itself',
+  },
+  {
+    id: 'overwind',
+    category: 'card',
+    subject:
+      'a mainspring wound two full turns past its mark along a diagonal, the outermost coil ' +
+      'snapped free and burning off while a brass plate braces the strained barrel',
+  },
+  {
+    id: 'back-gear',
+    category: 'card',
+    subject:
+      'a brass gear shifted two teeth backward along a diagonal, faint afterimages of its two ' +
+      'previous positions trailing ahead of it in the direction it came from',
+  },
+  {
+    id: 'paired-arrest',
+    category: 'card',
+    subject:
+      'two meshed gears pinned at once by a single diagonal iron pin driven through both, frost ' +
+      'blooming outward from the pin across both wheel faces',
+  },
+
+  // enemy · 小怪：补齐的六只，剪影单凸包，侧向姿态，钟面破碎或空白
+  {
+    id: 'second-wasp',
+    category: 'enemy',
+    tier: 'minion',
+    subject:
+      'a slender wasp perched in side profile on a bent brass rod, its abdomen a single blank ' +
+      'clock dial with no hands, two narrow glass wings folded back, a long needle stinger ' +
+      'angled down toward the ground',
+  },
+  {
+    id: 'rust-pilgrim',
+    category: 'enemy',
+    tier: 'minion',
+    subject:
+      'a stooped pilgrim in side profile wrapped in rust-caked plate, one arm ending in a heavy ' +
+      'ratchet head held low, a corroded empty dial hanging at its neck, a short staff dragging ' +
+      'behind it across the ground',
+  },
+  {
+    id: 'ember-tender',
+    category: 'enemy',
+    tier: 'minion',
+    subject:
+      'a squat furnace tender in side profile carrying an open firebox on its back, coals glowing ' +
+      'through the grate bars, a cracked blank dial fused to the firebox door, a long iron scoop ' +
+      'held in one hand',
+  },
+  {
+    id: 'hollow-cantor',
+    category: 'enemy',
+    tier: 'minion',
+    subject:
+      'a hollow-chested cantor leaning sideways, its ribcage opened into an empty resonating ' +
+      'cavity, a scored songbook chained to one wrist, a blank cracked dial where the sternum ' +
+      'should sit',
+  },
+  {
+    id: 'mirror-fry',
+    category: 'enemy',
+    tier: 'minion',
+    subject:
+      'a small hovering sprite in side profile built from overlapping polished brass shards, each ' +
+      'shard throwing back a fragment of the light that strikes it, a blank mirrored dial at its core',
+  },
+  {
+    id: 'grave-winder',
+    category: 'enemy',
+    tier: 'minion',
+    subject:
+      'a heavy grave winder in side profile with a winch drum sunk into its back and chain wound ' +
+      'around it, thick slab arms hanging low, a cracked empty dial set into its chest',
+  },
+
+  // enemy · 精英：补齐的两只，仅带 1 处冠，3/4 侧身，钟面完整正走
+  {
+    id: 'quarter-stalker',
+    category: 'enemy',
+    tier: 'elite',
+    subject:
+      'a lean stalker in three-quarter stance crouched to spring, a single swept quarter-hand ' +
+      'blade rising from its back as its only crest, an intact forward-running dial fixed to its ' +
+      'thigh plate, long clawed forelimbs braced against the ground',
+  },
+  {
+    id: 'oath-anvil',
+    category: 'enemy',
+    tier: 'elite',
+    subject:
+      'a broad-shouldered enforcer in three-quarter stance whose right arm ends in a massive ' +
+      'anvil head, a single low squared brow ridge as its only crest, an intact forward-running ' +
+      'dial set into the anvil face, chains of sealed tokens crossing its chest',
+  },
+
+  // enemy · Boss：正面对称，双层轮廓，钟面逆走
+  {
+    id: 'silent-conductor',
+    category: 'enemy',
+    tier: 'boss',
+    subject:
+      'a colossal frontal conductor with four symmetrical arms held up in a cadence that never ' +
+      'falls, a wide mantle of hanging bell mouths forming a second outer silhouette behind the ' +
+      'body, a reversed-running dial at its chest, nothing but shadow under the raised hood',
+  },
+
+  // ui：图鉴未解锁条目的占位
+  {
+    id: 'codex-unknown',
+    category: 'ui',
+    subject:
+      'a symmetrical ornate question mark cast in tarnished gold standing inside a hollow clock ' +
+      'dial ring with no hands, the mark itself dull and unlit, only the surrounding ring catching ' +
+      'a thin edge highlight',
   },
 ];

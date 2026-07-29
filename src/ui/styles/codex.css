@@ -1,0 +1,494 @@
+/* 手册的解锁进度、占位格与放大详情层 */
+
+.codex-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.codex-tab-count {
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  transition: color 0.18s ease;
+}
+
+.codex-tab.on .codex-tab-count {
+  color: var(--gold-400);
+}
+
+.codex-hint {
+  margin: -8px 0 14px;
+  text-align: center;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+.codex-tag.run {
+  color: var(--gold-400);
+  background: rgba(240, 180, 41, 0.1);
+  border: 1px solid rgba(240, 180, 41, 0.32);
+}
+
+/* 可放大的条目 */
+.codex-openable {
+  position: relative;
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.codex-body .codex-entry.codex-openable,
+.codex-body .codex-term.codex-openable {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.codex-body .codex-entry.codex-openable:hover,
+.codex-body .codex-term.codex-openable:hover {
+  border-color: rgba(240, 180, 41, 0.22);
+  background: rgba(29, 27, 75, 0.4);
+}
+
+.codex-body .codex-item.codex-openable {
+  transition:
+    transform 0.18s var(--ease-snap),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.codex-body .codex-item.codex-openable:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-dim);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+}
+
+/* 未解锁占位。尺寸与真条目一致，只留一个问号 */
+.codex-body .codex-unknown {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  color: var(--ink-faint);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(59, 55, 133, 0.28), transparent 68%),
+    rgba(19, 16, 51, 0.68);
+  border: 1px dashed rgba(157, 151, 196, 0.3);
+  box-shadow: none;
+  cursor: default;
+}
+
+.codex-body .card.codex-unknown {
+  width: var(--card-w);
+  height: var(--card-h);
+  border-radius: var(--radius);
+}
+
+.codex-body .equip-card.codex-unknown {
+  width: 246px;
+  min-height: 68px;
+  padding: 10px 12px;
+  transform: none;
+}
+
+.codex-body .equip-card.codex-unknown:hover {
+  border-color: rgba(157, 151, 196, 0.3);
+  transform: none;
+}
+
+.codex-unknown-mark {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1;
+  color: rgba(157, 151, 196, 0.7);
+}
+
+.codex-unknown-text {
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+.codex-body .codex-icon.codex-unknown {
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+
+.codex-unknown-item {
+  border-style: dashed;
+  border-color: rgba(157, 151, 196, 0.22);
+  background: rgba(19, 16, 51, 0.5);
+}
+
+.codex-unknown-item .codex-entry-name {
+  color: var(--ink-faint);
+  letter-spacing: 0.16em;
+}
+
+/* 放大详情层 */
+.codex-detail-overlay {
+  z-index: 60;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(8px, 2vw, 26px);
+  padding: 0 clamp(8px, 3vw, 40px);
+  background: rgba(5, 4, 16, 0.88);
+}
+
+.codex-detail {
+  position: relative;
+  justify-self: center;
+  width: min(880px, 100%);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 32px 20px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(170deg, rgba(35, 31, 82, 0.97), rgba(11, 9, 32, 0.99));
+  border: 1px solid rgba(240, 180, 41, 0.34);
+  box-shadow: var(--shadow-deep);
+  text-align: left;
+}
+
+.codex-detail::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(240, 180, 41, 0.1);
+  pointer-events: none;
+}
+
+.codex-detail-stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dim) transparent;
+}
+
+.codex-detail-counter {
+  margin-top: 12px;
+  padding-top: 10px;
+  text-align: center;
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--ink-faint);
+  border-top: 1px solid rgba(240, 180, 41, 0.14);
+}
+
+.codex-detail-nav {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+  color: var(--gold-300);
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-dim);
+  background: radial-gradient(circle at 36% 28%, rgba(240, 180, 41, 0.16), rgba(11, 9, 32, 0.92) 70%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.22),
+    0 5px 16px rgba(0, 0, 0, 0.6);
+  transition:
+    transform 0.18s var(--ease-snap),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.codex-detail-nav:hover:not(:disabled) {
+  transform: scale(1.08);
+  border-color: var(--gold-500);
+  box-shadow: var(--glow-gold);
+}
+
+.codex-detail-nav:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+/* 详情页 */
+.codex-page {
+  animation: codex-page-in 0.24s var(--ease-out);
+}
+
+.codex-page.from-left {
+  animation-name: codex-page-left;
+}
+
+@keyframes codex-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+
+@keyframes codex-page-left {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+.codex-page-caption {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--gold-dim);
+}
+
+.codex-page-title {
+  margin: 4px 0 16px;
+  padding-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.16em;
+  color: var(--gold-300);
+  border-bottom: 1px solid rgba(240, 180, 41, 0.18);
+}
+
+.codex-page-split {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.codex-page-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.codex-page-text {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+
+.codex-page.prose .codex-page-text {
+  font-size: 15px;
+  line-height: 2;
+  color: var(--ink-dim);
+}
+
+.codex-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-dim);
+  background: rgba(29, 27, 75, 0.44);
+  border-left: 2px solid var(--gold-dim);
+}
+
+/* 大图。卡牌用放大的卡面，其余用方形立绘 */
+.codex-hero {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.codex-hero .card {
+  --card-w: 196px;
+  --card-h: 300px;
+  box-shadow: var(--shadow-deep);
+}
+
+.codex-hero.art {
+  width: 208px;
+  height: 208px;
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(11, 9, 32, 0.9);
+  border: 1px solid var(--gold-dim);
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.6),
+    0 12px 30px rgba(0, 0, 0, 0.55);
+}
+
+.codex-hero.art.enemy {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: rgba(11, 9, 32, 0.94);
+  border-color: rgba(224, 72, 60, 0.42);
+  box-shadow:
+    inset 0 0 46px rgba(224, 72, 60, 0.12),
+    0 12px 30px rgba(0, 0, 0, 0.55);
+}
+
+.codex-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.codex-badge {
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  color: var(--gold-300);
+  background: linear-gradient(180deg, rgba(58, 46, 20, 0.66), rgba(24, 18, 8, 0.8));
+  border: 1px solid var(--gold-dim);
+}
+
+.codex-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(240, 180, 41, 0.14);
+}
+
+.codex-meta-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.codex-meta-key {
+  flex: 0 0 84px;
+  text-align: right;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+.codex-meta-val {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-dim);
+}
+
+.codex-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.codex-flag {
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--echo-soft);
+  background: rgba(224, 57, 154, 0.1);
+  border: 1px solid rgba(224, 57, 154, 0.32);
+}
+
+/* 敌人意图逐条 */
+.codex-intent-list {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.codex-intent {
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: rgba(29, 27, 75, 0.42);
+  border: 1px solid rgba(240, 180, 41, 0.14);
+}
+
+.codex-intent-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.codex-intent-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--gold-300);
+}
+
+.codex-intent-kind {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  border: 1px solid rgba(157, 151, 196, 0.28);
+}
+
+.codex-intent-kind[data-kind='attack'] {
+  color: #ff9d92;
+  border-color: rgba(224, 72, 60, 0.5);
+}
+
+.codex-intent-kind[data-kind='debuff'] {
+  color: var(--echo-soft);
+  border-color: rgba(224, 57, 154, 0.42);
+}
+
+.codex-intent-kind[data-kind='defend'] {
+  color: var(--block);
+  border-color: rgba(127, 179, 255, 0.42);
+}
+
+.codex-intent-kind[data-kind='buff'] {
+  color: var(--gold-400);
+  border-color: var(--gold-dim);
+}
+
+.codex-intent-aim,
+.codex-intent-slot {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.codex-intent-slot {
+  font-family: var(--font-num);
+  margin-left: auto;
+}
+
+.codex-intent-text {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-dim);
+}
+
+.codex-intent-list .codex-group {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .codex-page-split {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .codex-hero {
+    align-self: center;
+  }
+
+  .codex-meta-key {
+    flex-basis: 68px;
+  }
+
+  .codex-detail-nav {
+    width: 38px;
+    height: 38px;
+    font-size: 21px;
+  }
+}

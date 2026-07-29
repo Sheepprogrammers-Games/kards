@@ -4,11 +4,19 @@ import { availableNodes, type MapNode, type NodeKind } from '@engine/map';
 import type { RunState } from '@engine/run';
 import { cardDef } from '@engine/registry';
 import { effectsOf, upgradedCost } from '@engine/combat';
-import { EQUIP_SLOT_ORDER, type CardDef, type EquipSlot, type RewardOffer } from '@engine/types';
-import { equipmentDef } from '@engine/equipment';
-import { RELICS } from '@content/relics';
+import {
+  EQUIP_SLOT_ORDER,
+  type CardDef,
+  type EquipSlot,
+  type EquipmentDef,
+  type RewardOffer,
+  type ShopItem,
+} from '@engine/types';
+import { equipmentDef, equippedIds } from '@engine/equipment';
+import { RELICS, type RelicDef } from '@content/relics';
 import { art } from './assets';
 import { sfx } from '@audio/index';
+import { confirmAction } from './confirm';
 import { showDeck } from './deckview';
 
 const NODE_GLYPH: Record<NodeKind, string> = {
@@ -83,32 +91,142 @@ export function el(tag: string, className = '', text = ''): HTMLElement {
 
 export function renderRunBar(run: RunState, host?: HTMLElement): HTMLElement {
   const bar = el('div', 'run-bar');
+  const mount = host ?? bar;
+  const worn = wornIds(run);
+
   const deckButton = el('button', 'run-deck', `牌组 ${run.deck.length}`);
-  if (host) deckButton.addEventListener('click', () => showDeck(host, run.deck));
+  deckButton.addEventListener('click', () => showDeck(mount, run.deck));
+
+  const relicButton = el('button', 'run-deck', `遗物 ${run.relics.length}`);
+  relicButton.addEventListener('click', () => {
+    sfx.pick();
+    mount.append(renderRelicPanel(run));
+  });
+
+  const equipButton = el(
+    'button',
+    'run-deck',
+    `装备 ${worn.length}/${EQUIP_SLOT_ORDER.length}`,
+  );
+  equipButton.addEventListener('click', () => {
+    sfx.pick();
+    mount.append(renderLoadoutPanel(run));
+  });
+
   bar.append(
     el('span', '', `第 ${run.act} 幕`),
     el('span', '', `♥ ${run.hp}/${run.maxHp}`),
     el('span', '', `◈ ${run.gold}`),
     deckButton,
+    relicButton,
+    equipButton,
+  );
+  return bar;
+}
+
+function wornIds(run: RunState): string[] {
+  return run.equipment ? equippedIds(run.equipment) : [];
+}
+
+function relicDef(id: string): RelicDef | undefined {
+  return RELICS.find((r) => r.id === id);
+}
+
+/** 面板右上角的关闭，点遮罩同样关闭。 */
+function closablePanel(overlay: HTMLElement, panel: HTMLElement): HTMLElement {
+  panel.classList.add('has-close');
+  const close = el('button', 'panel-close', '×');
+  close.title = '关闭';
+  close.addEventListener('click', () => overlay.remove());
+  panel.append(close);
+  overlay.append(panel);
+  overlay.addEventListener('click', (ev) => {
+    if (ev.target === overlay) overlay.remove();
+  });
+  return overlay;
+}
+
+/** 已有遗物的清单：大图、名字与效果说明。 */
+export function renderRelicPanel(run: RunState): HTMLElement {
+  const overlay = el('div', 'overlay picker-overlay');
+  const panel = el('div', 'panel holding-panel');
+  panel.append(el('h2', '', '遗物'));
+  panel.append(el('p', '', `随身 ${run.relics.length} 件，效果整局常驻。`));
+
+  if (!run.relics.length) {
+    panel.append(el('div', 'holding-empty', '还没有捡到任何遗物。'));
+  } else {
+    const list = el('div', 'holding-list');
+    for (const id of run.relics) {
+      const def = relicDef(id);
+      const row = el('div', 'holding-row');
+
+      const icon = el('div', 'holding-orb');
+      const url = art.relic(def?.art ?? id);
+      if (url) icon.style.backgroundImage = `url(${url})`;
+
+      const body = el('div', 'holding-body');
+      body.append(
+        el('div', 'holding-name', def?.name ?? id),
+        el('div', 'holding-text', def?.text ?? ''),
+      );
+      row.append(icon, body);
+      list.append(row);
+    }
+    panel.append(list);
+  }
+  return closablePanel(overlay, panel);
+}
+
+/** 装备定义里的钩子决定这件装备在哪个时机结算。 */
+function equipTiming(def: EquipmentDef): string {
+  const parts: string[] = [];
+  if (def.onTurnStart?.length) parts.push('每回合开始时结算一次');
+  if (def.onTurnEnd?.length) parts.push('敌方回合结束时结算一次');
+  if (!parts.length) parts.push('常驻生效，不占用回合结算');
+  return parts.join('　·　');
+}
+
+/** 四个槽位分区展示，空槽画出轮廓。 */
+export function renderLoadoutPanel(run: RunState): HTMLElement {
+  const overlay = el('div', 'overlay picker-overlay');
+  const panel = el('div', 'panel holding-panel');
+  panel.append(el('h2', '', '装备'));
+  panel.append(
+    el('p', '', `四个槽位各能放一件，当前 ${wornIds(run).length}/${EQUIP_SLOT_ORDER.length}。`),
   );
 
-  const relics = el('div', 'relics');
-  for (const id of run.relics) {
-    const def = RELICS.find((r) => r.id === id);
-    const icon = el('div', 'relic-icon relic-slot');
-    const url = art.relic(def?.art ?? id);
-    if (url) icon.style.backgroundImage = `url(${url})`;
+  const grid = el('div', 'slot-grid');
+  for (const slot of EQUIP_SLOT_ORDER) {
+    const id = run.equipment?.[slot] ?? null;
+    const cell = el('div', 'slot-cell');
+    cell.dataset.slot = slot;
+    cell.append(el('div', 'slot-label', `${SLOT_GLYPH[slot]}　${SLOT_NAME[slot]}`));
 
-    const tip = el('div', 'relic-tip');
-    tip.append(
-      el('div', 'relic-tip-head', def?.name ?? id),
-      el('div', 'relic-tip-body', def?.text ?? ''),
-    );
-    icon.append(tip);
-    relics.append(icon);
+    if (id) {
+      const def = equipmentDef(id);
+      const face = el('div', 'slot-face');
+      const url = art.equipment(def.art);
+      if (url) face.style.backgroundImage = `url(${url})`;
+      else face.textContent = SLOT_GLYPH[slot];
+
+      const body = el('div', 'holding-body');
+      body.append(
+        el('div', 'holding-name', def.name),
+        el('div', 'holding-text', def.text),
+        el('div', 'slot-timing', equipTiming(def)),
+      );
+      cell.append(face, body);
+    } else {
+      cell.classList.add('empty');
+      const face = el('div', 'slot-face outline', SLOT_GLYPH[slot]);
+      cell.append(face, el('div', 'holding-text', '这个槽位还空着。'));
+    }
+    grid.append(cell);
   }
-  bar.append(relics, renderLoadout(run));
-  return bar;
+
+  panel.append(grid);
+  return closablePanel(overlay, panel);
 }
 
 const SLOT_NAME: Record<EquipSlot, string> = {
@@ -125,36 +243,25 @@ const SLOT_GLYPH: Record<EquipSlot, string> = {
   core: '⚙',
 };
 
-/** 四个装备槽常驻显示，空槽留一个占位符。 */
-function renderLoadout(run: RunState): HTMLElement {
-  const box = el('div', 'loadout');
-  for (const slot of EQUIP_SLOT_ORDER) {
-    const id = run.equipment?.[slot] ?? null;
-    const cell = el('div', 'equip-slot');
-    cell.dataset.slot = slot;
+/** 装备的大图卡面，art 缺失时退回槽位符号。 */
+export function renderEquipPortrait(id: string): HTMLElement {
+  const def = equipmentDef(id);
+  const node = el('div', 'equip-portrait');
+  node.dataset.rarity = def.rarity;
 
-    const tip = el('div', 'relic-tip');
-    if (id) {
-      const def = equipmentDef(id);
-      const url = art.equipment(def.art);
-      if (url) cell.style.backgroundImage = `url(${url})`;
-      else cell.textContent = SLOT_GLYPH[slot];
-      tip.append(
-        el('div', 'relic-tip-head', `${def.name}　${SLOT_NAME[slot]}`),
-        el('div', 'relic-tip-body', def.text),
-      );
-    } else {
-      cell.classList.add('empty');
-      cell.textContent = SLOT_GLYPH[slot];
-      tip.append(
-        el('div', 'relic-tip-head', SLOT_NAME[slot]),
-        el('div', 'relic-tip-body', '尚未装备。'),
-      );
-    }
-    cell.append(tip);
-    box.append(cell);
-  }
-  return box;
+  const face = el('div', 'equip-portrait-art');
+  const url = art.equipment(def.art);
+  if (url) face.style.backgroundImage = `url(${url})`;
+  else face.textContent = SLOT_GLYPH[def.slot];
+  face.append(el('div', 'equip-portrait-slot', SLOT_NAME[def.slot]));
+
+  const body = el('div', 'equip-portrait-body');
+  body.append(
+    el('div', 'equip-portrait-name', def.name),
+    el('div', 'equip-portrait-text', def.text),
+  );
+  node.append(face, body);
+  return node;
 }
 
 /** 装备的展示卡，用于奖励、商店与手册。 */
@@ -372,11 +479,13 @@ function drawEdges(
 
 /** 奖励界面把每一项交互交回调用方，取走后该项自行消失。 */
 export interface RewardHandlers {
-  onCard: (defId: string, claim: () => void) => void;
-  onRelic: (id: string, claim: () => void) => void;
-  onEquipment: (id: string, claim: () => void) => void;
+  onPickCard: (defId: string, claim: () => void) => void;
+  onPickRelic: (id: string, claim: () => void) => void;
+  onPickEquipment: (id: string, claim: () => void) => void;
   onRemoveCard: (claim: () => void) => void;
   onUpgradeCard: (claim: () => void) => void;
+  /** 时砂、回血这类无需挑选的项，玩家按下收取后触发。 */
+  onSimple?: (offer: RewardOffer, claim: () => void) => void;
   onDone: () => void;
 }
 
@@ -408,7 +517,7 @@ export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): H
           const node = renderStaticCard(defId);
           node.addEventListener('click', () => {
             sfx.play(defId);
-            handlers.onCard(defId, claim);
+            handlers.onPickCard(defId, claim);
           });
           row.append(node);
         }
@@ -416,12 +525,12 @@ export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): H
         break;
       }
       case 'equipment': {
-        const row = el('div', 'equip-row');
+        const row = el('div', 'portrait-row');
         for (const id of offer.options ?? []) {
-          const node = renderEquipCard(id);
+          const node = renderEquipPortrait(id);
           node.addEventListener('click', () => {
             sfx.play('relic');
-            handlers.onEquipment(id, claim);
+            handlers.onPickEquipment(id, claim);
           });
           row.append(node);
         }
@@ -430,7 +539,7 @@ export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): H
       }
       case 'relic': {
         for (const id of offer.options ?? []) {
-          const def = RELICS.find((r) => r.id === id);
+          const def = relicDef(id);
           const row = el('div', 'relic-reward');
           const img = document.createElement('img');
           const url = art.relic(def?.art ?? id);
@@ -441,18 +550,24 @@ export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): H
           row.append(img, info);
           row.addEventListener('click', () => {
             sfx.play('relic');
-            handlers.onRelic(id, claim);
+            handlers.onPickRelic(id, claim);
           });
           block.append(row);
         }
         break;
       }
-      case 'gold':
+      case 'gold': {
         block.append(el('div', 'reward-note', `获得 ${offer.amount ?? 0} 枚时砂。`));
+        const ack = simpleClaim(offer, claim, handlers);
+        if (ack) block.append(ack);
         break;
-      case 'heal':
+      }
+      case 'heal': {
         block.append(el('div', 'reward-note', `回复 ${offer.amount ?? 0} 点生命。`));
+        const ack = simpleClaim(offer, claim, handlers);
+        if (ack) block.append(ack);
         break;
+      }
       case 'removeCard': {
         const button = el('button', 'ghost-button', '挑一张洗去');
         button.addEventListener('click', () => handlers.onRemoveCard(claim));
@@ -480,6 +595,22 @@ export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): H
   return overlay;
 }
 
+/** 无需挑选的奖励留一个收取按钮，调用方没接就只显示说明。 */
+function simpleClaim(
+  offer: RewardOffer,
+  claim: () => void,
+  handlers: RewardHandlers,
+): HTMLElement | null {
+  const onSimple = handlers.onSimple;
+  if (!onSimple) return null;
+  const button = el('button', 'ghost-button', '收下');
+  button.addEventListener('click', () => {
+    sfx.pick();
+    onSimple(offer, claim);
+  });
+  return button;
+}
+
 /** 非交互的卡牌展示，用于奖励与商店。 */
 export function renderStaticCard(defId: string, upgraded = false): HTMLElement {
   const def = cardDef(defId);
@@ -503,6 +634,172 @@ export function renderStaticCard(defId: string, upgraded = false): HTMLElement {
   const mark = el('div', 'card-mark', TYPE_WORD[def.type] ?? '');
   node.append(inner, el('div', 'card-edge'), mark, el('div', 'card-cost', String(shownCost)));
   return node;
+}
+
+const TYPE_NAME: Record<string, string> = { weave: '织牌', ignite: '引牌', disrupt: '扰牌' };
+
+const RARITY_NAME: Record<string, string> = {
+  starter: '基础',
+  common: '常见',
+  uncommon: '罕见',
+  rare: '稀有',
+  curse: '诅咒',
+};
+
+/** 服务类商品的符号与文案。 */
+const SERVICE_GLYPH: Record<string, string> = {
+  removeCard: '✂',
+  upgradeCard: '✧',
+  supply: '✚',
+};
+
+const SERVICE_NAME: Record<string, string> = {
+  removeCard: '洗去一张牌',
+  upgradeCard: '重录一张牌',
+  supply: '补给',
+};
+
+/** 商店界面把点击交回调用方，本文件不读写进程状态。 */
+export interface ShopView {
+  items: ShopItem[];
+  /** 本次刷新的价格。 */
+  rerollCost: number;
+  /** 已售出的商品，给出下标清单或逐项判定。 */
+  sold?: readonly number[] | ((index: number) => boolean);
+  onBuy: (item: ShopItem, index: number) => void;
+  onReroll: () => void;
+  onLeave: () => void;
+  /** 牌组、遗物等弹层的挂载点，省略时挂在界面自身上。 */
+  host?: HTMLElement;
+}
+
+export function renderShop(run: RunState, view: ShopView): HTMLElement {
+  const screen = el('div', 'screen shop-screen');
+  screen.append(el('div', 'scene-grain'));
+  screen.append(el('div', 'screen-title', '残市'));
+  screen.append(el('div', 'screen-sub', '有人在这里用还没发生的事换已经发生的事'));
+  screen.append(renderRunBar(run, view.host ?? screen));
+
+  const panel = el('div', 'shop-panel');
+
+  const head = el('div', 'shop-head');
+  const purse = el('div', 'shop-purse');
+  purse.append(el('span', 'shop-purse-mark', '◈'), el('span', 'shop-purse-num', String(run.gold)));
+  purse.append(el('span', 'shop-purse-label', '时砂在手'));
+
+  const reroll = el('button', 'shop-reroll', `换一批 · ◈${view.rerollCost}`) as HTMLButtonElement;
+  if (run.gold < view.rerollCost) {
+    reroll.disabled = true;
+    reroll.classList.add('broke');
+  } else {
+    reroll.addEventListener('click', () => {
+      sfx.pick();
+      view.onReroll();
+    });
+  }
+  head.append(purse, reroll);
+  panel.append(head);
+
+  const soldSet = typeof view.sold === 'function' ? null : new Set(view.sold ?? []);
+  const isSold = (index: number) =>
+    soldSet ? soldSet.has(index) : (view.sold as (index: number) => boolean)(index);
+
+  const shelf = el('div', 'shop-rack');
+  view.items.forEach((item, index) => {
+    const tile = renderShopItem(item);
+    const done = isSold(index);
+    const affordable = run.gold >= item.price;
+
+    if (done) {
+      tile.classList.add('sold');
+      tile.dataset.stamp = '已售出';
+    } else if (!affordable) {
+      tile.classList.add('broke');
+    } else {
+      tile.addEventListener('click', () => {
+        sfx.pick();
+        view.onBuy(item, index);
+      });
+    }
+    shelf.append(tile);
+  });
+  panel.append(shelf);
+  screen.append(panel);
+
+  const actions = el('div', 'shop-actions');
+  const leave = el('button', 'ghost-button', '离开');
+  leave.addEventListener('click', view.onLeave);
+  actions.append(leave);
+  screen.append(actions);
+  return screen;
+}
+
+/** 货架上的一格。四种呈现共用同一副外框与同一个高度。 */
+function renderShopItem(item: ShopItem): HTMLElement {
+  const tile = el('div', 'shop-tile');
+  tile.dataset.kind = item.kind;
+
+  const face = el('div', 'shop-face');
+  const body = el('div', 'shop-body');
+
+  switch (item.kind) {
+    case 'card': {
+      const def = cardDef(item.id!);
+      face.append(renderStaticCard(def.id));
+      body.append(
+        el('div', 'shop-name', def.name),
+        el(
+          'div',
+          'shop-text',
+          `${TYPE_NAME[def.type] ?? def.type} · ${RARITY_NAME[def.rarity] ?? def.rarity} · 费用 ${def.cost}`,
+        ),
+      );
+      break;
+    }
+    case 'equipment': {
+      const def = equipmentDef(item.id!);
+      const portrait = el('div', 'shop-portrait');
+      const url = art.equipment(def.art);
+      if (url) portrait.style.backgroundImage = `url(${url})`;
+      else portrait.textContent = SLOT_GLYPH[def.slot];
+      portrait.append(el('div', 'shop-portrait-slot', SLOT_NAME[def.slot]));
+      face.append(portrait);
+      body.append(el('div', 'shop-name', def.name), el('div', 'shop-text', def.text));
+      break;
+    }
+    case 'relic': {
+      const def = relicDef(item.id!);
+      const orb = el('div', 'shop-orb');
+      const url = art.relic(def?.art ?? item.id!);
+      if (url) orb.style.backgroundImage = `url(${url})`;
+      face.append(orb);
+      body.append(
+        el('div', 'shop-name', def?.name ?? item.id!),
+        el('div', 'shop-text', def?.text ?? ''),
+      );
+      break;
+    }
+    default: {
+      const rune = el('div', 'shop-rune', SERVICE_GLYPH[item.kind] ?? '◈');
+      face.append(rune);
+      const desc: Record<string, string> = {
+        removeCard: '从牌组里永久抽走一张。',
+        upgradeCard: '把一张牌永久强化。',
+        supply: `回复 ${item.amount ?? 0} 点生命。`,
+      };
+      body.append(
+        el('div', 'shop-name', SERVICE_NAME[item.kind] ?? item.kind),
+        el('div', 'shop-text', desc[item.kind] ?? ''),
+      );
+      break;
+    }
+  }
+
+  const price = el('div', 'shop-price');
+  price.append(el('span', 'shop-price-mark', '◈'), el('span', '', String(item.price)));
+
+  tile.append(face, body, price);
+  return tile;
 }
 
 export interface EventChoice {
@@ -536,39 +833,82 @@ export function renderEvent(
   return overlay;
 }
 
+export interface DefeatOptions {
+  retryCost: number;
+  retryLimit: number;
+  canRetry: boolean;
+  onRetry: () => void;
+  onAbandon: () => void;
+}
+
 /** 战斗失败后的抉择：花时砂回到节点开头重来，或者就此收手。 */
-export function renderDefeat(
-  run: RunState,
-  opts: { retryCost: number; retryLimit: number; canRetry: boolean; onRetry: () => void; onAbandon: () => void },
-): HTMLElement {
-  const overlay = el('div', 'overlay');
-  const panel = el('div', 'panel');
+export function renderDefeat(run: RunState, opts: DefeatOptions): HTMLElement {
+  const overlay = el('div', 'overlay defeat-overlay');
+  const panel = el('div', 'panel defeat-panel');
+
+  panel.append(el('div', 'defeat-mark', '⧖'));
   panel.append(el('h2', '', '织线断了'));
-  panel.append(
-    el(
-      'p',
-      '',
-      `你倒在第 ${run.act} 幕。回响还没散尽，付出代价可以把这一节点重走一遍：` +
-        `已重挑 ${run.retries}/${opts.retryLimit} 次。`,
-    ),
+  panel.append(el('p', '', '你倒下了，但这一节点的时间还能倒回。'));
+
+  const left = Math.max(0, opts.retryLimit - run.retries);
+  const facts = el('div', 'defeat-facts');
+  facts.append(
+    defeatFact('这是第几次重挑', `第 ${run.retries + 1} 次`),
+    defeatFact('还剩几次', `${left} / ${opts.retryLimit}`),
+    defeatFact('这次要付', `◈ ${opts.retryCost}`),
+    defeatFact('手上时砂', `◈ ${run.gold}`),
   );
+  panel.append(facts);
+
+  const outOfTries = run.retries >= opts.retryLimit;
+  const broke = run.gold < opts.retryCost;
+  if (!opts.canRetry) {
+    const reason = outOfTries
+      ? `这一节点已经倒回 ${opts.retryLimit} 次，时间不肯再退了。`
+      : broke
+        ? `倒回一次要 ${opts.retryCost} 枚时砂，你手上只有 ${run.gold} 枚，付不起。`
+        : '这里没有可以退回的落点。';
+    panel.append(el('div', 'defeat-block', reason));
+  }
 
   const row = el('div', 'confirm-row');
-  const retry = el('button', 'title-button primary', `重挑 · ◈${opts.retryCost}`) as HTMLButtonElement;
+  const retry = el(
+    'button',
+    'title-button primary',
+    `重挑这一节点 · ◈${opts.retryCost}`,
+  ) as HTMLButtonElement;
   if (opts.canRetry) {
     retry.addEventListener('click', opts.onRetry);
   } else {
     retry.disabled = true;
-    retry.textContent = run.retries >= opts.retryLimit ? '重挑次数已用尽' : `时砂不足 · ◈${opts.retryCost}`;
+    retry.textContent = outOfTries
+      ? '重挑次数已用尽'
+      : broke
+        ? `时砂不足 · ◈${opts.retryCost}`
+        : '没有可退回的落点';
   }
 
-  const give = el('button', 'title-button', '放弃这一局');
-  give.addEventListener('click', opts.onAbandon);
+  const give = el('button', 'title-button danger', '放弃这一局');
+  give.addEventListener('click', () => {
+    confirmAction(overlay, {
+      title: '放弃这一局',
+      body: `第 ${run.act} 幕、已推进 ${run.cleared} 处的进度会全部作废，牌组与遗物一并散去。`,
+      confirmText: '就到这里',
+      cancelText: '再撑一次',
+      onConfirm: opts.onAbandon,
+    });
+  });
 
   row.append(retry, give);
   panel.append(row);
   overlay.append(panel);
   return overlay;
+}
+
+function defeatFact(label: string, value: string): HTMLElement {
+  const box = el('div', 'defeat-fact');
+  box.append(el('div', 'defeat-fact-label', label), el('div', 'defeat-fact-value', value));
+  return box;
 }
 
 export function renderGameOver(run: RunState, onRestart: () => void): HTMLElement {

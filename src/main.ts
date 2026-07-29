@@ -4,6 +4,9 @@ import './ui/styles/card.css';
 import './ui/styles/track.css';
 import './ui/styles/battle.css';
 import './ui/styles/map.css';
+import './ui/styles/reward.css';
+import './ui/styles/shop.css';
+import './ui/styles/codex.css';
 
 import { loadContent } from '@content/index';
 import { fx } from '@fx/index';

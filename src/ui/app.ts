@@ -28,7 +28,7 @@ import {
 } from '@engine/run';
 import { rerollPrice, rollShop } from '@engine/shop';
 import { allCards } from '@engine/registry';
-import type { ShopItem } from '@engine/types';
+import type { EquipSlot, RewardOffer, ShopItem } from '@engine/types';
 import { ENEMIES } from '@content/enemies';
 import { EQUIPMENT } from '@content/equipment';
 import { EVENTS, type EventOption, type EventOutcome } from '@content/events';
@@ -45,7 +45,7 @@ import {
   renderGameOver,
   renderMap,
   renderReward,
-  renderRunBar,
+  renderShop,
   renderStaticCard,
   type EventChoice,
 } from './screens';
@@ -59,6 +59,13 @@ import { renderTitle } from './title';
 
 const SAVE_KEY = 'echoes.run';
 
+const SLOT_LABEL: Record<EquipSlot, string> = {
+  weapon: '武器',
+  armor: '护甲',
+  trinket: '饰品',
+  core: '机芯',
+};
+
 export class App {
   private run: RunState;
   private battle: BattleScene | null = null;
@@ -67,6 +74,8 @@ export class App {
   private shopRerolls = 0;
   private shopNode: string | null = null;
   private unbindPause: (() => void) | null = null;
+  /** 当前这场战斗来自哪只宝箱怪，胜负两条出口都按它调整。 */
+  private chestEnemy: string | null = null;
 
   constructor(private root: HTMLElement, run?: RunState) {
     this.run = run ?? this.freshRun();
@@ -172,6 +181,9 @@ export class App {
 
   /** 非战斗界面的菜单入口。Esc 与右上角按钮都通向暂停面板。 */
   private mountMenu(): void {
+    this.unbindPause?.();
+    this.unbindPause = null;
+
     const actions = {
       onResume: () => {},
       onTitle: () => this.showTitle(true),
@@ -247,6 +259,7 @@ export class App {
 
   /** 节点类型决定敌人组成与难度。 */
   private startCombat(): void {
+    this.chestEnemy = null;
     const node = this.run.currentNode ? nodeAt(this.run.map, this.run.currentNode) : null;
     const kind: NodeKind = node?.kind ?? 'combat';
     const tier = kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'minion';
@@ -272,11 +285,58 @@ export class App {
     );
   }
 
-  /** 宝箱怪。打赢按普通遭遇发奖励，打输仍然落到失败相。 */
+  /** 宝箱怪。先演一段箱子自己动起来的预兆，掀开才进战斗。 */
   private startChestBattle(enemyId: string, seed: number): void {
-    music.play('elite');
+    this.chestEnemy = enemyId;
     this.root.innerHTML = '';
-    this.enterBattle([{ defId: enemyId, hpScale: 1 + (this.run.act - 1) * 0.35 }], seed, 'combat');
+    this.root.append(renderMap(this.run, () => {}));
+
+    const overlay = el('div', 'overlay chest-omen-overlay');
+    const card = el('div', 'chest-omen');
+    card.append(
+      el('div', 'chest-omen-glyph', '❑'),
+      el('div', 'chest-omen-title', '箱子动了'),
+      el(
+        'div',
+        'chest-omen-body',
+        '扣舌自己弹开一格，又慢慢扣回原位。木头里的东西换了个更舒服的姿势，' +
+          '像是终于等到愿意伸手的人。',
+      ),
+    );
+
+    const open = el('button', 'title-button primary', '掀开');
+    open.addEventListener('click', () => {
+      sfx.pick();
+      overlay.remove();
+      music.play('elite');
+      // 战斗自带暂停入口，先撤掉幕间界面绑的那一个
+      this.unbindPause?.();
+      this.unbindPause = null;
+      this.root.innerHTML = '';
+      this.enterBattle(
+        [{ defId: enemyId, hpScale: 1 + (this.run.act - 1) * 0.35 }],
+        seed,
+        'combat',
+        true,
+      );
+    });
+
+    card.append(open);
+    overlay.append(card);
+    this.root.append(overlay);
+    this.mountMenu();
+  }
+
+  /** 宝箱怪的战利品按精英规格发放，再多掷一项不重样的。 */
+  private chestRewards(run: RunState): RewardOffer[] {
+    const offers = rollRewards(run, 'elite');
+    const taken = new Set(offers.map((offer) => offer.kind));
+    for (const offer of rollRewards({ ...run, rng: (run.rng + 0x5f37) | 0 }, 'combat')) {
+      if (taken.has(offer.kind)) continue;
+      offers.push(offer);
+      break;
+    }
+    return offers;
   }
 
   /** 按敌人定义组装一场战斗，并接上胜负两条出口。 */
@@ -284,6 +344,7 @@ export class App {
     picks: { defId: string; hpScale: number }[],
     seed: number,
     kind: NodeKind,
+    chest = false,
   ): void {
     const defs = picks
       .map((pick) => ({ def: ENEMIES.find((e) => e.id === pick.defId), scale: pick.hpScale }))
@@ -318,7 +379,9 @@ export class App {
       (result, endHp) => {
         if (result === 'victory') {
           music.sting('victory', `map-act${Math.min(3, this.run.act)}` as 'map-act1');
-          this.showReward({ ...this.run, hp: Math.max(1, endHp) }, kind);
+          const survived = { ...this.run, hp: Math.max(1, endHp) };
+          this.chestEnemy = null;
+          this.showReward(survived, kind, chest ? this.chestRewards(survived) : undefined);
         } else {
           music.sting('defeat');
           this.setRun(defeatRun(this.run));
@@ -331,47 +394,72 @@ export class App {
     );
   }
 
-  /** 战斗奖励由进程层掷出，时砂与回血直接入账，其余交给玩家挑。 */
-  private showReward(run: RunState, kind: NodeKind): void {
-    const offers = rollRewards(run, kind);
+  /**
+   * 战斗奖励。每一项单独领取，领完才放行；时砂与回血在点走的那一刻入账，
+   * 没点走的在离开时补发。
+   */
+  private showReward(run: RunState, kind: NodeKind, rolled?: RewardOffer[]): void {
+    const offers = rolled ?? rollRewards(run, kind);
 
-    let current = run;
+    this.run = run;
+
+    const pending = new Map<RewardOffer, () => void>();
     for (const offer of offers) {
-      if (offer.kind === 'gold') current = gainGold(current, offer.amount ?? 0);
-      if (offer.kind === 'heal') current = heal(current, offer.amount ?? 0);
+      const amount = offer.amount ?? 0;
+      if (offer.kind === 'gold') {
+        pending.set(offer, () => {
+          this.run = gainGold(this.run, amount);
+        });
+      } else if (offer.kind === 'heal') {
+        pending.set(offer, () => {
+          this.run = heal(this.run, amount);
+        });
+      }
     }
 
-    // 战斗场景留在底下不重绘，奖励面板直接压上去
-    this.run = current;
-    const finish = () => this.setRun(completeNode(this.run));
+    const finish = () => {
+      for (const grant of pending.values()) grant();
+      pending.clear();
+      this.setRun(completeNode(this.run));
+    };
 
+    // 战斗场景留在底下不重绘，奖励面板直接压上去
     this.root.append(
       renderReward(offers, {
-        onCard: (defId, claim) => {
+        onPickCard: (defId, claim) => {
           confirmAction(this.root, {
             title: '织入牌组',
-            body: `「${cardDef(defId).name}」将加入牌组，本次奖励只能取一张。`,
+            body: `「${cardDef(defId).name}」将加入牌组，同一份奖励只能取一张。`,
             confirmText: '就要这张',
             preview: bigCard(defId),
             onConfirm: () => {
               this.run = addCard(this.run, defId);
               recordSeen('cards', [defId]);
+              sfx.play(defId);
               claim();
             },
           });
         },
-        onRelic: (relicId, claim) => {
-          this.run = addRelic(this.run, relicId);
-          recordSeen('relics', [relicId]);
-          claim();
-        },
-        onEquipment: (equipId, claim) => {
-          const def = equipmentDef(equipId);
+        onPickRelic: (relicId, claim) => {
+          const def = RELICS.find((r) => r.id === relicId);
           confirmAction(this.root, {
+            title: '收下遗物',
+            body: `「${def?.name ?? relicId}」将一直跟着你，直到本局结束。`,
+            confirmText: '收下',
+            preview: bigRelic(relicId),
+            onConfirm: () => {
+              this.run = addRelic(this.run, relicId);
+              recordSeen('relics', [relicId]);
+              sfx.play('relic');
+              toast(this.root, `${def?.name ?? relicId} 已收入`);
+              claim();
+            },
+          });
+        },
+        onPickEquipment: (equipId, claim) => {
+          this.confirmEquip(equipId, {
             title: '穿上装备',
-            body: this.replaceHint(equipId),
-            confirmText: `装备 · ${def.name}`,
-            preview: bigEquip(equipId),
+            confirmText: `装备 · ${equipmentDef(equipId).name}`,
             onConfirm: () => {
               this.wearEquipment(equipId);
               claim();
@@ -379,38 +467,110 @@ export class App {
           });
         },
         onRemoveCard: (claim) => {
-          this.pickFromDeck(
-            '洗去一张牌',
-            '选中的牌永久离开牌组。',
-            () => true,
-            (index) => {
+          this.pickFromDeck({
+            title: '洗去一张牌',
+            body: '选中的牌永久离开牌组。',
+            mode: 'remove',
+            confirmText: '洗掉这张',
+            accepts: () => this.run.deck.length > 1,
+            onPick: (index) => {
               this.run = removeCard(this.run, index);
+              toast(this.root, '那张牌不再回来');
               claim();
             },
-          );
+          });
         },
         onUpgradeCard: (claim) => {
-          this.pickFromDeck(
-            '重录一张牌',
-            '选中的牌永久强化。',
-            (card) => !card.upgraded && canUpgrade(cardDef(card.defId)),
-            (index) => {
+          this.pickFromDeck({
+            title: '重录一张牌',
+            body: '卡面下方是重录前后的数值对照。选中的牌永久强化。',
+            mode: 'upgrade',
+            confirmText: '就录这张',
+            empty: '牌组里已经没有可以重录的牌了。',
+            accepts: (card) => !card.upgraded && canUpgrade(cardDef(card.defId)),
+            onPick: (index) => {
               this.run = upgradeCard(this.run, index);
+              toast(this.root, '织法已经改写');
               claim();
             },
-          );
+          });
+        },
+        onSimple: (offer, claim) => {
+          pending.get(offer)?.();
+          pending.delete(offer);
+          this.claimBurst(offer);
+          claim();
         },
         onDone: finish,
       }),
     );
   }
 
+  /** 直给奖励的领取演出。数值从中心浮起，光环扩散后自行散去。 */
+  private claimBurst(offer: RewardOffer): void {
+    const layer = el('div', 'claim-burst');
+    layer.dataset.tone = offer.kind;
+
+    const core = el('div', 'claim-burst-core');
+    core.append(el('div', 'claim-burst-ring'));
+
+    if (offer.kind === 'gold') {
+      core.append(
+        el('div', 'claim-burst-glyph', '◈'),
+        el('div', 'claim-burst-value', `+${offer.amount ?? 0}`),
+        el('div', 'claim-burst-note', '时砂入账'),
+      );
+      sfx.pick();
+    } else if (offer.kind === 'heal') {
+      core.append(
+        el('div', 'claim-burst-glyph', '♥'),
+        el('div', 'claim-burst-value', `+${offer.amount ?? 0}`),
+        el('div', 'claim-burst-note', '伤口收拢'),
+      );
+      sfx.play('heal');
+    } else {
+      core.append(
+        el('div', 'claim-burst-glyph', '◌'),
+        el('div', 'claim-burst-value', '—'),
+        el('div', 'claim-burst-note', '余烬散得很干净'),
+      );
+      sfx.blocked();
+    }
+
+    layer.append(core);
+    this.root.append(layer);
+    setTimeout(() => layer.remove(), 1150);
+  }
+
   /** 同槽位已经有装备时提示会顶掉哪一件。 */
   private replaceHint(equipId: string): string {
     const def = equipmentDef(equipId);
+    const slot = SLOT_LABEL[def.slot];
     const worn = this.run.equipment[def.slot];
-    if (!worn || worn === equipId) return `「${def.name}」将占用该槽位。`;
-    return `「${def.name}」将顶掉正在使用的「${equipmentDef(worn).name}」，被顶掉的装备就此丢弃。`;
+    if (!worn || worn === equipId) return `「${def.name}」将占用空着的${slot}槽。`;
+    return (
+      `${slot}槽正用着「${equipmentDef(worn).name}」。` +
+      `换上「${def.name}」会把它顶下来，顶掉的那件就此丢弃。`
+    );
+  }
+
+  /** 装备到手前的抉择。同槽有装备时并排摆出两件，让玩家决定换还是不换。 */
+  private confirmEquip(
+    equipId: string,
+    opts: { title: string; confirmText: string; lead?: string; onConfirm: () => void },
+  ): void {
+    const def = equipmentDef(equipId);
+    const worn = this.run.equipment[def.slot];
+    const swapping = Boolean(worn) && worn !== equipId;
+
+    confirmAction(this.root, {
+      title: opts.title,
+      body: (opts.lead ? `${opts.lead} ` : '') + this.replaceHint(equipId),
+      confirmText: opts.confirmText,
+      cancelText: swapping ? '不换' : '再想想',
+      preview: swapping ? equipSwapPreview(worn!, equipId) : bigEquip(equipId),
+      onConfirm: opts.onConfirm,
+    });
   }
 
   /** 穿上装备并提示被顶掉的那一件。 */
@@ -426,60 +586,105 @@ export class App {
     }
   }
 
-  /** 从当前牌组里挑一张，用于洗去与重录这类服务。 */
-  private pickFromDeck(
-    title: string,
-    body: string,
-    accepts: (card: DeckCard) => boolean,
-    onPick: (index: number) => void,
-  ): void {
-    const overlay = el('div', 'overlay');
-    const panel = el('div', 'panel has-close');
-    panel.append(el('h2', '', title), el('p', '', body));
+  /**
+   * 牌组网格。可选的牌铺成大图，滚动查看，重录模式下每张牌带前后数值对照。
+   * 点中一张先进确认，确认后才落到 onPick。
+   */
+  private pickFromDeck(opts: DeckPickOptions): void {
+    const overlay = el('div', 'overlay deck-pick-overlay');
+    const panel = el('div', 'panel deck-pick-panel has-close');
+    panel.append(el('h2', '', opts.title), el('p', '', opts.body));
 
-    const row = el('div', 'card-row deck-row');
+    const close = () => {
+      overlay.remove();
+      opts.onCancel?.();
+    };
+
+    const grid = el('div', 'deck-pick-grid');
     let offered = 0;
-    this.run.deck.forEach((card, index) => {
-      if (!accepts(card)) return;
-      offered += 1;
-      const node = renderStaticCard(card.defId, card.upgraded);
-      node.addEventListener('click', () => {
-        sfx.play(card.defId);
-        overlay.remove();
-        onPick(index);
-      });
-      row.append(node);
-    });
-    if (!offered) panel.append(el('p', '', '牌组里没有符合条件的牌。'));
-    panel.append(row);
 
-    const close = el('button', 'panel-close', '×');
-    close.title = '关闭';
-    close.addEventListener('click', () => overlay.remove());
-    panel.append(close);
+    this.run.deck.forEach((card, index) => {
+      if (!opts.accepts(card)) return;
+      offered += 1;
+
+      const cell = el('div', 'deck-pick-cell');
+      cell.append(renderStaticCard(card.defId, card.upgraded));
+      if (opts.mode === 'upgrade') cell.append(upgradeDiffRow(card.defId, 'deck-pick-diff'));
+
+      cell.addEventListener('click', () => {
+        sfx.play(card.defId);
+        confirmAction(this.root, {
+          title: opts.title,
+          body: opts.body,
+          confirmText: opts.confirmText,
+          preview:
+            opts.mode === 'upgrade'
+              ? upgradePreview(card.defId)
+              : bigCard(card.defId, card.upgraded),
+          onConfirm: () => {
+            overlay.remove();
+            opts.onPick(index);
+          },
+        });
+      });
+      grid.append(cell);
+    });
+
+    panel.append(
+      el('div', 'deck-pick-count', `牌组 ${this.run.deck.length} 张，可选 ${offered} 张`),
+    );
+    if (!offered) panel.append(el('p', '', opts.empty ?? '牌组里没有符合条件的牌。'));
+
+    const scroll = el('div', 'deck-pick-scroll');
+    scroll.append(grid);
+    panel.append(scroll);
+
+    const x = el('button', 'panel-close', '×');
+    x.title = '关闭';
+    x.addEventListener('click', close);
+    panel.append(x);
 
     overlay.append(panel);
+    overlay.addEventListener('click', (ev) => {
+      if (ev.target === overlay) close();
+    });
     this.root.append(overlay);
   }
 
   /** 失败相。重挑回到节点开头，放弃才真正结束本局。 */
   private showDefeat(): void {
     this.root.append(renderMap(this.run, () => {}));
-    this.root.append(
-      renderDefeat(this.run, {
-        retryCost: C.RETRY_GOLD_COST,
-        retryLimit: C.RETRY_LIMIT,
-        canRetry: canRetry(this.run),
-        onRetry: () => {
-          sfx.pick();
-          this.setRun(retryNode(this.run));
-        },
-        onAbandon: () => {
-          sfx.pick();
-          this.setRun(abandonRun(this.run));
-        },
-      }),
-    );
+
+    const chest = this.chestEnemy !== null;
+    const overlay = renderDefeat(this.run, {
+      retryCost: C.RETRY_GOLD_COST,
+      retryLimit: C.RETRY_LIMIT,
+      canRetry: canRetry(this.run),
+      onRetry: () => {
+        sfx.pick();
+        this.chestEnemy = null;
+        this.setRun(retryNode(this.run));
+      },
+      onAbandon: () => {
+        sfx.pick();
+        this.chestEnemy = null;
+        this.setRun(abandonRun(this.run));
+      },
+    });
+
+    if (chest) {
+      const panel = overlay.querySelector('.panel');
+      const note = el(
+        'p',
+        'defeat-omen',
+        '箱盖是在你倒下之后才合回去的。里面的东西没有走远，' +
+          '它把那个位置空着，扣舌照旧朝里弯着等下一双手。',
+      );
+      const anchor = panel?.querySelector('.defeat-facts') ?? panel?.querySelector('.confirm-row');
+      panel?.insertBefore(note, anchor ?? null);
+    }
+
+    this.root.append(overlay);
   }
 
   private showEvent(): void {
@@ -578,44 +783,17 @@ export class App {
     this.root.innerHTML = '';
     this.root.append(renderMap(this.run, () => {}));
 
-    const overlay = el('div', 'overlay');
-    const panel = el('div', 'panel');
-    panel.append(el('h2', '', '重录'));
-    panel.append(el('p', '', '点击一张牌，查看重录前后的对照。'));
-
-    const row = el('div', 'card-row');
-    let offered = 0;
-    this.run.deck.forEach((card, index) => {
-      if (card.upgraded) return;
+    this.pickFromDeck({
+      title: '重录',
+      body: '卡面下方是重录前后的数值对照。选中的牌永久强化，本次篝火就此结束，不能再休息。',
+      mode: 'upgrade',
+      confirmText: '就录这张',
+      empty: '牌组里已经没有可以重录的牌了。',
       // 强化后毫无变化的牌不摆上来，免得白白浪费一次重录
-      if (!canUpgrade(cardDef(card.defId))) return;
-      offered += 1;
-
-      const node = renderStaticCard(card.defId, false);
-      node.addEventListener('click', () => {
-        confirmAction(this.root, {
-          title: '重录这张牌',
-          body: '本次篝火就此结束，不能再休息。',
-          confirmText: '就录这张',
-          preview: upgradePreview(card.defId),
-          onConfirm: () => {
-            sfx.play(card.defId);
-            const next = structuredClone(this.run);
-            const target = next.deck[index];
-            if (target) target.upgraded = true;
-            this.setRun(completeNode(next));
-          },
-        });
-      });
-      row.append(node);
+      accepts: (card) => !card.upgraded && canUpgrade(cardDef(card.defId)),
+      onPick: (index) => this.setRun(completeNode(upgradeCard(this.run, index))),
+      onCancel: () => this.render(),
     });
-
-    if (!offered) {
-      panel.append(el('p', '', '牌组里已经没有可以重录的牌了。'));
-    }
-    panel.append(row);
-    overlay.append(panel);
-    this.root.append(overlay);
   }
 
   private showShop(): void {
@@ -626,52 +804,34 @@ export class App {
       this.shopRerolls = 0;
     }
 
-    const items = rollShop(this.run, this.shopRerolls);
+    // 买过的从货架上撤下，剩下的连同各自的原始下标一起送去渲染
+    const live = rollShop(this.run, this.shopRerolls)
+      .map((item, index) => ({ item, key: `${this.shopRerolls}:${index}` }))
+      .filter((entry) => !this.shopBought.has(entry.key));
 
-    this.root.innerHTML = '';
-    const screen = el('div', 'screen');
-    screen.append(el('div', 'screen-title', '残市'));
-    screen.append(el('div', 'screen-sub', '有人在这里用还没发生的事换已经发生的事'));
-    screen.append(renderRunBar(this.run, this.root));
-
-    const shelf = el('div', 'shop-shelf');
-    items.forEach((item, index) => {
-      const key = `${this.shopRerolls}:${index}`;
-      const sold = this.shopBought.has(key);
-      const affordable = this.run.gold >= item.price;
-
-      const wrap = el('div', 'shop-item');
-      if (sold) wrap.classList.add('sold');
-      else if (!affordable) wrap.classList.add('locked');
-
-      const tag = el('div', 'screen-sub', sold ? '已售出' : `◈ ${item.price}`);
-      tag.style.marginTop = '8px';
-      wrap.append(shopTile(item), tag);
-
-      if (!sold && affordable) {
-        wrap.addEventListener('click', () => this.buy(item, key));
-      }
-      shelf.append(wrap);
-    });
-    screen.append(shelf);
-
-    const actions = el('div', 'shop-actions');
     const rerollCost = rerollPrice(this.shopRerolls);
-    const reroll = el('button', 'ghost-button', `换一批 · ◈${rerollCost}`) as HTMLButtonElement;
-    if (this.run.gold < rerollCost) {
-      reroll.disabled = true;
-    } else {
-      reroll.addEventListener('click', () => {
-        sfx.pick();
+    this.root.innerHTML = '';
+
+    const screen = renderShop(this.run, {
+      items: live.map((entry) => entry.item),
+      rerollCost,
+      onBuy: (item, index) => {
+        const entry = live[index];
+        if (entry) this.buy(item, entry.key);
+      },
+      onReroll: () => {
         this.shopRerolls += 1;
         this.setRun(gainGold(this.run, -rerollCost));
-      });
-    }
+      },
+      onLeave: () => this.setRun(completeNode(this.run)),
+      host: this.root,
+    });
 
-    const leave = el('button', 'ghost-button', '离开');
-    leave.addEventListener('click', () => this.setRun(completeNode(this.run)));
-    actions.append(reroll, leave);
-    screen.append(actions);
+    if (!live.length) {
+      screen
+        .querySelector('.shop-rack')
+        ?.append(el('div', 'shop-empty', '货架空了，剩下的只有沙。'));
+    }
     this.root.append(screen);
   }
 
@@ -715,11 +875,10 @@ export class App {
         break;
       }
       case 'equipment': {
-        confirmAction(this.root, {
+        this.confirmEquip(item.id!, {
           title: '买下这件装备',
-          body: `花费 ${item.price} 枚时砂。${this.replaceHint(item.id!)}`,
+          lead: `花费 ${item.price} 枚时砂。`,
           confirmText: `买下 · ◈${item.price}`,
-          preview: bigEquip(item.id!),
           onConfirm: () => {
             paid();
             this.wearEquipment(item.id!);
@@ -729,28 +888,33 @@ export class App {
         break;
       }
       case 'removeCard':
-        this.pickFromDeck(
-          '洗去一张牌',
-          `花费 ${item.price} 枚时砂，选中的牌永久离开牌组。`,
-          () => true,
-          (index) => {
+        this.pickFromDeck({
+          title: '洗去一张牌',
+          body: `花费 ${item.price} 枚时砂，选中的牌永久离开牌组。`,
+          mode: 'remove',
+          confirmText: `洗掉这张 · ◈${item.price}`,
+          accepts: () => this.run.deck.length > 1,
+          onPick: (index) => {
             paid();
             this.setRun(removeCard(this.run, index));
             toast(this.root, '那张牌不再回来');
           },
-        );
+        });
         break;
       case 'upgradeCard':
-        this.pickFromDeck(
-          '重录一张牌',
-          `花费 ${item.price} 枚时砂，选中的牌永久强化。`,
-          (card) => !card.upgraded && canUpgrade(cardDef(card.defId)),
-          (index) => {
+        this.pickFromDeck({
+          title: '重录一张牌',
+          body: `花费 ${item.price} 枚时砂，选中的牌永久强化，卡面下方是前后对照。`,
+          mode: 'upgrade',
+          confirmText: `就录这张 · ◈${item.price}`,
+          empty: '牌组里已经没有可以重录的牌了。',
+          accepts: (card) => !card.upgraded && canUpgrade(cardDef(card.defId)),
+          onPick: (index) => {
             paid();
             this.setRun(upgradeCard(this.run, index));
             toast(this.root, '织法已经改写');
           },
-        );
+        });
         break;
       case 'supply': {
         const amount = item.amount ?? 0;
@@ -771,36 +935,17 @@ export class App {
   }
 }
 
-/** 货架上的一格。卡牌与装备用各自的卡面，服务类只有一句说明。 */
-function shopTile(item: ShopItem): HTMLElement {
-  switch (item.kind) {
-    case 'card':
-      return renderStaticCard(item.id!);
-    case 'equipment':
-      return renderEquipCard(item.id!);
-    case 'relic': {
-      const def = RELICS.find((r) => r.id === item.id);
-      const tile = el('div', 'shop-service');
-      const icon = el('div', 'shop-service-icon');
-      const url = art.relic(def?.art ?? item.id!);
-      if (url) icon.style.backgroundImage = `url(${url})`;
-      tile.append(icon, el('div', 'shop-service-name', def?.name ?? item.id!));
-      tile.append(el('div', 'shop-service-text', def?.text ?? ''));
-      return tile;
-    }
-    default: {
-      const text: Record<string, [string, string]> = {
-        removeCard: ['洗去一张牌', '从牌组里永久抽走一张。'],
-        upgradeCard: ['重录一张牌', '把一张牌永久强化。'],
-        supply: ['补给', `回复 ${item.amount ?? 0} 点生命。`],
-      };
-      const [name, desc] = text[item.kind] ?? [item.kind, ''];
-      const tile = el('div', 'shop-service');
-      tile.append(el('div', 'shop-service-icon'), el('div', 'shop-service-name', name));
-      tile.append(el('div', 'shop-service-text', desc));
-      return tile;
-    }
-  }
+/** 牌组网格的一次挑选。remove 只摆卡面，upgrade 额外附上前后数值对照。 */
+interface DeckPickOptions {
+  title: string;
+  body: string;
+  mode: 'remove' | 'upgrade';
+  confirmText: string;
+  /** 一张都挑不出来时替换的说明。 */
+  empty?: string;
+  accepts: (card: DeckCard) => boolean;
+  onPick: (index: number) => void;
+  onCancel?: () => void;
 }
 
 /** 确认框里的大图预览。 */
@@ -813,6 +958,43 @@ function bigCard(defId: string, upgraded = false): HTMLElement {
 function bigEquip(equipId: string): HTMLElement {
   const box = el('div', 'big-card');
   box.append(renderEquipCard(equipId));
+  return box;
+}
+
+function bigRelic(relicId: string): HTMLElement {
+  const def = RELICS.find((r) => r.id === relicId);
+  const box = el('div', 'relic-preview');
+
+  const icon = el('div', 'relic-preview-art');
+  const url = art.relic(def?.art ?? relicId);
+  if (url) icon.style.backgroundImage = `url(${url})`;
+
+  const body = el('div', 'relic-preview-body');
+  body.append(
+    el('div', 'relic-preview-name', def?.name ?? relicId),
+    el('div', 'relic-preview-text', def?.text ?? ''),
+  );
+
+  box.append(icon, body);
+  return box;
+}
+
+/** 换装的并排对照：左边是正在用的，右边是要换上的。 */
+function equipSwapPreview(currentId: string, nextId: string): HTMLElement {
+  const box = el('div', 'equip-swap');
+
+  const current = el('div', 'equip-swap-side drop');
+  current.append(el('div', 'equip-swap-label', '正在使用'), renderEquipCard(currentId));
+
+  const next = el('div', 'equip-swap-side');
+  next.append(el('div', 'equip-swap-label up', '换上'), renderEquipCard(nextId));
+
+  box.append(
+    current,
+    el('div', 'equip-swap-arrow', '→'),
+    next,
+    el('div', 'equip-swap-drop', `换下的「${equipmentDef(currentId).name}」不进背包，就此丢弃。`),
+  );
   return box;
 }
 
@@ -889,9 +1071,9 @@ function upgradePreview(defId: string): HTMLElement {
 }
 
 /** 强化带来的变化，数值不变的牌走降费。 */
-function upgradeDiffRow(defId: string): HTMLElement {
+function upgradeDiffRow(defId: string, className = 'upgrade-diff'): HTMLElement {
   const def = cardDef(defId);
-  const rows = el('div', 'upgrade-diff');
+  const rows = el('div', className);
   const upgraded = effectsOf(def, true);
 
   const addRow = (name: string, from: number, to: number) => {

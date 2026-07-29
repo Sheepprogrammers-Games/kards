@@ -5,9 +5,14 @@ import { countEntries, entriesOf, rewindsLeft } from '@engine/track';
 import { C, coefOf } from '@engine/constants';
 import { intentAim } from '@engine/intents';
 import { cardDef, intentDef } from '@engine/registry';
+import { EQUIP_SLOT_ORDER } from '@engine/types';
 import type {
   Effect,
   CardDef,
+  EnemyState,
+  EquipmentDef,
+  EquipSlot,
+  IntentDef,
   Manipulation,
   CardInstance,
   CombatEvent,
@@ -28,7 +33,7 @@ import { showPiles } from './deckview';
 import { cardText } from './screens';
 import { bindPauseKey, openPause } from './pause';
 import { pickSlot } from './slotpicker';
-import { settings } from './settings';
+import { onSettingsChange, settings } from './settings';
 import { KEYWORD_TERMS, STATUS_TERMS } from './glossary';
 import { STATUS_LABEL, echoYieldText, igniteYieldText } from './readout';
 import { openCodex } from './codex';
@@ -72,6 +77,7 @@ export class BattleScene {
   private lastTargetId: string | null = null;
   private aim: AimLine | null = null;
 
+  private elScene!: HTMLElement;
   private elEnemyRow!: HTMLElement;
   private elLanes!: Record<Lane, HTMLElement>;
   private elHand!: HTMLElement;
@@ -97,6 +103,7 @@ export class BattleScene {
   /** 界面上正在显示的护甲，跟血量一样按事件推进。 */
   private shownBlock = new Map<string, number>();
   private unbindPause: (() => void) | null = null;
+  private unbindSettings: (() => void) | null = null;
 
   constructor(
     root: HTMLElement,
@@ -118,6 +125,7 @@ export class BattleScene {
   private build(): void {
     this.root.innerHTML = '';
     const scene = el('div', 'battle');
+    this.elScene = scene;
 
     const bg = el('div', 'scene');
     const bgUrl = art.bg('act1-clocktower');
@@ -173,9 +181,11 @@ export class BattleScene {
     piles.addEventListener('click', () => showPiles(this.root, this.state));
 
     this.elRelics = el('div', 'relic-bar');
-    this.elEquips = el('div', 'relic-bar equip-bar');
-    bar.append(portrait, hpWrap, this.elEnergy, this.elBlock, piles, this.elRelics, this.elEquips);
+    bar.append(portrait, hpWrap, this.elEnergy, this.elBlock, piles, this.elRelics);
     scene.append(bar);
+
+    this.elEquips = el('div', 'equip-rack');
+    scene.append(this.elEquips);
 
     const book = el('button', 'codex-button');
     book.textContent = '?';
@@ -204,6 +214,8 @@ export class BattleScene {
     this.aim = new AimLine(scene);
 
     this.root.append(scene);
+    this.applyDisplay();
+    this.unbindSettings = onSettingsChange(() => this.applyDisplay());
     window.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('pointerup', this.onPointerUp);
     this.unbindPause = bindPauseKey(this.root, {
@@ -211,6 +223,12 @@ export class BattleScene {
       onMap: () => this.onExit('map'),
       onTitle: () => this.onExit('title'),
     });
+  }
+
+  /** 关掉产出预估时轨上只留图形与名字；敌方泳道可以钉住常驻展开。 */
+  private applyDisplay(): void {
+    this.elScene.classList.toggle('no-numbers', !settings().showNumbers);
+    this.elTrack.classList.toggle('pinned', settings().pinEnemyLane);
   }
 
   /** still 为真时轨上条目直接就位，位移由事件播放单独驱动。 */
@@ -263,7 +281,15 @@ export class BattleScene {
       if (enemy.phaseName) name.classList.add('shifted');
       node.append(bar, text, name);
 
-      node.addEventListener('pointerenter', () => (this.hoverTarget = enemy.index));
+      const tip = enemyDeckTip(enemy);
+      if (tip) node.append(tip);
+
+      node.addEventListener('pointerenter', () => {
+        this.hoverTarget = enemy.index;
+        // 说明卡朝屏幕中央一侧展开
+        const r = node.getBoundingClientRect();
+        node.classList.toggle('tip-left', r.left + r.width / 2 > window.innerWidth / 2);
+      });
       node.addEventListener('pointerleave', () => (this.hoverTarget = null));
       this.elEnemyRow.append(node);
     }
@@ -439,14 +465,19 @@ export class BattleScene {
       const preview = this.echoPreview(entry, slot);
       if (preview) node.append(preview);
     } else {
+      node.dataset.intent = entry.cardId;
+      node.dataset.enemy = String(entry.sourceEnemy ?? 0);
+
       const box = el('div', 'entry-intent');
+      const kind = intentKindOf(entry);
       const damage = entry.effects.find((e) => e.kind === 'damage');
       const raw = damage ? (damage.amount + entry.snapshot.strength) * entry.snapshot.damageScale : 0;
       const value = el('div', 'entry-intent-value');
       value.textContent = damage
         ? `${Math.floor(raw)}${(damage.hits ?? 1) > 1 ? `×${damage.hits}` : ''}`
         : intentValueOf(entry) || '◈';
-      box.append(value);
+      box.dataset.kind = kind;
+      box.append(el('div', 'entry-intent-glyph', INTENT_GLYPH[kind] ?? '◈'), value);
 
       const label = intentEffectLabel(entry);
       if (label) box.append(el('div', 'entry-intent-label', label));
@@ -590,32 +621,51 @@ export class BattleScene {
     }
   }
 
-  /** 在身装备与遗物并排常驻，结算时点亮对应的那一格。 */
+  /** 在身装备按槽位顺序常驻在状态面板上方，结算时点亮对应的那一格。 */
   private renderEquips(): void {
     this.elEquips.innerHTML = '';
-    for (const id of this.state.equipment) {
-      const def = EQUIPMENT.find((e) => e.id === id);
-      if (!def) continue;
-      const slot = el('div', 'relic-slot equip-worn');
+    const worn = this.state.equipment
+      .map((id) => EQUIPMENT.find((e) => e.id === id))
+      .filter((def): def is EquipmentDef => Boolean(def))
+      .sort((a, b) => EQUIP_SLOT_ORDER.indexOf(a.slot) - EQUIP_SLOT_ORDER.indexOf(b.slot));
+
+    for (const def of worn) {
+      const slot = el('div', 'equip-slot');
+      slot.dataset.equip = def.id;
+      slot.dataset.slot = def.slot;
+
+      const face = el('div', 'equip-face');
       const url = art.equipment(def.art);
-      if (url) slot.style.backgroundImage = `url(${url})`;
-      slot.dataset.equip = id;
+      if (url) face.style.backgroundImage = `url(${url})`;
 
       const tip = el('div', 'relic-tip');
-      tip.append(el('div', 'relic-tip-head', def.name), el('div', 'relic-tip-body', def.text));
-      slot.append(tip);
+      tip.append(
+        el('div', 'relic-tip-head', `${def.name}　${SLOT_LABEL[def.slot]}`),
+        el('div', 'relic-tip-body', def.text),
+      );
+      slot.append(face, el('span', 'equip-kind', SLOT_GLYPH[def.slot]), tip);
       this.elEquips.append(slot);
     }
   }
 
-  /** 装备结算时闪一下对应的槽位。 */
-  private fireEquip(id: string): void {
+  /** 装备结算时脉冲一下对应的槽位，并把这次的产出浮起来。 */
+  private fireEquip(id: string, text: string): void {
     const slot = this.elEquips.querySelector(`[data-equip="${id}"]`) as HTMLElement | null;
     if (!slot) return;
     slot.classList.remove('firing');
     void slot.offsetWidth;
     slot.classList.add('firing');
     setTimeout(() => slot.classList.remove('firing'), 900);
+
+    const rect = slot.getBoundingClientRect();
+    fx.impact({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, 42, 10);
+    if (!text) return;
+
+    const label = el('div', 'equip-fire-label', text);
+    label.style.left = `${rect.left + rect.width / 2}px`;
+    label.style.top = `${rect.bottom + 8}px`;
+    this.root.append(label);
+    setTimeout(() => label.remove(), 1200);
   }
 
   /** 遗物生效时点亮它并说明发生了什么。 */
@@ -708,6 +758,7 @@ export class BattleScene {
     };
     node.classList.add('dragging');
     this.elHand.classList.add('aiming');
+    this.elScene.classList.add('dragging');
 
     const def = cardDef(card.defId);
     const lane = targetLaneOf(def);
@@ -850,6 +901,7 @@ export class BattleScene {
     litTarget?.classList.remove('targeted');
     this.aim?.hide();
     this.elHand.classList.remove('aiming');
+    this.elScene.classList.remove('dragging');
     this.elPlayZone.classList.remove('show', 'armed');
     this.revealEnemyLane(false, 'drag');
     this.elLanes.enemy.classList.remove('lane-hot');
@@ -1223,8 +1275,8 @@ export class BattleScene {
           break;
 
         case 'equip':
-          this.fireEquip(String(ev.equipId));
-          await wait(120);
+          this.fireEquip(String(ev.equipId), equipYield(events, i));
+          await wait(160);
           break;
 
         case 'intentStrike': {
@@ -1238,34 +1290,19 @@ export class BattleScene {
             `.entry[data-uid="${ev.uid}"]`,
           ) as HTMLElement | null;
 
-          // 朝自己的意图打回敌人身上，攻向玩家的才落到肖像上
           const def = safeIntentDef(String(ev.cardId));
-          const inward = def ? intentAim(def) === 'self' : false;
-          const landing = centerOf(inward && node ? node : this.elPortrait);
-
-          if (entry) {
-            const from = centerOf(entry);
-            entry.style.setProperty('--fly-x', `${landing.x - from.x}px`);
-            entry.style.setProperty('--fly-y', `${landing.y - from.y}px`);
-            entry.classList.add('launching');
-            fx.bolt(from, landing, 0.3);
-          }
-          sfx.intent();
-          if (!inward) fx.nudge(4);
+          const mode = intentModeOf(def);
+          this.flyIntent(entry, mode, node);
+          this.reactEnemy(node, mode);
 
           if (node) {
-            node.classList.remove('striking');
-            void node.offsetWidth;
-            node.classList.add('striking');
-            setTimeout(() => node.classList.remove('striking'), 440);
-
             const acting = effectLabel(def?.effects ?? []);
             if (acting) {
               const r = node.getBoundingClientRect();
-              this.castLabel(acting, { x: r.left + r.width / 2, y: r.top + 12 });
+              this.castLabel(acting, { x: r.left + r.width / 2, y: r.top + 12 }, CAST_VARIANT[mode]);
             }
           }
-          await wait(360);
+          await wait(mode === 'strike' ? 360 : 300);
           this.revealEnemyLane(false, 'strike');
           break;
         }
@@ -1333,21 +1370,76 @@ export class BattleScene {
     this.syncSlots();
   }
 
-  /** 敌方意图脱离末位飞向玩家。 */
+  /** 意图脱离末位。已经在出手时演过的不再重播，只等它落幕。 */
   private async launchIntent(uid: number): Promise<void> {
     const node = this.entryEl(uid);
     if (!node) return;
-    const from = centerOf(node);
-    const portrait = this.root.querySelector('.portrait') as HTMLElement | null;
-    const to = portrait ? centerOf(portrait) : { x: from.x, y: window.innerHeight - 70 };
-    node.style.setProperty('--fly-x', `${to.x - from.x}px`);
-    node.style.setProperty('--fly-y', `${to.y - from.y}px`);
-    node.classList.add('launching');
-    sfx.intent();
-    fx.bolt(from, to, 0.26);
-    await wait(240);
+    if (node.dataset.flown) {
+      await wait(120);
+    } else {
+      const owner = this.nodeForCombatant(`enemy${node.dataset.enemy ?? 0}`);
+      this.flyIntent(node, intentModeOf(safeIntentDef(node.dataset.intent ?? '')), owner);
+      await wait(240);
+    }
     node.remove();
     this.syncSlots();
+  }
+
+  /**
+   * 意图落地的三种演出。攻向玩家的破空飞出，配震屏、定格与迸发；
+   * 只施加负面状态的收敛成一道颜色标记与轻音；朝自己的向内收束回敌人身上。
+   */
+  private flyIntent(node: HTMLElement | null, mode: IntentMode, enemy: HTMLElement | null): void {
+    const landing = centerOf(mode === 'gather' ? (enemy ?? this.elPortrait) : this.elPortrait);
+    const from = node ? centerOf(node) : landing;
+
+    if (node) {
+      node.dataset.flown = '1';
+      node.style.setProperty('--fly-x', `${landing.x - from.x}px`);
+      node.style.setProperty('--fly-y', `${landing.y - from.y}px`);
+      node.classList.add(FLY_CLASS[mode]);
+    }
+
+    if (mode === 'strike') {
+      fx.bolt(from, landing, 0.3);
+      fx.impact(from, 6, 12);
+      fx.nudge(5);
+      fx.hold(60);
+      sfx.intent();
+      return;
+    }
+
+    if (mode === 'mark') {
+      fx.beam(from, landing, 325, { travel: true, width: 2, duration: 0.34 });
+      this.elPortrait.classList.remove('marked');
+      void this.elPortrait.offsetWidth;
+      this.elPortrait.classList.add('marked');
+      setTimeout(() => this.elPortrait.classList.remove('marked'), 700);
+      sfx.disrupt();
+      return;
+    }
+
+    // 光华从四周向内聚拢
+    for (let i = 0; i < 4; i++) {
+      const angle = (Math.PI / 2) * i + Math.PI / 4;
+      const start = { x: landing.x + Math.cos(angle) * 78, y: landing.y + Math.sin(angle) * 78 };
+      fx.beam(start, landing, 210, { travel: true, width: 2.5, duration: 0.3 });
+    }
+    fx.beam(from, landing, 210, { travel: true, width: 3, duration: 0.32 });
+    fx.nudge(2);
+    // 沉稳的金属加固：机械咬合打底，随后一记扣合的余响
+    sfx.shift();
+    setTimeout(() => sfx.block(), 90);
+  }
+
+  /** 敌人自身的反应动作，强度与意图指向一致。 */
+  private reactEnemy(node: HTMLElement | null, mode: IntentMode): void {
+    if (!node) return;
+    const cls = REACT_CLASS[mode];
+    node.classList.remove(cls);
+    void node.offsetWidth;
+    node.classList.add(cls);
+    setTimeout(() => node.classList.remove(cls), mode === 'gather' ? 820 : 460);
   }
 
   /** 一批位移同时播放，整轨读作一次推进。 */
@@ -1488,8 +1580,8 @@ export class BattleScene {
   }
 
   /** 敌人出手时报出这一击的名字。 */
-  private castLabel(text: string, pos: { x: number; y: number }): void {
-    const node = el('div', 'cast-label');
+  private castLabel(text: string, pos: { x: number; y: number }, variant = ''): void {
+    const node = el('div', variant ? `cast-label ${variant}` : 'cast-label');
     node.textContent = text;
     node.style.left = `${pos.x}px`;
     node.style.top = `${pos.y}px`;
@@ -1524,6 +1616,7 @@ export class BattleScene {
 
   destroy(): void {
     this.unbindPause?.();
+    this.unbindSettings?.();
     window.clearTimeout(this.revealTimer);
     this.aim?.destroy();
     window.removeEventListener('pointermove', this.onPointerMove);
@@ -1559,6 +1652,32 @@ function echoOutputs(events: CombatEvent[]): Map<number, EchoOutput> {
   return out;
 }
 
+/** 装备触发后紧跟的一串效果事件，汇成一行读数。 */
+function equipYield(events: CombatEvent[], from: number): string {
+  let damage = 0;
+  let block = 0;
+  let heal = 0;
+  const statuses: string[] = [];
+
+  for (let k = from + 1; k < events.length && EFFECT_TYPES.has(events[k]!.type); k++) {
+    const e = events[k]!;
+    if (e.type === 'damage') damage += Number(e.amount);
+    else if (e.type === 'block') block += Number(e.amount);
+    else if (e.type === 'heal') heal += Number(e.amount);
+    else if (e.type === 'status') {
+      const id = String(e.status);
+      statuses.push(`${STATUS_LABEL[id] ?? id} +${e.stacks}`);
+    }
+  }
+
+  const parts: string[] = [];
+  if (damage > 0) parts.push(`伤害 ${damage}`);
+  if (block > 0) parts.push(`护甲 +${block}`);
+  if (heal > 0) parts.push(`生命 +${heal}`);
+  parts.push(...statuses);
+  return parts.join('　');
+}
+
 /** 意图落地的效果先于其事件产出，起飞点回退到该串效果之前。 */
 function intentLaunches(events: CombatEvent[]): Map<number, number> {
   const out = new Map<number, number>();
@@ -1591,6 +1710,101 @@ const INTENT_GLYPH: Record<string, string> = {
   debuff: '蚀',
   buff: '增',
 };
+
+/** 意图的演出档位：攻向玩家、只留标记、收束回自身。 */
+type IntentMode = 'strike' | 'mark' | 'gather';
+
+const FLY_CLASS: Record<IntentMode, string> = {
+  strike: 'launching',
+  mark: 'marking',
+  gather: 'converging',
+};
+
+const REACT_CLASS: Record<IntentMode, string> = {
+  strike: 'striking',
+  mark: 'casting',
+  gather: 'fortifying',
+};
+
+const CAST_VARIANT: Record<IntentMode, string> = {
+  strike: '',
+  mark: 'hex',
+  gather: 'calm',
+};
+
+const SLOT_GLYPH: Record<EquipSlot, string> = {
+  weapon: '武',
+  armor: '甲',
+  trinket: '佩',
+  core: '核',
+};
+
+const SLOT_LABEL: Record<EquipSlot, string> = {
+  weapon: '武器',
+  armor: '护甲',
+  trinket: '饰品',
+  core: '核心',
+};
+
+/** 朝自己的收束，攻向玩家的按有没有伤害分强弱。 */
+function intentModeOf(def: IntentDef | null): IntentMode {
+  if (!def) return 'strike';
+  if (intentAim(def) === 'self') return 'gather';
+  return def.effects.some((e) => e.kind === 'damage') ? 'strike' : 'mark';
+}
+
+/** 敌人的招式一览：带牌库的读出剩余张数，其余列出脚本里会出现的意图。 */
+function enemyDeckTip(enemy: EnemyState): HTMLElement | null {
+  const pool = enemy.intentPool ?? [];
+  const deck = enemy.intentDeck ?? [];
+
+  const remaining = new Map<string, number>();
+  for (const id of deck) remaining.set(id, (remaining.get(id) ?? 0) + 1);
+
+  // left 为 -1 表示这个敌人不靠牌库出招，不读张数
+  const rows = pool.length
+    ? pool.map((item) => ({
+        id: item.intentId,
+        left: remaining.get(item.intentId) ?? 0,
+        total: item.copies,
+      }))
+    : [...new Set(enemy.intentScript.map((o) => o.intentId))].map((id) => ({
+        id,
+        left: -1,
+        total: 0,
+      }));
+  if (!rows.length) return null;
+
+  const tip = el('div', 'enemy-tip');
+  const total = pool.reduce((n, item) => n + item.copies, 0);
+  tip.append(
+    el(
+      'div',
+      'enemy-tip-head',
+      pool.length ? `招式牌库　还剩 ${deck.length} / ${total} 张` : '这一战会用的招式',
+    ),
+  );
+
+  for (const row of rows) {
+    const def = safeIntentDef(row.id);
+    const line = el('div', 'enemy-tip-row');
+    line.dataset.kind = def?.kind ?? 'attack';
+    if (row.left === 0) line.classList.add('exhausted');
+
+    line.append(
+      el('span', 'enemy-tip-glyph', INTENT_GLYPH[def?.kind ?? 'attack'] ?? '◈'),
+      el('span', 'enemy-tip-name', def?.name ?? row.id),
+      el('span', 'enemy-tip-text', def ? effectLabel(def.effects) : ''),
+    );
+    if (row.left >= 0) line.append(el('span', 'enemy-tip-left', `${row.left} / ${row.total}`));
+    tip.append(line);
+  }
+
+  if (enemy.charge > 0) {
+    tip.append(el('div', 'enemy-tip-foot', `敌轨被占满，蓄力 ${enemy.charge} 层等待落位`));
+  }
+  return tip;
+}
 
 function intentKindOf(entry: TrackEntry): string {
   if (entry.effects.some((e) => e.kind === 'damage')) return 'attack';

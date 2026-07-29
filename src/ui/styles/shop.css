@@ -1,0 +1,592 @@
+/* 残市货架、随身物品面板与重挑界面。 */
+
+/* 遗物与装备面板 */
+.panel.holding-panel {
+  width: min(760px, 92vw);
+  text-align: left;
+}
+
+.panel.holding-panel h2,
+.panel.holding-panel p {
+  text-align: center;
+}
+
+.holding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.holding-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: rgba(29, 27, 75, 0.5);
+  border: 1px solid rgba(240, 180, 41, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 170, 0.1);
+}
+
+.holding-orb {
+  flex: 0 0 auto;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(11, 9, 32, 0.9);
+  border: 1.5px solid var(--gold-dim);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.2),
+    0 6px 16px rgba(0, 0, 0, 0.55);
+}
+
+.holding-body {
+  min-width: 0;
+}
+
+.holding-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--gold-300);
+  margin-bottom: 5px;
+}
+
+.holding-text {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--ink-dim);
+}
+
+.holding-empty {
+  padding: 26px 0 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* 装备四槽 */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.slot-cell {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: linear-gradient(170deg, rgba(38, 34, 88, 0.5), rgba(12, 10, 34, 0.72));
+  border: 1px solid rgba(240, 180, 41, 0.24);
+}
+
+.slot-label {
+  grid-column: 1 / -1;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: var(--gold-400);
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(240, 180, 41, 0.16);
+}
+
+.slot-cell.empty {
+  border-style: dashed;
+  border-color: rgba(157, 151, 196, 0.26);
+  background: rgba(11, 9, 32, 0.42);
+}
+
+.slot-cell.empty .slot-label {
+  color: var(--ink-faint);
+  border-bottom-color: rgba(157, 151, 196, 0.18);
+}
+
+.slot-face {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(11, 9, 32, 0.9);
+  border: 1.5px solid var(--gold-dim);
+  color: var(--gold-400);
+  font-size: 28px;
+}
+
+.slot-face.outline {
+  border-style: dashed;
+  border-color: rgba(157, 151, 196, 0.34);
+  background: none;
+  color: var(--ink-faint);
+}
+
+.slot-timing {
+  margin-top: 6px;
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--gold-dim);
+}
+
+/* 装备大图卡面 */
+.portrait-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 10px 0 6px;
+}
+
+.equip-portrait {
+  width: 178px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-align: left;
+  background: linear-gradient(180deg, rgba(38, 34, 88, 0.62), rgba(12, 10, 34, 0.9));
+  border: 1px solid var(--gold-dim);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.14),
+    var(--shadow-deep);
+  cursor: pointer;
+  transition:
+    transform 0.18s var(--ease-snap),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.equip-portrait:hover {
+  transform: translateY(-6px);
+  border-color: var(--gold-500);
+  box-shadow: var(--glow-gold);
+}
+
+.equip-portrait[data-rarity='rare'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.18),
+    var(--glow-gold);
+}
+
+.equip-portrait-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 150px;
+  background-size: cover;
+  background-position: center 34%;
+  background-color: rgba(11, 9, 32, 0.85);
+  border-bottom: 1px solid rgba(240, 180, 41, 0.22);
+  color: var(--gold-400);
+  font-size: 40px;
+}
+
+.equip-portrait-slot {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--gold-300);
+  background: rgba(9, 7, 26, 0.82);
+  border: 1px solid rgba(240, 180, 41, 0.34);
+}
+
+.equip-portrait-body {
+  padding: 10px 12px 12px;
+}
+
+.equip-portrait-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--gold-300);
+  margin-bottom: 5px;
+}
+
+.equip-portrait-text {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+/* 残市 */
+.shop-screen {
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-bottom: 26px;
+}
+
+.shop-panel {
+  width: min(1120px, 94vw);
+  margin: 20px auto 0;
+  padding: 16px 22px 24px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(170deg, rgba(35, 31, 82, 0.82), rgba(11, 9, 32, 0.92));
+  border: 1px solid rgba(240, 180, 41, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.1),
+    var(--shadow-deep);
+  backdrop-filter: blur(4px);
+}
+
+.shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(240, 180, 41, 0.2);
+}
+
+.shop-purse {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-num);
+}
+
+.shop-purse-mark {
+  font-size: 18px;
+  color: var(--gold-500);
+  text-shadow: 0 0 10px rgba(240, 180, 41, 0.5);
+}
+
+.shop-purse-num {
+  font-size: 26px;
+  color: var(--gold-300);
+}
+
+.shop-purse-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+.shop-reroll {
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  color: var(--gold-300);
+  border: 1px solid var(--gold-dim);
+  background: linear-gradient(180deg, rgba(58, 46, 20, 0.62), rgba(24, 18, 8, 0.72));
+  transition:
+    transform 0.18s var(--ease-snap),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.shop-reroll:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-500);
+  box-shadow: var(--glow-gold);
+}
+
+.shop-reroll.broke {
+  color: var(--ink-faint);
+  border-color: rgba(157, 151, 196, 0.24);
+  background: rgba(11, 9, 32, 0.55);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.shop-reroll.broke:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(157, 151, 196, 0.24);
+}
+
+.shop-rack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* 四种商品共用同一副外框，各段高度固定，换行后仍然对齐 */
+.shop-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 178px;
+  padding: 10px 10px 0;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(38, 34, 88, 0.55), rgba(12, 10, 34, 0.88));
+  border: 1px solid rgba(240, 180, 41, 0.26);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 170, 0.12);
+  cursor: pointer;
+  transition:
+    transform 0.18s var(--ease-snap),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.shop-tile:hover {
+  transform: translateY(-7px);
+  border-color: var(--gold-500);
+  box-shadow: var(--glow-gold);
+}
+
+.shop-face {
+  --card-w: 138px;
+  --card-h: 210px;
+  flex: 0 0 auto;
+  height: 210px;
+  display: grid;
+  place-items: center;
+}
+
+.shop-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 138px;
+  height: 210px;
+  border-radius: var(--radius);
+  background-size: cover;
+  background-position: center 34%;
+  background-color: rgba(11, 9, 32, 0.85);
+  border: 1.5px solid var(--gold-dim);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+  color: var(--gold-400);
+  font-size: 42px;
+}
+
+.shop-portrait-slot {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--gold-300);
+  background: rgba(9, 7, 26, 0.82);
+  border: 1px solid rgba(240, 180, 41, 0.34);
+}
+
+.shop-orb {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(11, 9, 32, 0.9);
+  border: 1.5px solid var(--gold-dim);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.22),
+    0 0 26px rgba(240, 180, 41, 0.22);
+}
+
+.shop-rune {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 46px;
+  color: var(--gold-400);
+  background: radial-gradient(circle at 38% 30%, rgba(240, 180, 41, 0.14), rgba(11, 9, 32, 0.92) 72%);
+  border: 1px dashed rgba(240, 180, 41, 0.42);
+  text-shadow: 0 0 16px rgba(240, 180, 41, 0.4);
+}
+
+.shop-body {
+  flex: 0 0 auto;
+  height: 84px;
+  padding: 10px 2px 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.shop-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--gold-300);
+  margin-bottom: 4px;
+}
+
+.shop-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+.shop-price {
+  flex: 0 0 auto;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 -10px;
+  border-top: 1px solid rgba(240, 180, 41, 0.2);
+  font-family: var(--font-num);
+  font-size: 16px;
+  color: var(--gold-300);
+}
+
+.shop-price-mark {
+  font-size: 13px;
+  color: var(--gold-500);
+}
+
+/* 买不起与已售出：压暗，不再响应指针 */
+.shop-tile.broke,
+.shop-tile.sold {
+  filter: grayscale(0.8) brightness(0.55);
+  opacity: 0.42;
+  cursor: not-allowed;
+  border-color: rgba(157, 151, 196, 0.2);
+}
+
+.shop-tile.broke:hover,
+.shop-tile.sold:hover {
+  transform: none;
+  box-shadow: inset 0 1px 0 rgba(255, 226, 170, 0.12);
+  border-color: rgba(157, 151, 196, 0.2);
+}
+
+.shop-tile.sold::after {
+  content: attr(data-stamp);
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  padding: 5px 14px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.26em;
+  color: var(--ink);
+  border: 1.5px solid rgba(232, 227, 255, 0.55);
+  border-radius: var(--radius-sm);
+  background: rgba(9, 7, 26, 0.72);
+}
+
+/* 重挑 */
+.overlay.defeat-overlay {
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 46%, rgba(96, 12, 16, 0.5), transparent 72%),
+    linear-gradient(to bottom, rgba(28, 5, 10, 0.9), rgba(7, 4, 12, 0.95));
+  backdrop-filter: blur(7px) saturate(0.7);
+  animation: defeat-in 0.5s var(--ease-out);
+}
+
+@keyframes defeat-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.panel.defeat-panel {
+  width: min(600px, 92vw);
+  padding: 28px 34px 30px;
+  background: linear-gradient(170deg, rgba(58, 16, 24, 0.94), rgba(12, 6, 18, 0.98));
+  border: 1px solid rgba(224, 72, 60, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 168, 158, 0.12),
+    0 22px 60px rgba(0, 0, 0, 0.8);
+}
+
+.defeat-mark {
+  font-size: 34px;
+  line-height: 1;
+  color: rgba(255, 157, 146, 0.9);
+  text-shadow: 0 0 24px rgba(224, 72, 60, 0.6);
+  margin-bottom: 10px;
+}
+
+.panel.defeat-panel h2 {
+  color: #ffb3a8;
+  text-shadow: 0 0 22px rgba(224, 72, 60, 0.45);
+}
+
+.panel.defeat-panel p {
+  margin-bottom: 18px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.defeat-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  margin-bottom: 16px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: rgba(224, 72, 60, 0.22);
+}
+
+.defeat-fact {
+  padding: 11px 8px 12px;
+  background: rgba(14, 7, 20, 0.86);
+}
+
+.defeat-fact-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+
+.defeat-fact-value {
+  font-family: var(--font-num);
+  font-size: 17px;
+  color: #ffc9c0;
+}
+
+.defeat-block {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: rgba(255, 157, 146, 0.92);
+  background: rgba(96, 20, 22, 0.28);
+  border: 1px solid rgba(224, 72, 60, 0.34);
+}
+
+.defeat-panel .title-button.primary {
+  color: #ffe0bb;
+  border-color: rgba(240, 180, 41, 0.6);
+}
+
+.defeat-panel .title-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.title-button.danger {
+  color: rgba(255, 157, 146, 0.9);
+  border-color: rgba(224, 72, 60, 0.42);
+}
+
+.title-button.danger:hover {
+  color: #ffc9c0;
+  border-color: rgba(224, 72, 60, 0.8);
+  box-shadow: 0 0 14px rgba(224, 72, 60, 0.35);
+}
+
+.title-button.danger::before,
+.title-button.danger::after {
+  border-color: rgba(224, 72, 60, 0.5);
+}

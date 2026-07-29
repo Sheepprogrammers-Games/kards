@@ -1459,11 +1459,362 @@
   }
 }
 
-/* 在身装备与遗物并排，槽位为方形以示区分 */
-.equip-bar {
-  max-width: 112px;
+/* 在身装备常驻左上角，与右上的手册、暂停对称，避开手牌与轨道 */
+.equip-rack {
+  position: absolute;
+  left: 24px;
+  top: 20px;
+  z-index: 12;
+  display: flex;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(20, 17, 52, 0.82), rgba(9, 7, 26, 0.9));
+  border: 1px solid rgba(240, 180, 41, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.1),
+    0 12px 30px rgba(0, 0, 0, 0.48);
 }
 
-.relic-slot.equip-worn {
+.equip-rack:empty {
+  display: none;
+}
+
+.equip-slot {
+  position: relative;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-dim);
+  background: rgba(11, 9, 32, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.16),
+    0 4px 14px rgba(0, 0, 0, 0.6);
+  cursor: help;
+  transition:
+    transform 0.16s var(--ease-snap),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.equip-face {
+  position: absolute;
+  inset: 2px;
+  border-radius: 2px;
+  background-size: cover;
+  background-position: center;
+}
+
+/* 槽位类别的角标，骑在左下角 */
+.equip-kind {
+  position: absolute;
+  left: -3px;
+  bottom: -4px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 13px;
+  color: var(--gold-300);
+  background: linear-gradient(180deg, #2b2460, #120f38);
+  border: 1px solid rgba(240, 180, 41, 0.42);
+}
+
+.equip-slot:hover {
+  transform: translateY(-3px) scale(1.1);
+  z-index: 3;
+  border-color: var(--gold-500);
+  box-shadow: var(--glow-gold);
+}
+
+/* 装备在屏幕上沿，说明卡改向下弹 */
+.equip-slot .relic-tip {
+  bottom: auto;
+  top: calc(100% + 10px);
+  left: 0;
+  transform: translateY(-5px);
+}
+
+.equip-slot:hover .relic-tip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.equip-slot .relic-tip::after {
+  top: auto;
+  bottom: 100%;
+  left: 16px;
+  transform: rotate(45deg) translateY(5px);
+  background: rgba(26, 21, 62, 0.98);
+  border: none;
+  border-left: 1px solid rgba(240, 180, 41, 0.42);
+  border-top: 1px solid rgba(240, 180, 41, 0.42);
+}
+
+/* 装备结算：槽位脉冲，产出读数从槽位下方浮出 */
+.equip-slot.firing {
+  animation: relic-fire 0.9s var(--ease-out);
+}
+
+.equip-fire-label {
+  position: absolute;
+  transform: translate(-50%, 0);
+  padding: 3px 10px;
+  border-radius: 9px;
+  font-family: var(--font-num);
+  font-size: 12.5px;
+  white-space: nowrap;
+  color: #dbeaff;
+  background: linear-gradient(180deg, rgba(24, 30, 72, 0.97), rgba(9, 10, 30, 0.98));
+  border: 1px solid rgba(127, 179, 255, 0.55);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 20;
+  animation: equip-label 1.2s var(--ease-out) forwards;
+}
+
+@keyframes equip-label {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, 6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 18px);
+  }
+}
+
+/* 敌人的招式一览，贴在朝向屏幕中央的一侧 */
+.enemy-tip {
+  position: absolute;
+  left: calc(100% + 14px);
+  bottom: 2px;
+  width: max-content;
+  max-width: 268px;
+  padding: 10px 13px;
+  border-radius: 9px;
+  text-align: left;
+  background: linear-gradient(180deg, rgba(26, 21, 62, 0.98), rgba(9, 7, 26, 0.99));
+  border: 1px solid rgba(224, 72, 60, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.1),
+    0 12px 30px rgba(0, 0, 0, 0.75);
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.18s var(--ease-out);
+  z-index: 26;
+}
+
+.enemy:hover {
+  z-index: 22;
+}
+
+.enemy.tip-left .enemy-tip {
+  left: auto;
+  right: calc(100% + 14px);
+  transform: translateX(6px);
+}
+
+.enemy:hover .enemy-tip {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 拖拽出牌时让位，不遮挡目标 */
+.battle.dragging .enemy-tip {
+  opacity: 0;
+}
+
+.enemy-tip-head {
+  margin-bottom: 7px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(240, 180, 41, 0.18);
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--gold-400);
+  white-space: nowrap;
+}
+
+.enemy-tip-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.enemy-tip-row.exhausted {
+  opacity: 0.42;
+}
+
+.enemy-tip-glyph {
+  flex: 0 0 auto;
+  width: 15px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--gold-400);
+}
+
+.enemy-tip-row[data-kind='attack'] .enemy-tip-glyph {
+  color: #ff8f83;
+}
+
+.enemy-tip-row[data-kind='debuff'] .enemy-tip-glyph {
+  color: var(--echo-soft);
+}
+
+.enemy-tip-row[data-kind='defend'] .enemy-tip-glyph {
+  color: var(--block);
+}
+
+.enemy-tip-name {
+  flex: 0 0 auto;
+  color: var(--ink);
+}
+
+.enemy-tip-text {
+  flex: 1 1 auto;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.enemy-tip-left {
+  flex: 0 0 auto;
+  font-family: var(--font-num);
+  font-size: 11px;
+  color: var(--gold-300);
+}
+
+.enemy-tip-foot {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(240, 180, 41, 0.18);
+  font-size: 11px;
+  color: rgba(238, 150, 96, 0.92);
+}
+
+/* 只施加负面状态的意图：不震屏，落点只留一道颜色标记 */
+.enemy.casting {
+  animation: enemy-cast 0.5s var(--ease-out);
+  z-index: 6;
+}
+
+@keyframes enemy-cast {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  34% {
+    transform: translateY(-10px);
+    filter: brightness(1.28) saturate(1.2);
+  }
+}
+
+.portrait.marked {
+  animation: portrait-mark 0.62s ease;
+}
+
+@keyframes portrait-mark {
+  0%,
+  100% {
+    border-color: var(--gold-dim);
+    box-shadow: var(--glow-gold);
+  }
+  26% {
+    border-color: var(--echo-soft);
+    box-shadow: 0 0 22px 6px rgba(224, 57, 154, 0.7);
+  }
+}
+
+/* 朝自己的意图：光华向内聚拢，脚下泛起护盾环 */
+.enemy.fortifying .enemy-art {
+  animation: enemy-fortify 0.78s var(--ease-out);
+}
+
+@keyframes enemy-fortify {
+  0% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.85));
+  }
+  36% {
+    transform: scale(0.965) translateY(4px);
+    filter: drop-shadow(0 0 30px rgba(127, 179, 255, 0.95))
+      drop-shadow(0 16px 18px rgba(0, 0, 0, 0.85)) brightness(1.4) saturate(1.15);
+  }
+  66% {
+    transform: scale(1.035) translateY(-3px);
+    filter: drop-shadow(0 0 18px rgba(127, 179, 255, 0.6))
+      drop-shadow(0 16px 18px rgba(0, 0, 0, 0.85)) brightness(1.16);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.85));
+  }
+}
+
+.enemy.fortifying::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  width: 168px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(127, 179, 255, 0.85);
+  box-shadow:
+    0 0 26px rgba(127, 179, 255, 0.5),
+    inset 0 0 24px rgba(127, 179, 255, 0.32);
+  pointer-events: none;
+  animation: fortify-ring 0.82s var(--ease-out) forwards;
+}
+
+/* 环从外围收拢到脚下，与光华同向 */
+@keyframes fortify-ring {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.55);
+  }
+  38% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9);
+  }
+}
+
+.cast-label.hex {
+  font-size: 18px;
+  color: #ffcaec;
+  text-shadow:
+    0 0 16px rgba(224, 57, 154, 0.85),
+    0 2px 6px #000;
+}
+
+.cast-label.calm {
+  font-size: 18px;
+  color: #d9e9ff;
+  text-shadow:
+    0 0 16px rgba(127, 179, 255, 0.8),
+    0 2px 6px #000;
+}
+
+/* 关掉产出预估后，意图徽章只读图形与引信 */
+.battle.no-numbers .intent-value {
+  display: none;
 }

@@ -44,6 +44,18 @@ const TIER_FRAMING = {
     'the silhouette is cropped by the top and side edges of the frame to imply mass beyond view',
 };
 
+/** 装备槽位形制。靠器物类别与持用方式拉开四个槽位，不靠颜色。 */
+const SLOT_FRAMING = {
+  weapon: 'a hand-held weapon shown alone at a slight angle, grip and pommel fully visible, ' +
+    'the striking end catching the strongest light, wear concentrated where a hand grips it',
+  armor: 'a wearable armor piece still holding the curve of the body it covers, ' +
+    'strap hardware and buckles visible, impact marks scattered across the outer face',
+  trinket: 'a small personal accessory no larger than a palm, hanging from its own chain or ' +
+    'clasp, fine detail concentrated in one small area with the rest of the object plain',
+  core: 'an uncased clockwork movement seen from the plate side, bridges jewels and mainspring ' +
+    'barrel exposed, the light originating from inside the mechanism itself',
+};
+
 /**
  * 可用尺寸为 1024x1024、1024x1536、1536x1024。
  * 接口会按比例回落到 848x1264 / 1024x1024 / 1264x848，版式按比例设计而非绝对像素。
@@ -86,15 +98,16 @@ export const PRESETS = {
       `${CHROMA_BG}. ${NEGATIVE}.`,
   },
 
-  /** 单件装备图标，绿幕拍摄后抠像并补成正方形。 */
+  /** 单件装备图标，绿幕拍摄后抠像并补成正方形。slot 决定形制。 */
   equipment: {
     size: '1024x1024',
     quality: 'high',
     output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 384 },
-    wrap: (subject) =>
+    wrap: (subject, opts = {}) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
-      'Single piece of wearable gear presented as a clean product shot, three-quarter view, ' +
-      'worn metal and leather with visible craftsmanship, faint arcane glow at the seams. ' +
+      `${SLOT_FRAMING[opts.slot ?? 'trinket']}. ` +
+      'Clean product shot of one object, three-quarter view, worn metal and leather with ' +
+      'visible craftsmanship, faint arcane glow at the seams. ' +
       `${CHROMA_BG}. ${NEGATIVE}.`,
   },
 

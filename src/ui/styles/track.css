@@ -248,6 +248,28 @@
   text-shadow: 0 2px 8px #000;
 }
 
+/* 不读数字时顶上来的类别图形 */
+.entry-intent-glyph {
+  display: none;
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.05;
+  color: #ffb4ac;
+  text-shadow: 0 2px 8px #000;
+}
+
+.entry-intent[data-kind='defend'] .entry-intent-glyph {
+  color: var(--block);
+}
+
+.entry-intent[data-kind='debuff'] .entry-intent-glyph {
+  color: var(--echo-soft);
+}
+
+.entry-intent[data-kind='buff'] .entry-intent-glyph {
+  color: var(--gold-400);
+}
+
 .entry-intent-label {
   font-size: 10.5px;
   line-height: 1.25;
@@ -364,6 +386,55 @@
   animation: intent-fly 0.24s cubic-bezier(0.42, 0, 0.9, 0.62) forwards;
   z-index: 6;
   pointer-events: none;
+}
+
+/* 只施加负面状态：细而淡的一道，不带冲击 */
+.entry.marking {
+  animation: intent-mark 0.34s ease-in forwards;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* 朝自己的意图向内收束，落回敌人身上 */
+.entry.converging {
+  animation: intent-converge 0.36s var(--ease-out) forwards;
+  z-index: 6;
+  pointer-events: none;
+}
+
+@keyframes intent-mark {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.55);
+    opacity: 0;
+    filter: brightness(1.5) hue-rotate(-52deg);
+  }
+}
+
+@keyframes intent-converge {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+    border-color: rgba(224, 72, 60, 0.6);
+    filter: brightness(1.5);
+  }
+  46% {
+    transform: translate(calc(var(--fly-x) * 0.34), calc(var(--fly-y) * 0.34)) scale(0.78);
+    opacity: 0.95;
+    border-color: rgba(127, 179, 255, 0.9);
+    box-shadow: 0 0 18px rgba(127, 179, 255, 0.7);
+    filter: brightness(2);
+  }
+  100% {
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.22);
+    opacity: 0;
+    border-color: rgba(127, 179, 255, 0.9);
+    filter: brightness(2.4);
+  }
 }
 
 @keyframes coef-rise {
@@ -762,4 +833,25 @@
 /* 有归属标签时数值下移让位 */
 .entry-intent {
   padding-top: 12px;
+}
+
+/* 钉住后敌方泳道常驻展开，不再依赖悬停 */
+.track.pinned .lane-enemy {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.track.pinned .enemy-hint .hint-dot.filled {
+  transform: scale(1.35);
+}
+
+/* 关掉产出预估：轨上只留图形与名字 */
+.battle.no-numbers .entry-preview,
+.battle.no-numbers .entry-intent-value {
+  display: none;
+}
+
+.battle.no-numbers .entry-intent-glyph {
+  display: block;
 }

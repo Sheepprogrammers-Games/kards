@@ -2,6 +2,7 @@
 
 import { C, coefOf, normalizeCoef } from './constants';
 import { drawCards, frontmostEnemy, isNullAt, resolveEntry } from './effects';
+import { equipmentEffects, type EquipHook } from './equipment';
 import { resolveIntent, scheduleIntents } from './intents';
 import { cardDef } from './registry';
 import { shuffle } from './rng';
@@ -32,8 +33,12 @@ import type {
   CombatAction,
   CombatState,
   EnemyState,
+  Initiative,
+  IntentDeckEntry,
   IntentOption,
   Lane,
+  StatusBag,
+  StatusGrant,
   TrackEntry,
 } from './types';
 
@@ -44,6 +49,12 @@ export interface EnemySetup {
   intentsPerTurn: number;
   intentScript: IntentOption[];
   phases?: EnemyPhase[];
+  /** 开局自带的状态层数。 */
+  startingStatuses?: StatusGrant[];
+  /** 谁先手，省略为玩家。 */
+  initiative?: Initiative;
+  /** 抽意图的牌库，省略时按 intentScript 加权抽取。 */
+  deck?: IntentDeckEntry[];
 }
 
 export interface CombatSetup {
@@ -52,8 +63,19 @@ export interface CombatSetup {
   maxHp: number;
   hp?: number;
   relics?: string[];
+  /** 本场战斗生效的装备 id。 */
+  equipment?: string[];
   mods?: CombatModifiers;
   enemies: EnemySetup[];
+}
+
+/** 把开局状态列表折叠成状态包，同一状态的多条累加。 */
+function startingStatusBag(grants?: StatusGrant[]): StatusBag {
+  const bag: StatusBag = {};
+  for (const grant of grants ?? []) {
+    bag[grant.status] = (bag[grant.status] ?? 0) + grant.amount;
+  }
+  return bag;
 }
 
 setPayoffResolver((state, entry) => {
@@ -82,6 +104,7 @@ export function createCombat(setup: CombatSetup): CombatState {
       handSize: C.HAND_SIZE + mods.handSize,
       relics: setup.relics ?? [],
     },
+    equipment: setup.equipment ?? [],
     enemies: setup.enemies.map((e, index) => ({
       id: `enemy${index}`,
       defId: e.defId,
@@ -90,12 +113,13 @@ export function createCombat(setup: CombatSetup): CombatState {
       hp: e.maxHp,
       maxHp: e.maxHp,
       block: 0,
-      statuses: {},
+      statuses: startingStatusBag(e.startingStatuses),
       alive: true,
       charge: 0,
       intentsPerTurn: e.intentsPerTurn,
       intentScript: e.intentScript,
       phases: e.phases ? e.phases.slice().sort((a, b) => b.atHpRatio - a.atHpRatio) : undefined,
+      intentPool: e.deck,
     })),
     track: {
       player: new Array<TrackEntry | null>(C.TRACK_SLOTS).fill(null),
@@ -125,6 +149,9 @@ export function createCombat(setup: CombatSetup): CombatState {
   if (mods.startingStrength !== 0) state.player.statuses.strength = mods.startingStrength;
 
   scheduleIntents(state);
+  if (setup.enemies.some((e) => e.initiative === 'enemy')) enemyOpening(state);
+  if (state.result !== 'ongoing') return state;
+
   startPlayerTurn(state);
 
   // 起始护甲在首个回合的清零之后给出，否则会被立刻抹掉
@@ -133,6 +160,21 @@ export function createCombat(setup: CombatSetup): CombatState {
     state.events.push({ type: 'block', targetId: 'player', amount: mods.startingBlock });
   }
   return state;
+}
+
+/**
+ * 敌方先手的开场。回合计数尚未起步，只把已挂上的意图推进一轮，
+ * 再为玩家的第一个回合重新调度。
+ */
+function enemyOpening(state: CombatState): void {
+  state.phase = 'enemyTurn';
+  state.events.push({ type: 'opening', initiative: 'enemy' });
+
+  advanceTrack(state, (entry) => resolveIntent(state, entry));
+  settleDeaths(state);
+  if (state.result !== 'ongoing') return;
+
+  scheduleIntents(state);
 }
 
 /** 唯一对外入口。入参不被修改。 */
@@ -298,19 +340,13 @@ function playCard(
   settleDeaths(state);
 }
 
-/** 引牌与扰牌自身的效果瞬发一次，不占用轨位。 */
-function resolveInstant(
-  state: CombatState,
-  def: CardDef,
-  targetIndex?: number,
-  upgraded = false,
-): void {
-  if (!def.effects.length) return;
-  const entry: TrackEntry = {
+/** 一次性结算用的临时条目，不占用轨位也不回响。 */
+function instantEntry(state: CombatState, cardId: string, effects: Effect[]): TrackEntry {
+  return {
     uid: state.uidCounter++,
-    cardId: def.id,
+    cardId,
     owner: 'player',
-    effects: effectsOf(def, upgraded),
+    effects,
     echoBudget: 0,
     resolvedHere: true,
     rewindCount: 0,
@@ -321,7 +357,28 @@ function resolveInstant(
     frozen: false,
     snapshot: snapshotOf(state),
   };
+}
+
+/** 引牌与扰牌自身的效果瞬发一次，不占用轨位。 */
+function resolveInstant(
+  state: CombatState,
+  def: CardDef,
+  targetIndex?: number,
+  upgraded = false,
+): void {
+  if (!def.effects.length) return;
+  const entry = instantEntry(state, def.id, effectsOf(def, upgraded));
   resolveEntry(state, entry, 1, { isPlay: true, targetIndex });
+}
+
+/** 按挂钩结算已装备的效果，逐件产生事件供界面演出。 */
+function triggerEquipment(state: CombatState, hook: EquipHook): void {
+  if (!state.equipment.length) return;
+  for (const trigger of equipmentEffects(state.equipment, hook)) {
+    if (!trigger.effects.length) continue;
+    state.events.push({ type: 'equip', slot: trigger.slot, equipId: trigger.equipId });
+    resolveEntry(state, instantEntry(state, trigger.equipId, trigger.effects), 1, { isPlay: true });
+  }
 }
 
 /** 引爆时的效率，遗物可以上调，上限之内。 */
@@ -553,6 +610,9 @@ function startPlayerTurn(state: CombatState): void {
 
   state.weavePlays = 0;
   state.igniteCountThisTurn = 0;
+
+  triggerEquipment(state, 'onTurnStart');
+  settleDeaths(state);
 }
 
 function endTurn(state: CombatState): void {
@@ -576,6 +636,10 @@ function endTurn(state: CombatState): void {
   for (const enemy of state.enemies) enemy.block = 0;
 
   advanceTrack(state, (entry) => resolveIntent(state, entry));
+  settleDeaths(state);
+  if (state.result !== 'ongoing') return;
+
+  triggerEquipment(state, 'onTurnEnd');
   settleDeaths(state);
   if (state.result !== 'ongoing') return;
 

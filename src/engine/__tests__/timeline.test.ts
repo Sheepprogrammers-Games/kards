@@ -1,7 +1,14 @@
-import { describe, expect, it, beforeAll } from 'vitest';
+import { describe, expect, it, afterAll, beforeAll } from 'vitest';
 import { loadContent, STARTER_DECK } from '@content/index';
+import { INTENTS } from '@content/enemies';
 import { C, coefOf } from '../constants';
-import { createCombat, ignitePayload, reduce, type CombatSetup } from '../combat';
+import {
+  createCombat,
+  ignitePayload,
+  reduce,
+  type CombatSetup,
+  type EnemySetup,
+} from '../combat';
 import {
   countEntries,
   entriesOf,
@@ -12,8 +19,9 @@ import {
   setEntry,
   slotOfEntry,
 } from '../track';
-import { resolveIntent } from '../intents';
-import { NO_MODIFIERS, type CombatState } from '../types';
+import { intentAim, resolveIntent } from '../intents';
+import { allEquipment, setEquipmentRegistry } from '../equipment';
+import { NO_MODIFIERS, type CombatState, type Effect, type EquipmentDef } from '../types';
 import { dealDamage } from '../effects';
 import { generateMap } from '../map';
 
@@ -719,5 +727,252 @@ describe('多格延后', () => {
     state = reduce(state, { type: 'playCard', uid, slot: target.slot, laneTarget: 'enemy' });
     const now = slotOfEntry(state, 'enemy', target.entry.uid);
     expect(now === null || now < target.slot).toBe(true);
+  });
+});
+
+describe('先手与开局状态', () => {
+  function opener(overrides: Partial<EnemySetup> = {}) {
+    return setup({
+      enemies: [
+        {
+          defId: 'mote-gnaw',
+          name: '时蚀虫',
+          maxHp: 200,
+          intentsPerTurn: 1,
+          intentScript: [{ intentId: 'gnaw', preferredSlot: 4, weight: 1 }],
+          ...overrides,
+        },
+      ],
+    });
+  }
+
+  it('敌方先手时玩家开局即挨一轮', () => {
+    const state = opener({ initiative: 'enemy' });
+    expect(state.player.hp).toBeLessThan(state.player.maxHp);
+  });
+
+  it('玩家先手时开局不掉血', () => {
+    const state = opener();
+    expect(state.player.hp).toBe(state.player.maxHp);
+  });
+
+  it('先手的一轮不占用回合计数，事件排在首回合之前', () => {
+    const state = opener({ initiative: 'enemy' });
+    expect(state.turn).toBe(1);
+    expect(state.phase).toBe('playerTurn');
+
+    const opening = state.events.findIndex((e) => e.type === 'opening');
+    const turnStart = state.events.findIndex((e) => e.type === 'turnStart');
+    expect(opening).toBeGreaterThanOrEqual(0);
+    expect(turnStart).toBeGreaterThan(opening);
+  });
+
+  it('先手的一轮结束后仍为玩家挂上新的意图', () => {
+    const state = opener({ initiative: 'enemy' });
+    expect(countEntries(state, 'enemy')).toBe(1);
+  });
+
+  it('开局状态写进敌人状态包，同名层数累加', () => {
+    const state = opener({
+      startingStatuses: [
+        { status: 'thorns', amount: 3 },
+        { status: 'strength', amount: 2 },
+        { status: 'thorns', amount: 1 },
+      ],
+    });
+    const enemy = state.enemies[0]!;
+    expect(enemy.statuses.thorns).toBe(4);
+    expect(enemy.statuses.strength).toBe(2);
+  });
+
+  it('没有声明开局状态的敌人状态包为空', () => {
+    expect(opener().enemies[0]!.statuses).toEqual({});
+  });
+});
+
+describe('意图牌库', () => {
+  function decked(deck: { intentId: string; copies: number }[], intentsPerTurn = 1) {
+    return setup({
+      enemies: [
+        {
+          defId: 'mote-gnaw',
+          name: '时蚀虫',
+          maxHp: 400,
+          intentsPerTurn,
+          intentScript: [{ intentId: 'gnaw', preferredSlot: 4, weight: 1 }],
+          deck,
+        },
+      ],
+    });
+  }
+
+  it('有牌库时不再走脚本的加权抽取', () => {
+    const state = decked([{ intentId: 'sap', copies: 3 }]);
+    expect(entriesOf(state, 'enemy').map((e) => e.entry.cardId)).toEqual(['sap']);
+  });
+
+  it('牌库按份数发牌，抽完一轮才重洗', () => {
+    let state = decked([{ intentId: 'sap', copies: 2 }]);
+    expect(state.enemies[0]!.intentDeck).toHaveLength(1);
+
+    state = reduce(state, { type: 'endTurn' });
+    expect(state.enemies[0]!.intentDeck).toHaveLength(0);
+    expect(state.events.some((e) => e.type === 'intentReshuffle')).toBe(false);
+
+    state = reduce(state, { type: 'endTurn' });
+    expect(state.events.some((e) => e.type === 'intentReshuffle')).toBe(true);
+    expect(state.enemies[0]!.intentDeck).toHaveLength(1);
+  });
+
+  it('一整轮抽取覆盖牌库的全部份数', () => {
+    const state = decked(
+      [
+        { intentId: 'sap', copies: 1 },
+        { intentId: 'swarm', copies: 1 },
+      ],
+      2,
+    );
+    const drawn = entriesOf(state, 'enemy').map((e) => e.entry.cardId);
+    expect(drawn.slice().sort()).toEqual(['sap', 'swarm']);
+    expect(state.enemies[0]!.intentDeck).toHaveLength(0);
+  });
+
+  it('相同种子下牌库顺序一致', () => {
+    const order = () => decked([{ intentId: 'sap', copies: 4 }]).enemies[0]!.intentDeck;
+    expect(order()).toEqual(order());
+  });
+});
+
+describe('意图格位', () => {
+  it('挂载格位取自数据声明而非固定末位', () => {
+    const state = setup({
+      enemies: [
+        {
+          defId: 'mote-gnaw',
+          name: '时蚀虫',
+          maxHp: 200,
+          intentsPerTurn: 1,
+          intentScript: [{ intentId: 'gnaw', preferredSlot: 2, weight: 1 }],
+        },
+        {
+          defId: 'null-leech',
+          name: '空蛭',
+          maxHp: 200,
+          intentsPerTurn: 1,
+          intentScript: [{ intentId: 'sap', preferredSlot: 4, weight: 1 }],
+        },
+      ],
+    });
+
+    const slots = new Map(entriesOf(state, 'enemy').map((e) => [e.entry.cardId, e.slot]));
+    expect(slots.get('gnaw')).toBe(2);
+    expect(slots.get('sap')).toBe(4);
+  });
+});
+
+describe('意图指向', () => {
+  it('声明了 aim 的意图按声明取值', () => {
+    expect(intentAim({ id: 'a', name: '甲', kind: 'attack', aim: 'self', effects: [] })).toBe('self');
+    expect(
+      intentAim({
+        id: 'b',
+        name: '乙',
+        kind: 'defend',
+        aim: 'player',
+        effects: [{ kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' }],
+      }),
+    ).toBe('player');
+  });
+
+  it('省略 aim 时含伤害或负面状态的朝玩家，只有护甲回复的朝自己', () => {
+    const derive = (effects: Effect[]) =>
+      intentAim({ id: 'x', name: '丙', kind: 'attack', effects });
+
+    expect(derive([{ kind: 'damage', amount: 5, scaleMode: 'SCALAR' }])).toBe('player');
+    expect(
+      derive([{ kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak' }]),
+    ).toBe('player');
+    expect(derive([{ kind: 'block', amount: 6, scaleMode: 'SCALAR', target: 'self' }])).toBe('self');
+    expect(
+      derive([{ kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'strength' }]),
+    ).toBe('self');
+    expect(derive([{ kind: 'heal', amount: 4, scaleMode: 'SCALAR', target: 'self' }])).toBe('self');
+    expect(
+      derive([
+        { kind: 'block', amount: 6, scaleMode: 'SCALAR', target: 'self' },
+        { kind: 'damage', amount: 3, scaleMode: 'SCALAR' },
+      ]),
+    ).toBe('player');
+  });
+
+  it('内容里的每条意图都能定出指向', () => {
+    for (const def of INTENTS) {
+      expect(['player', 'self']).toContain(intentAim(def));
+    }
+  });
+});
+
+describe('装备触发', () => {
+  const FIXTURES: EquipmentDef[] = [
+    {
+      id: 'test-edge',
+      name: '试炼刃',
+      slot: 'weapon',
+      rarity: 'common',
+      text: '回合开始获得 1 点力量。',
+      art: 'test-edge',
+      onTurnStart: [{ kind: 'selfStatus', amount: 1, scaleMode: 'ONCE', status: 'strength' }],
+    },
+    {
+      id: 'test-plate',
+      name: '试炼甲',
+      slot: 'armor',
+      rarity: 'common',
+      text: '敌方回合结束获得 2 层护盾。',
+      art: 'test-plate',
+      onTurnEnd: [{ kind: 'selfStatus', amount: 2, scaleMode: 'ONCE', status: 'ward' }],
+    },
+  ];
+
+  let restore: EquipmentDef[] = [];
+  beforeAll(() => {
+    restore = allEquipment();
+    setEquipmentRegistry([...restore, ...FIXTURES]);
+  });
+  afterAll(() => setEquipmentRegistry(restore));
+
+  it('未装备任何东西时不产生装备事件', () => {
+    const state = setup();
+    expect(state.events.some((e) => e.type === 'equip')).toBe(false);
+  });
+
+  it('玩家回合开始结算 onTurnStart', () => {
+    const state = setup({ equipment: ['test-edge'] });
+    expect(state.events.some((e) => e.type === 'equip' && e.equipId === 'test-edge')).toBe(true);
+    expect(state.player.statuses.strength).toBe(1);
+  });
+
+  it('onTurnStart 每个回合各结算一次', () => {
+    let state = setup({ equipment: ['test-edge'] });
+    state = reduce(state, { type: 'endTurn' });
+    expect(state.player.statuses.strength).toBe(2);
+  });
+
+  it('敌方回合结束结算 onTurnEnd，排在下一回合开始之前', () => {
+    let state = setup({ equipment: ['test-plate'] });
+    expect(state.events.some((e) => e.type === 'equip')).toBe(false);
+
+    state = reduce(state, { type: 'endTurn' });
+    const equipAt = state.events.findIndex((e) => e.type === 'equip' && e.equipId === 'test-plate');
+    const turnStart = state.events.findIndex((e) => e.type === 'turnStart');
+    expect(equipAt).toBeGreaterThanOrEqual(0);
+    expect(equipAt).toBeLessThan(turnStart);
+    expect(state.player.statuses.ward).toBe(2);
+  });
+
+  it('装备事件带上槽位供界面演出', () => {
+    const state = setup({ equipment: ['test-edge'] });
+    const event = state.events.find((e) => e.type === 'equip');
+    expect(event?.slot).toBe('weapon');
   });
 });

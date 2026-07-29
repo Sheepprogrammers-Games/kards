@@ -1,6 +1,13 @@
 /** 敌人与意图定义。意图的引信长度由 preferredSlot 声明，不在流程里做隐式调整。 */
 
-import type { EnemyPhase, IntentDef, IntentOption } from '@engine/types';
+import type {
+  EnemyPhase,
+  Initiative,
+  IntentDeckEntry,
+  IntentDef,
+  IntentOption,
+  StatusGrant,
+} from '@engine/types';
 
 export interface EnemyDef {
   id: string;
@@ -13,6 +20,12 @@ export interface EnemyDef {
   art: string;
   /** 生命跌破阈值后换一套打法。 */
   phases?: EnemyPhase[];
+  /** 开局自带的状态层数。 */
+  startingStatuses?: StatusGrant[];
+  /** 谁先手。省略为 player。 */
+  initiative?: Initiative;
+  /** 抽意图的牌库。省略时沿用 intentScript 的加权抽取。 */
+  deck?: IntentDeckEntry[];
 }
 
 export const INTENTS: IntentDef[] = [
@@ -20,12 +33,14 @@ export const INTENTS: IntentDef[] = [
     id: 'gnaw',
     name: '啃噬',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 7, scaleMode: 'SCALAR' }],
   },
   {
     id: 'sap',
     name: '抽丝',
     kind: 'debuff',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 4, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 1, scaleMode: 'SCALAR', status: 'weak' },
@@ -35,24 +50,29 @@ export const INTENTS: IntentDef[] = [
     id: 'swarm',
     name: '蚀群',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 3, hits: 3, scaleMode: 'SCALAR' }],
   },
   {
     id: 'harden',
     name: '固壳',
     kind: 'defend',
+    aim: 'self',
+    art: 'harden',
     effects: [{ kind: 'block', amount: 8, scaleMode: 'SCALAR' }],
   },
   {
     id: 'dust-cough',
     name: '扬尘',
     kind: 'debuff',
+    aim: 'player',
     effects: [{ kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'vulnerable' }],
   },
   {
     id: 'discord',
     name: '失谐',
     kind: 'attack',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 9, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 1, scaleMode: 'SCALAR', status: 'weak' },
@@ -62,18 +82,23 @@ export const INTENTS: IntentDef[] = [
     id: 'pounce',
     name: '扑击',
     kind: 'attack',
+    aim: 'player',
+    art: 'pounce',
     effects: [{ kind: 'damage', amount: 12, scaleMode: 'SCALAR' }],
   },
   {
     id: 'drift',
     name: '游移',
     kind: 'buff',
+    aim: 'self',
+    art: 'drift',
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'strength' }],
   },
   {
     id: 'burrow',
     name: '掘沙',
     kind: 'attack',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 6, scaleMode: 'SCALAR' },
       { kind: 'block', amount: 6, scaleMode: 'SCALAR' },
@@ -83,12 +108,16 @@ export const INTENTS: IntentDef[] = [
     id: 'verdict',
     name: '裁定',
     kind: 'attack',
+    aim: 'player',
+    art: 'verdict',
     effects: [{ kind: 'damage', amount: 16, scaleMode: 'SCALAR' }],
   },
   {
     id: 'seal',
     name: '封印',
     kind: 'debuff',
+    aim: 'player',
+    art: 'seal',
     effects: [
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak' },
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'vulnerable' },
@@ -98,6 +127,8 @@ export const INTENTS: IntentDef[] = [
     id: 'wind-back',
     name: '倒拨',
     kind: 'buff',
+    aim: 'self',
+    art: 'wind-back',
     effects: [
       { kind: 'heal', amount: 12, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'strength' },
@@ -107,12 +138,15 @@ export const INTENTS: IntentDef[] = [
     id: 'shatterpoint',
     name: '碎点',
     kind: 'attack',
+    aim: 'player',
+    art: 'shatterpoint',
     effects: [{ kind: 'damage', amount: 5, hits: 4, scaleMode: 'SCALAR' }],
   },
   {
     id: 'toll',
     name: '鸣钟',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 22, scaleMode: 'SCALAR' }],
     unstealable: true,
     undelayable: true,
@@ -121,6 +155,8 @@ export const INTENTS: IntentDef[] = [
     id: 'reversal',
     name: '逆转',
     kind: 'attack',
+    aim: 'player',
+    art: 'reversal',
     effects: [
       { kind: 'damage', amount: 14, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 3, scaleMode: 'SCALAR', status: 'vulnerable' },
@@ -131,6 +167,8 @@ export const INTENTS: IntentDef[] = [
     id: 'unmake',
     name: '拆解',
     kind: 'attack',
+    aim: 'player',
+    art: 'unmake',
     effects: [{ kind: 'damage', amount: 9, hits: 3, scaleMode: 'SCALAR' }],
     unstealable: true,
     undelayable: true,
@@ -139,6 +177,8 @@ export const INTENTS: IntentDef[] = [
     id: 'first-thread',
     name: '初丝',
     kind: 'debuff',
+    aim: 'player',
+    art: 'first-thread',
     effects: [
       { kind: 'damage', amount: 8, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 3, scaleMode: 'SCALAR', status: 'poison' },
@@ -148,12 +188,14 @@ export const INTENTS: IntentDef[] = [
     id: 'chaff',
     name: '碎屑',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 4, scaleMode: 'SCALAR' }],
   },
   {
     id: 'flare-burst',
     name: '曜爆',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 15, scaleMode: 'SCALAR' }],
     undelayable: true,
   },
@@ -161,6 +203,7 @@ export const INTENTS: IntentDef[] = [
     id: 'drain-hour',
     name: '汲时',
     kind: 'debuff',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 3, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak' },
@@ -171,12 +214,14 @@ export const INTENTS: IntentDef[] = [
     id: 'slow-swing',
     name: '缓摆',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 20, scaleMode: 'SCALAR' }],
   },
   {
     id: 'slag-guard',
     name: '熔壁',
     kind: 'defend',
+    aim: 'self',
     effects: [
       { kind: 'block', amount: 14, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'strength' },
@@ -186,12 +231,15 @@ export const INTENTS: IntentDef[] = [
     id: 'anvil-fall',
     name: '砧落',
     kind: 'attack',
+    aim: 'player',
+    art: 'anvil-fall',
     effects: [{ kind: 'damage', amount: 17, scaleMode: 'SCALAR' }],
   },
   {
     id: 'bound-blow',
     name: '缚击',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 6, hits: 3, scaleMode: 'SCALAR' }],
     unstealable: true,
   },
@@ -199,18 +247,21 @@ export const INTENTS: IntentDef[] = [
     id: 'wind-deep',
     name: '深绞',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 13, scaleMode: 'SCALAR' }],
   },
   {
     id: 'coil-tight',
     name: '紧簧',
     kind: 'buff',
+    aim: 'self',
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'strength' }],
   },
   {
     id: 'plumb-drop',
     name: '垂锤',
     kind: 'attack',
+    aim: 'player',
     effects: [{ kind: 'damage', amount: 18, scaleMode: 'SCALAR' }],
     unstealable: true,
     undelayable: true,
@@ -219,6 +270,7 @@ export const INTENTS: IntentDef[] = [
     id: 'graft-noise',
     name: '嫁接杂响',
     kind: 'debuff',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 5, scaleMode: 'SCALAR' },
       { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'quiet-movement', pile: 'discard' },
@@ -228,6 +280,7 @@ export const INTENTS: IntentDef[] = [
     id: 'arc-sweep',
     name: '弧扫',
     kind: 'attack',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 5, hits: 2, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'vulnerable' },
@@ -238,6 +291,7 @@ export const INTENTS: IntentDef[] = [
     id: 'bristle-up',
     name: '竖棘',
     kind: 'defend',
+    aim: 'self',
     effects: [
       { kind: 'block', amount: 6, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 4, scaleMode: 'SCALAR', status: 'thorns' },
@@ -248,6 +302,7 @@ export const INTENTS: IntentDef[] = [
     id: 'carapace',
     name: '甲壳',
     kind: 'defend',
+    aim: 'self',
     effects: [
       { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'ward' },
       { kind: 'block', amount: 4, scaleMode: 'SCALAR' },
@@ -257,6 +312,7 @@ export const INTENTS: IntentDef[] = [
     id: 'spite-lash',
     name: '反鞭',
     kind: 'attack',
+    aim: 'player',
     effects: [
       { kind: 'damage', amount: 10, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'thorns' },
@@ -266,6 +322,8 @@ export const INTENTS: IntentDef[] = [
     id: 'mirror-shell',
     name: '镜壳',
     kind: 'buff',
+    aim: 'self',
+    art: 'mirror-shell',
     effects: [
       { kind: 'selfStatus', amount: 4, scaleMode: 'SCALAR', status: 'ward' },
       { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'thorns' },
@@ -277,6 +335,7 @@ export const INTENTS: IntentDef[] = [
     id: 'turnback-veil',
     name: '折返幕',
     kind: 'defend',
+    aim: 'self',
     effects: [
       { kind: 'block', amount: 6, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect' },
@@ -286,6 +345,8 @@ export const INTENTS: IntentDef[] = [
     id: 'mirror-verdict',
     name: '镜裁',
     kind: 'attack',
+    aim: 'player',
+    art: 'mirror-verdict',
     effects: [
       { kind: 'damage', amount: 8, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect' },
@@ -296,11 +357,136 @@ export const INTENTS: IntentDef[] = [
     id: 'reversion-halo',
     name: '回照环',
     kind: 'buff',
+    aim: 'self',
+    art: 'reversion-halo',
     effects: [
       { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'reflect' },
       { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'strength' },
     ],
     unstealable: true,
+  },
+  {
+    id: 'scuttle-bite',
+    name: '疾咬',
+    kind: 'attack',
+    aim: 'player',
+    art: 'scuttle-bite',
+    effects: [{ kind: 'damage', amount: 5, scaleMode: 'SCALAR' }],
+  },
+  {
+    id: 'tempo-lash',
+    name: '拍鞭',
+    kind: 'attack',
+    aim: 'player',
+    art: 'tempo-lash',
+    effects: [
+      { kind: 'damage', amount: 4, hits: 2, scaleMode: 'SCALAR' },
+      { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'strength' },
+    ],
+  },
+  {
+    id: 'sunder-note',
+    name: '裂音击',
+    kind: 'attack',
+    aim: 'player',
+    effects: [{ kind: 'damage', amount: 6, hits: 2, scaleMode: 'SCALAR' }],
+  },
+  {
+    id: 'ratchet-slam',
+    name: '棘轮砸',
+    kind: 'attack',
+    aim: 'player',
+    art: 'ratchet-slam',
+    effects: [{ kind: 'damage', amount: 11, scaleMode: 'SCALAR' }],
+  },
+  {
+    id: 'ember-spit',
+    name: '燃吐',
+    kind: 'attack',
+    aim: 'player',
+    effects: [
+      { kind: 'damage', amount: 5, scaleMode: 'SCALAR' },
+      { kind: 'applyStatus', amount: 3, scaleMode: 'SCALAR', status: 'burn' },
+    ],
+  },
+  {
+    id: 'oath-brand',
+    name: '誓印',
+    kind: 'debuff',
+    aim: 'player',
+    art: 'oath-brand',
+    effects: [
+      { kind: 'damage', amount: 6, scaleMode: 'SCALAR' },
+      { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'vulnerable' },
+    ],
+  },
+  {
+    id: 'hour-siphon',
+    name: '汲刻',
+    kind: 'attack',
+    aim: 'player',
+    effects: [{ kind: 'damage', amount: 9, scaleMode: 'SCALAR', lifesteal: 0.5 }],
+  },
+  {
+    id: 'hollow-choir',
+    name: '空唱',
+    kind: 'debuff',
+    aim: 'player',
+    effects: [
+      { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak' },
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'patient-weft', pile: 'discard' },
+    ],
+  },
+  {
+    id: 'weave-theft',
+    name: '夺织',
+    kind: 'debuff',
+    aim: 'player',
+    effects: [
+      { kind: 'damage', amount: 7, scaleMode: 'SCALAR' },
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'eternal-warp', pile: 'discard' },
+    ],
+  },
+  {
+    id: 'long-toll',
+    name: '长鸣',
+    kind: 'attack',
+    aim: 'player',
+    effects: [{ kind: 'damage', amount: 13, hits: 2, scaleMode: 'SCALAR' }],
+    unstealable: true,
+    undelayable: true,
+  },
+  {
+    id: 'brace-cog',
+    name: '抵齿',
+    kind: 'defend',
+    aim: 'self',
+    art: 'brace-cog',
+    effects: [
+      { kind: 'block', amount: 7, scaleMode: 'SCALAR' },
+      { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'strength' },
+    ],
+  },
+  {
+    id: 'quench-plate',
+    name: '淬甲',
+    kind: 'defend',
+    aim: 'self',
+    art: 'quench-plate',
+    effects: [
+      { kind: 'block', amount: 10, scaleMode: 'SCALAR' },
+      { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'ward' },
+    ],
+  },
+  {
+    id: 'gilded-recoil',
+    name: '镀金回挡',
+    kind: 'defend',
+    aim: 'self',
+    effects: [
+      { kind: 'block', amount: 8, scaleMode: 'SCALAR' },
+      { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect' },
+    ],
   },
 ];
 
@@ -314,7 +500,7 @@ export const ENEMIES: EnemyDef[] = [
     intentsPerTurn: 1,
     art: 'mote-gnaw',
     intentScript: [
-      { intentId: 'gnaw', preferredSlot: 4, weight: 3 },
+      { intentId: 'gnaw', preferredSlot: 3, weight: 3 },
       { intentId: 'sap', preferredSlot: 4, weight: 2 },
     ],
   },
@@ -327,8 +513,21 @@ export const ENEMIES: EnemyDef[] = [
     intentsPerTurn: 1,
     art: 'tick-mite',
     intentScript: [
-      { intentId: 'swarm', preferredSlot: 4, weight: 3 },
+      { intentId: 'swarm', preferredSlot: 2, weight: 3 },
       { intentId: 'harden', preferredSlot: 4, weight: 1 },
+    ],
+  },
+  {
+    id: 'second-wasp',
+    name: '秒蜂',
+    tier: 'minion',
+    act: [1],
+    maxHp: [16, 20],
+    intentsPerTurn: 1,
+    art: 'second-wasp',
+    intentScript: [
+      { intentId: 'scuttle-bite', preferredSlot: 2, weight: 4 },
+      { intentId: 'tempo-lash', preferredSlot: 3, weight: 2 },
     ],
   },
   {
@@ -341,7 +540,7 @@ export const ENEMIES: EnemyDef[] = [
     art: 'dust-acolyte',
     intentScript: [
       { intentId: 'dust-cough', preferredSlot: 4, weight: 2 },
-      { intentId: 'gnaw', preferredSlot: 4, weight: 3 },
+      { intentId: 'gnaw', preferredSlot: 3, weight: 3 },
     ],
   },
   {
@@ -353,8 +552,24 @@ export const ENEMIES: EnemyDef[] = [
     intentsPerTurn: 1,
     art: 'cracked-chorister',
     intentScript: [
-      { intentId: 'discord', preferredSlot: 4, weight: 3 },
-      { intentId: 'harden', preferredSlot: 3, weight: 1 },
+      { intentId: 'discord', preferredSlot: 3, weight: 3 },
+      { intentId: 'harden', preferredSlot: 2, weight: 1 },
+      { intentId: 'sunder-note', preferredSlot: 4, weight: 2 },
+    ],
+  },
+  {
+    id: 'rust-pilgrim',
+    name: '锈朝圣者',
+    tier: 'minion',
+    act: [1, 2],
+    maxHp: [30, 36],
+    intentsPerTurn: 1,
+    art: 'rust-pilgrim',
+    startingStatuses: [{ status: 'ward', amount: 3 }],
+    intentScript: [
+      { intentId: 'ratchet-slam', preferredSlot: 3, weight: 3 },
+      { intentId: 'carapace', preferredSlot: 4, weight: 2 },
+      { intentId: 'brace-cog', preferredSlot: 3, weight: 1 },
     ],
   },
   {
@@ -365,8 +580,9 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [36, 44],
     intentsPerTurn: 1,
     art: 'minute-hound',
+    startingStatuses: [{ status: 'strength', amount: 2 }],
     intentScript: [
-      { intentId: 'pounce', preferredSlot: 3, weight: 3 },
+      { intentId: 'pounce', preferredSlot: 2, weight: 3 },
       { intentId: 'drift', preferredSlot: 4, weight: 1 },
       { intentId: 'spite-lash', preferredSlot: 3, weight: 2 },
     ],
@@ -380,9 +596,9 @@ export const ENEMIES: EnemyDef[] = [
     intentsPerTurn: 1,
     art: 'pendulum-wisp',
     intentScript: [
-      { intentId: 'swarm', preferredSlot: 4, weight: 2 },
+      { intentId: 'swarm', preferredSlot: 3, weight: 2 },
       { intentId: 'seal', preferredSlot: 4, weight: 2 },
-      { intentId: 'bristle-up', preferredSlot: 4, weight: 2 },
+      { intentId: 'bristle-up', preferredSlot: 2, weight: 2 },
       { intentId: 'turnback-veil', preferredSlot: 4, weight: 2 },
     ],
   },
@@ -394,8 +610,9 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [42, 50],
     intentsPerTurn: 1,
     art: 'sand-crawler',
+    startingStatuses: [{ status: 'ward', amount: 2 }],
     intentScript: [
-      { intentId: 'burrow', preferredSlot: 4, weight: 3 },
+      { intentId: 'burrow', preferredSlot: 3, weight: 3 },
       { intentId: 'drift', preferredSlot: 4, weight: 1 },
       { intentId: 'bristle-up', preferredSlot: 4, weight: 2 },
     ],
@@ -410,8 +627,8 @@ export const ENEMIES: EnemyDef[] = [
     intentsPerTurn: 2,
     art: 'warp-thief',
     intentScript: [
-      { intentId: 'chaff', preferredSlot: 4, weight: 4 },
-      { intentId: 'harden', preferredSlot: 4, weight: 1 },
+      { intentId: 'chaff', preferredSlot: 2, weight: 4 },
+      { intentId: 'harden', preferredSlot: 3, weight: 1 },
       { intentId: 'carapace', preferredSlot: 4, weight: 2 },
     ],
   },
@@ -425,6 +642,20 @@ export const ENEMIES: EnemyDef[] = [
     art: 'flare-moth',
     intentScript: [
       { intentId: 'flare-burst', preferredSlot: 4, weight: 4 },
+      { intentId: 'dust-cough', preferredSlot: 3, weight: 1 },
+    ],
+  },
+  {
+    id: 'ember-tender',
+    name: '燃炉侍',
+    tier: 'minion',
+    act: [2],
+    maxHp: [32, 38],
+    intentsPerTurn: 1,
+    art: 'ember-tender',
+    intentScript: [
+      { intentId: 'ember-spit', preferredSlot: 3, weight: 3 },
+      { intentId: 'quench-plate', preferredSlot: 4, weight: 2 },
       { intentId: 'dust-cough', preferredSlot: 4, weight: 1 },
     ],
   },
@@ -438,8 +669,23 @@ export const ENEMIES: EnemyDef[] = [
     art: 'null-leech',
     intentScript: [
       { intentId: 'drain-hour', preferredSlot: 4, weight: 3 },
-      { intentId: 'sap', preferredSlot: 4, weight: 2 },
+      { intentId: 'sap', preferredSlot: 3, weight: 2 },
       { intentId: 'graft-noise', preferredSlot: 4, weight: 2 },
+      { intentId: 'hour-siphon', preferredSlot: 3, weight: 2 },
+    ],
+  },
+  {
+    id: 'hollow-cantor',
+    name: '空腔领唱',
+    tier: 'minion',
+    act: [2, 3],
+    maxHp: [38, 46],
+    intentsPerTurn: 1,
+    art: 'hollow-cantor',
+    intentScript: [
+      { intentId: 'sunder-note', preferredSlot: 3, weight: 3 },
+      { intentId: 'hollow-choir', preferredSlot: 4, weight: 2 },
+      { intentId: 'weave-theft', preferredSlot: 4, weight: 2 },
     ],
   },
   {
@@ -457,6 +703,40 @@ export const ENEMIES: EnemyDef[] = [
     ],
   },
   {
+    // 开局自带转嫁层，直接伤害在打掉层数前会被折返一半
+    id: 'mirror-fry',
+    name: '镜苗',
+    tier: 'minion',
+    act: [3],
+    maxHp: [28, 34],
+    intentsPerTurn: 2,
+    art: 'mirror-fry',
+    startingStatuses: [{ status: 'reflect', amount: 2 }],
+    intentScript: [
+      { intentId: 'chaff', preferredSlot: 2, weight: 3 },
+      { intentId: 'mirror-verdict', preferredSlot: 3, weight: 2 },
+      { intentId: 'gilded-recoil', preferredSlot: 4, weight: 2 },
+    ],
+  },
+  {
+    id: 'grave-winder',
+    name: '冢绞者',
+    tier: 'minion',
+    act: [3],
+    maxHp: [50, 58],
+    intentsPerTurn: 1,
+    art: 'grave-winder',
+    startingStatuses: [
+      { status: 'ward', amount: 3 },
+      { status: 'strength', amount: 1 },
+    ],
+    intentScript: [
+      { intentId: 'ratchet-slam', preferredSlot: 3, weight: 3 },
+      { intentId: 'wind-deep', preferredSlot: 4, weight: 2 },
+      { intentId: 'quench-plate', preferredSlot: 4, weight: 2 },
+    ],
+  },
+  {
     id: 'brass-inquisitor',
     name: '黄铜审判官',
     tier: 'elite',
@@ -464,10 +744,36 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [72, 84],
     intentsPerTurn: 1,
     art: 'brass-inquisitor',
+    startingStatuses: [{ status: 'ward', amount: 2 }],
     intentScript: [
       { intentId: 'verdict', preferredSlot: 3, weight: 3 },
       { intentId: 'seal', preferredSlot: 4, weight: 2 },
       { intentId: 'harden', preferredSlot: 4, weight: 1 },
+      { intentId: 'oath-brand', preferredSlot: 2, weight: 2 },
+    ],
+    // 立案、定罪、行刑轮转一遍才回到起点
+    deck: [
+      { intentId: 'oath-brand', copies: 2 },
+      { intentId: 'verdict', copies: 2 },
+      { intentId: 'seal', copies: 1 },
+      { intentId: 'harden', copies: 1 },
+    ],
+  },
+  {
+    id: 'quarter-stalker',
+    name: '刻针猎手',
+    tier: 'elite',
+    act: [1, 2],
+    maxHp: [66, 76],
+    intentsPerTurn: 1,
+    art: 'quarter-stalker',
+    initiative: 'enemy',
+    startingStatuses: [{ status: 'strength', amount: 1 }],
+    intentScript: [
+      { intentId: 'scuttle-bite', preferredSlot: 1, weight: 3 },
+      { intentId: 'tempo-lash', preferredSlot: 2, weight: 2 },
+      { intentId: 'hour-siphon', preferredSlot: 2, weight: 2 },
+      { intentId: 'brace-cog', preferredSlot: 3, weight: 1 },
     ],
   },
   {
@@ -478,9 +784,19 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [88, 100],
     intentsPerTurn: 1,
     art: 'hour-warden',
+    initiative: 'enemy',
+    startingStatuses: [{ status: 'strength', amount: 1 }],
     intentScript: [
       { intentId: 'shatterpoint', preferredSlot: 3, weight: 3 },
       { intentId: 'drift', preferredSlot: 4, weight: 2 },
+      { intentId: 'pounce', preferredSlot: 2, weight: 2 },
+      { intentId: 'brace-cog', preferredSlot: 3, weight: 1 },
+    ],
+    deck: [
+      { intentId: 'shatterpoint', copies: 2 },
+      { intentId: 'pounce', copies: 1 },
+      { intentId: 'drift', copies: 1 },
+      { intentId: 'brace-cog', copies: 1 },
     ],
   },
   {
@@ -494,6 +810,30 @@ export const ENEMIES: EnemyDef[] = [
     intentScript: [
       { intentId: 'wind-back', preferredSlot: 4, weight: 2 },
       { intentId: 'verdict', preferredSlot: 2, weight: 3 },
+      { intentId: 'hour-siphon', preferredSlot: 3, weight: 2 },
+    ],
+  },
+  {
+    id: 'oath-anvil',
+    name: '誓砧',
+    tier: 'elite',
+    act: [2, 3],
+    maxHp: [92, 104],
+    intentsPerTurn: 1,
+    art: 'oath-anvil',
+    startingStatuses: [{ status: 'ward', amount: 4 }],
+    intentScript: [
+      { intentId: 'anvil-fall', preferredSlot: 4, weight: 3 },
+      { intentId: 'ratchet-slam', preferredSlot: 3, weight: 2 },
+      { intentId: 'quench-plate', preferredSlot: 4, weight: 2 },
+      { intentId: 'oath-brand', preferredSlot: 2, weight: 2 },
+    ],
+    // 重锤之间必定夹一次补壳，护盾层不会断档
+    deck: [
+      { intentId: 'anvil-fall', copies: 2 },
+      { intentId: 'ratchet-slam', copies: 2 },
+      { intentId: 'quench-plate', copies: 1 },
+      { intentId: 'oath-brand', copies: 1 },
     ],
   },
   {
@@ -504,11 +844,20 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [110, 124],
     intentsPerTurn: 1,
     art: 'glass-cardinal',
+    startingStatuses: [{ status: 'reflect', amount: 2 }],
     intentScript: [
       { intentId: 'reversal', preferredSlot: 2, weight: 3 },
       { intentId: 'seal', preferredSlot: 4, weight: 2 },
       { intentId: 'mirror-shell', preferredSlot: 4, weight: 1 },
-      { intentId: 'reversion-halo', preferredSlot: 4, weight: 2 },
+      { intentId: 'reversion-halo', preferredSlot: 3, weight: 2 },
+      { intentId: 'mirror-verdict', preferredSlot: 3, weight: 2 },
+    ],
+    deck: [
+      { intentId: 'reversal', copies: 2 },
+      { intentId: 'mirror-verdict', copies: 2 },
+      { intentId: 'seal', copies: 1 },
+      { intentId: 'mirror-shell', copies: 1 },
+      { intentId: 'reversion-halo', copies: 1 },
     ],
   },
   {
@@ -519,6 +868,7 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [86, 98],
     intentsPerTurn: 1,
     art: 'slag-sentinel',
+    startingStatuses: [{ status: 'ward', amount: 3 }],
     intentScript: [
       { intentId: 'anvil-fall', preferredSlot: 3, weight: 3 },
       { intentId: 'slag-guard', preferredSlot: 4, weight: 3 },
@@ -535,10 +885,11 @@ export const ENEMIES: EnemyDef[] = [
     intentsPerTurn: 1,
     art: 'chain-vicar',
     intentScript: [
-      { intentId: 'bound-blow', preferredSlot: 3, weight: 3 },
-      { intentId: 'discord', preferredSlot: 4, weight: 2 },
+      { intentId: 'bound-blow', preferredSlot: 2, weight: 3 },
+      { intentId: 'discord', preferredSlot: 3, weight: 2 },
       { intentId: 'seal', preferredSlot: 4, weight: 1 },
       { intentId: 'spite-lash', preferredSlot: 3, weight: 2 },
+      { intentId: 'oath-brand', preferredSlot: 4, weight: 2 },
     ],
   },
   {
@@ -550,6 +901,7 @@ export const ENEMIES: EnemyDef[] = [
     maxHp: [104, 118],
     intentsPerTurn: 2,
     art: 'deep-winder',
+    startingStatuses: [{ status: 'strength', amount: 2 }],
     intentScript: [
       { intentId: 'wind-deep', preferredSlot: 1, weight: 3 },
       { intentId: 'coil-tight', preferredSlot: 1, weight: 2 },
@@ -565,7 +917,7 @@ export const ENEMIES: EnemyDef[] = [
     art: 'bell-tyrant',
     intentScript: [
       { intentId: 'toll', preferredSlot: 1, weight: 2 },
-      { intentId: 'swarm', preferredSlot: 4, weight: 3 },
+      { intentId: 'swarm', preferredSlot: 3, weight: 3 },
       { intentId: 'harden', preferredSlot: 4, weight: 2 },
     ],
     phases: [
@@ -580,6 +932,20 @@ export const ENEMIES: EnemyDef[] = [
           { intentId: 'bristle-up', preferredSlot: 4, weight: 2 },
         ],
       },
+    ],
+  },
+  {
+    id: 'plumb-magistrate',
+    name: '垂锤执政官',
+    tier: 'boss',
+    act: [1],
+    maxHp: [152, 152],
+    intentsPerTurn: 2,
+    art: 'plumb-magistrate',
+    intentScript: [
+      { intentId: 'plumb-drop', preferredSlot: 1, weight: 2 },
+      { intentId: 'arc-sweep', preferredSlot: 3, weight: 3 },
+      { intentId: 'harden', preferredSlot: 4, weight: 3 },
     ],
   },
   {
@@ -620,6 +986,35 @@ export const ENEMIES: EnemyDef[] = [
     ],
   },
   {
+    id: 'silent-conductor',
+    name: '静默指挥者',
+    tier: 'boss',
+    act: [2, 3],
+    maxHp: [164, 164],
+    intentsPerTurn: 2,
+    art: 'silent-conductor',
+    startingStatuses: [{ status: 'strength', amount: 2 }],
+    intentScript: [
+      { intentId: 'long-toll', preferredSlot: 2, weight: 3 },
+      { intentId: 'sunder-note', preferredSlot: 3, weight: 3 },
+      { intentId: 'hollow-choir', preferredSlot: 4, weight: 2 },
+      { intentId: 'gilded-recoil', preferredSlot: 4, weight: 2 },
+    ],
+    phases: [
+      {
+        atHpRatio: 0.55,
+        name: '终章',
+        intentsPerTurn: 3,
+        onEnter: [{ status: 'strength', amount: 2 }],
+        intentScript: [
+          { intentId: 'long-toll', preferredSlot: 2, weight: 3 },
+          { intentId: 'weave-theft', preferredSlot: 3, weight: 3 },
+          { intentId: 'sunder-note', preferredSlot: 3, weight: 2 },
+        ],
+      },
+    ],
+  },
+  {
     id: 'first-weaver',
     name: '初代织时者',
     tier: 'boss',
@@ -633,19 +1028,12 @@ export const ENEMIES: EnemyDef[] = [
       { intentId: 'wind-back', preferredSlot: 3, weight: 2 },
       { intentId: 'mirror-shell', preferredSlot: 4, weight: 2 },
     ],
-  },
-  {
-    id: 'plumb-magistrate',
-    name: '垂锤执政官',
-    tier: 'boss',
-    act: [1],
-    maxHp: [152, 152],
-    intentsPerTurn: 2,
-    art: 'plumb-magistrate',
-    intentScript: [
-      { intentId: 'plumb-drop', preferredSlot: 1, weight: 2 },
-      { intentId: 'arc-sweep', preferredSlot: 4, weight: 3 },
-      { intentId: 'harden', preferredSlot: 4, weight: 3 },
+    // 九张抽完才重洗，一轮之内拆解最多落两次
+    deck: [
+      { intentId: 'unmake', copies: 2 },
+      { intentId: 'first-thread', copies: 3 },
+      { intentId: 'wind-back', copies: 2 },
+      { intentId: 'mirror-shell', copies: 2 },
     ],
   },
 ];

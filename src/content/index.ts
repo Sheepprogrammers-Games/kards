@@ -1,7 +1,11 @@
-import { setRegistry } from '@engine/registry';
+import { setEquipmentRegistry } from '@engine/equipment';
+import { setRegistry, type RelicSummary } from '@engine/registry';
+import { setRelicPool } from '@engine/run';
 import type { CardDef, IntentDef } from '@engine/types';
 import { CARDS } from './cards';
 import { ENEMIES, INTENTS } from './enemies';
+import { EQUIPMENT } from './equipment';
+import { RELICS } from './relics';
 
 function byId<T extends { id: string }>(items: T[]): Record<string, T> {
   return Object.fromEntries(items.map((it) => [it.id, it]));
@@ -22,10 +26,23 @@ function validate(cards: CardDef[], intents: IntentDef[]): void {
   }
 }
 
-export function loadContent(): void {
-  validate(CARDS, INTENTS);
-  setRegistry({ cards: byId(CARDS), intents: byId(INTENTS) });
+/** 遗物在引擎侧只用到 id 与稀有度。 */
+function relicSummaries(): RelicSummary[] {
+  return RELICS.map((def) => ({ id: def.id, rarity: def.rarity }));
 }
 
-export { CARDS, ENEMIES, INTENTS };
+export function loadContent(): void {
+  validate(CARDS, INTENTS);
+  setRegistry({
+    cards: byId(CARDS),
+    intents: byId(INTENTS),
+    equipment: byId(EQUIPMENT),
+    relics: byId(relicSummaries()),
+  });
+  setEquipmentRegistry(EQUIPMENT);
+  // 守时者遗物只从守时者身上掉，不进随机奖励池
+  setRelicPool(RELICS.filter((def) => def.rarity !== 'boss').map((def) => def.id));
+}
+
+export { CARDS, ENEMIES, EQUIPMENT, INTENTS, RELICS };
 export { STARTER_DECK } from './decks';

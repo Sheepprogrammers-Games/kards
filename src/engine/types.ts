@@ -177,6 +177,21 @@ export interface IntentOption {
   weight: number;
 }
 
+/** 一条状态授予：给某个状态加指定层数。 */
+export interface StatusGrant {
+  status: StatusId;
+  amount: number;
+}
+
+/** 战斗开场的行动顺序。 */
+export type Initiative = 'player' | 'enemy';
+
+/** 意图牌库的一项，copies 为该意图在牌库中的份数。 */
+export interface IntentDeckEntry {
+  intentId: string;
+  copies: number;
+}
+
 /** 生命跌破阈值后切换的行为形态。 */
 export interface EnemyPhase {
   /** 触发阈值，取当前生命与上限的比值。 */
@@ -185,7 +200,7 @@ export interface EnemyPhase {
   intentsPerTurn?: number;
   intentScript: IntentOption[];
   /** 进入该形态时一次性获得的状态。 */
-  onEnter?: { status: StatusId; amount: number }[];
+  onEnter?: StatusGrant[];
 }
 
 export interface EnemyState extends Combatant {
@@ -198,6 +213,10 @@ export interface EnemyState extends Combatant {
   /** 尚未触发的形态，按阈值从高到低排列。 */
   phases?: EnemyPhase[];
   phaseName?: string;
+  /** 意图牌库的完整构成，抽空后据此重洗。 */
+  intentPool?: IntentDeckEntry[];
+  /** 牌库中尚未抽出的意图 id，按抽取顺序排列。 */
+  intentDeck?: string[];
 }
 
 export interface IntentDef {
@@ -207,6 +226,9 @@ export interface IntentDef {
   effects: Effect[];
   unstealable?: boolean;
   undelayable?: boolean;
+  /** 这一击朝谁去，决定界面的演出方向。省略时由效果推导。 */
+  aim?: 'player' | 'self';
+  art?: string;
 }
 
 /** 遗物合并后的战斗修饰。引擎只读取字段，不认识具体遗物。 */
@@ -256,6 +278,30 @@ export const NO_MODIFIERS: CombatModifiers = {
   rewindBonus: 0,
 };
 
+export type EquipSlot = 'weapon' | 'armor' | 'trinket' | 'core';
+
+/** 槽位的固定排列顺序，界面与存档按此顺序遍历。 */
+export const EQUIP_SLOT_ORDER: EquipSlot[] = ['weapon', 'armor', 'trinket', 'core'];
+
+export interface EquipmentDef {
+  id: string;
+  name: string;
+  slot: EquipSlot;
+  rarity: 'common' | 'uncommon' | 'rare';
+  /** 卡面文案，说明每回合会发生什么。 */
+  text: string;
+  art: string;
+  /** 常驻修正，与遗物共用一套字段。 */
+  mods?: Partial<CombatModifiers>;
+  /** 玩家回合开始时结算一次。 */
+  onTurnStart?: Effect[];
+  /** 敌方回合结束时结算一次。 */
+  onTurnEnd?: Effect[];
+}
+
+/** 每个槽位当前装备的 id，空槽为 null。 */
+export type EquipmentLoadout = Record<EquipSlot, string | null>;
+
 export type CombatPhase = 'playerTurn' | 'enemyTurn' | 'finished';
 
 export type CombatResult = 'ongoing' | 'victory' | 'defeat';
@@ -263,6 +309,13 @@ export type CombatResult = 'ongoing' | 'victory' | 'defeat';
 export interface CombatEvent {
   type: string;
   [key: string]: unknown;
+}
+
+/** 装备结算时产生的事件，界面据此播放对应槽位的演出。 */
+export interface EquipEvent extends CombatEvent {
+  type: 'equip';
+  slot: EquipSlot;
+  equipId: string;
 }
 
 export interface CombatState {
@@ -274,6 +327,8 @@ export interface CombatState {
 
   player: PlayerState;
   enemies: EnemyState[];
+  /** 本场战斗生效的装备 id。 */
+  equipment: string[];
 
   track: Record<Lane, (TrackEntry | null)[]>;
 
@@ -298,3 +353,38 @@ export interface CombatState {
 export type CombatAction =
   | { type: 'playCard'; uid: number; targetIndex?: number; slot?: number; laneTarget?: Lane }
   | { type: 'endTurn' };
+
+export type RewardKind =
+  | 'card'
+  | 'relic'
+  | 'equipment'
+  | 'gold'
+  | 'heal'
+  | 'removeCard'
+  | 'upgradeCard'
+  | 'nothing';
+
+/** 战斗结算后提供的一项奖励。 */
+export interface RewardOffer {
+  kind: RewardKind;
+  /** card / relic / equipment 的候选 id。 */
+  options?: string[];
+  amount?: number;
+}
+
+export type ShopItemKind =
+  | 'card'
+  | 'relic'
+  | 'equipment'
+  | 'removeCard'
+  | 'upgradeCard'
+  | 'supply';
+
+/** 商店货架上的一件商品。 */
+export interface ShopItem {
+  kind: ShopItemKind;
+  id?: string;
+  price: number;
+  /** supply 的回血量。 */
+  amount?: number;
+}

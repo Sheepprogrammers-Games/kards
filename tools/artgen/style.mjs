@@ -86,6 +86,18 @@ export const PRESETS = {
       `${CHROMA_BG}. ${NEGATIVE}.`,
   },
 
+  /** 单件装备图标，绿幕拍摄后抠像并补成正方形。 */
+  equipment: {
+    size: '1024x1024',
+    quality: 'high',
+    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 384 },
+    wrap: (subject) =>
+      `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
+      'Single piece of wearable gear presented as a clean product shot, three-quarter view, ' +
+      'worn metal and leather with visible craftsmanship, faint arcane glow at the seams. ' +
+      `${CHROMA_BG}. ${NEGATIVE}.`,
+  },
+
   /** 横版场景背景，下方中部留空放置战斗单位。 */
   bg: {
     size: '1536x1024',

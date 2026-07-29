@@ -322,7 +322,6 @@ export const CARDS: CardDef[] = [
     rarity: 'common',
     // 单次数值压到同费织牌的六成，回响次数补偿穿透带来的收益
     text: '造成 3 点伤害，无视护甲与护盾。',
-    // 插画沿用 burr-thread
     art: 'burr-thread',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 3, scaleMode: 'SCALAR', target: 'target', pierce: true }],
@@ -334,7 +333,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '造成 2 点伤害 3 次，无视护甲与护盾。',
-    // 插画沿用 braid-of-hours
     art: 'braid-of-hours',
     needsTarget: true,
     effects: [
@@ -348,7 +346,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '造成 6 点伤害。按造成的生命损失的一半回复生命。',
-    // 插画沿用 thread-doubling
     art: 'thread-doubling',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 6, scaleMode: 'SCALAR', target: 'target', lifesteal: 0.5 }],
@@ -360,7 +357,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '造成 5 点伤害。按造成的生命损失回复等量生命。',
-    // 插画沿用 mending-coil
     art: 'mending-coil',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 5, scaleMode: 'SCALAR', target: 'target', lifesteal: 1 }],
@@ -372,7 +368,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '获得 3 层荆棘。',
-    // 插画沿用 slow-spindle
     art: 'slow-spindle',
     effects: [{ kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'thorns', target: 'self' }],
   },
@@ -383,7 +378,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '获得 2 层护盾。获得 2 层荆棘。',
-    // 插画沿用 spiral-ward
     art: 'spiral-ward',
     effects: [
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'ward', target: 'self' },
@@ -397,7 +391,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'common',
     text: '获得 2 层护盾。',
-    // 插画沿用 hourguard
     art: 'hourguard',
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'ward', target: 'self' }],
   },
@@ -408,7 +401,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '造成 5 点伤害；目标生命不高于 40% 时该次伤害翻倍。',
-    // 插画沿用 thread-snap
     art: 'thread-snap',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 5, scaleMode: 'SCALAR', target: 'target', execute: 0.4 }],
@@ -420,7 +412,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '造成 4 点伤害。结算系数不低于 70% 时，额外造成 6 点伤害；目标生命不高于 50% 时该次额外伤害翻倍。',
-    // 插画沿用 hour-tapestry
     art: 'hour-tapestry',
     needsTarget: true,
     effects: [
@@ -435,7 +426,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '造成 7 点伤害；击杀目标后溢出伤害转给下一个敌人。',
-    // 插画沿用 lacerate
     art: 'lacerate',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 7, scaleMode: 'SCALAR', target: 'target', overkill: true }],
@@ -450,7 +440,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'common',
     text: '获得 4 点护甲。走完全程自然退场时，对最靠前的敌人造成 8 点伤害。',
-    // 插画沿用 gilded-seam
     art: 'gilded-seam',
     effects: [{ kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' }],
     payoff: [{ kind: 'damage', amount: 8, scaleMode: 'SCALAR', target: 'frontmost' }],
@@ -462,7 +451,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'common',
     text: '获得 4 点护甲。走完全程自然退场时，恢复 8 点生命。',
-    // 插画沿用 mending-coil
     art: 'mending-coil',
     effects: [{ kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' }],
     payoff: [{ kind: 'heal', amount: 8, scaleMode: 'SCALAR', target: 'self' }],
@@ -474,7 +462,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '造成 6 点伤害。走完全程自然退场时，对最靠前的敌人造成 14 点伤害。',
-    // 插画沿用 thread-doubling
     art: 'thread-doubling',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 6, scaleMode: 'SCALAR', target: 'target' }],
@@ -487,7 +474,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '获得 4 点护甲。走完全程自然退场时，获得 3 层力量。',
-    // 插画沿用 slow-spindle
     art: 'slow-spindle',
     effects: [{ kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' }],
     payoff: [{ kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'strength', target: 'self' }],
@@ -499,7 +485,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '获得 6 点护甲。走完全程自然退场时，获得 3 层转嫁。',
-    // 插画沿用 spiral-ward
     art: 'spiral-ward',
     effects: [{ kind: 'block', amount: 6, scaleMode: 'SCALAR', target: 'self' }],
     payoff: [{ kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'reflect', target: 'self' }],
@@ -511,7 +496,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '施加 4 层中毒。走完全程自然退场时，对最靠前的敌人施加 6 层中毒。',
-    // 插画沿用 corrode
     art: 'corrode',
     needsTarget: true,
     effects: [
@@ -528,7 +512,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '造成 6 点伤害。打出时使你获得 2 层虚弱。走完全程自然退场时，对最靠前的敌人造成 22 点伤害。',
-    // 插画沿用 thread-snap
     art: 'thread-snap',
     needsTarget: true,
     effects: [
@@ -544,7 +527,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'rare',
     text: '造成 9 点伤害。走完全程自然退场时，使你获得 4 层中毒。',
-    // 插画沿用 second-hand-vow
     art: 'second-hand-vow',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 9, scaleMode: 'SCALAR', target: 'target' }],
@@ -557,7 +539,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'rare',
     text: '造成 6 点伤害。打出时获得 1 点能量。走完全程自然退场时，使你获得 3 层虚弱。',
-    // 插画沿用 twin-anchor
     art: 'twin-anchor',
     needsTarget: true,
     effects: [
@@ -575,7 +556,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '获得 2 层转嫁。',
-    // 插画沿用 hourguard
     art: 'hourguard',
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect', target: 'self' }],
   },
@@ -586,7 +566,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '获得 6 点护甲。获得 2 层转嫁。',
-    // 插画沿用 stone-warp
     art: 'stone-warp',
     effects: [
       { kind: 'block', amount: 6, scaleMode: 'SCALAR', target: 'self' },
@@ -855,7 +834,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'common',
     text: '引爆最新的 1 个条目。造成 3 点伤害，无视护甲与护盾。',
-    // 插画沿用 split-flare
     art: 'split-flare',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 3, scaleMode: 'SCALAR', target: 'target', pierce: true }],
@@ -868,7 +846,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '引爆全部条目。造成 6 点伤害；目标生命不高于 50% 时该次伤害翻倍。',
-    // 插画沿用 resonance-lance
     art: 'resonance-lance',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 6, scaleMode: 'SCALAR', target: 'target', execute: 0.5 }],
@@ -881,7 +858,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '引爆最旧的 1 个条目。造成 6 点伤害；击杀目标后溢出伤害转给下一个敌人。',
-    // 插画沿用 lens-of-noon
     art: 'lens-of-noon',
     needsTarget: true,
     effects: [{ kind: 'damage', amount: 6, scaleMode: 'SCALAR', target: 'target', overkill: true }],
@@ -894,7 +870,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '引爆全部条目。获得 2 层护盾。',
-    // 插画沿用 cascade-call
     art: 'cascade-call',
     needsTarget: true,
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'ward', target: 'self' }],
@@ -908,7 +883,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'rare',
     text: '引爆全部条目。获得 3 层转嫁。被引爆的条目拿不到走完全程的赌注。',
-    // 插画沿用 prism-of-echoes
     art: 'prism-of-echoes',
     needsTarget: true,
     effects: [{ kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'reflect', target: 'self' }],
@@ -1170,7 +1144,6 @@ export const CARDS: CardDef[] = [
     rarity: 'uncommon',
     // 位移先于自身效果结算，被推出末位的意图在荆棘挂上之前落地
     text: '将一个敌方意图向末位推 1 格，已在末位的意图立即结算。获得 3 层荆棘。',
-    // 插画沿用 skip-tooth
     art: 'skip-tooth',
     needsSlot: true,
     effects: [{ kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'thorns', target: 'self' }],
@@ -1183,7 +1156,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '获得 2 层护盾。将一个敌方意图延后一格。',
-    // 插画沿用 hold-fast
     art: 'hold-fast',
     needsSlot: true,
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'ward', target: 'self' }],
@@ -1196,7 +1168,6 @@ export const CARDS: CardDef[] = [
     cost: 2,
     rarity: 'uncommon',
     text: '将一个己方条目的预算 +2。对最靠前的敌人造成 4 点伤害，按造成的生命损失回复等量生命。',
-    // 插画沿用 wedge
     art: 'wedge',
     needsSlot: true,
     effects: [
@@ -1212,7 +1183,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '将一个敌方意图延后一格。获得 2 层转嫁。',
-    // 插画沿用 desync
     art: 'desync',
     needsSlot: true,
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect', target: 'self' }],
@@ -1225,7 +1195,6 @@ export const CARDS: CardDef[] = [
     cost: 0,
     rarity: 'common',
     text: '将一个己方条目向末位推 1 格，前方被占用时一并顺推；被顶出末位的条目烧毁，拿不到走完全程的赌注。',
-    // 插画沿用 skip-tooth
     art: 'skip-tooth',
     needsSlot: true,
     effects: [],
@@ -1238,7 +1207,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '抽空一个己方条目，按其剩余系数的 30% 立即结算后退场，该条目拿不到走完全程的赌注。',
-    // 插画沿用 shear
     art: 'shear',
     needsSlot: true,
     effects: [],
@@ -1251,7 +1219,6 @@ export const CARDS: CardDef[] = [
     cost: 1,
     rarity: 'uncommon',
     text: '将一个己方条目的预算 +2，再冻结它，本回合末不推进并消耗其 1 点预算。',
-    // 插画沿用 jam-escapement
     art: 'jam-escapement',
     needsSlot: true,
     effects: [],
@@ -1259,6 +1226,215 @@ export const CARDS: CardDef[] = [
       { kind: 'sustain', lane: 'player', amount: 2 },
       { kind: 'freeze', lane: 'player' },
     ],
+  },
+
+  // 摹本：由窃招牌生成，只在本场战斗内存在，瞬发一次后进消耗堆
+  {
+    id: 'traced-blade',
+    name: '摹刃',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'starter',
+    text: '消耗。造成 9 点伤害。',
+    art: 'thread-theft',
+    needsTarget: true,
+    exhaust: true,
+    effects: [{ kind: 'damage', amount: 9, scaleMode: 'SCALAR', target: 'target' }],
+  },
+  {
+    id: 'traced-ward',
+    name: '摹盾',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'starter',
+    text: '消耗。获得 9 点护甲。',
+    art: 'hold-fast',
+    exhaust: true,
+    effects: [{ kind: 'block', amount: 9, scaleMode: 'SCALAR', target: 'self' }],
+  },
+  {
+    id: 'traced-hex',
+    name: '摹咒',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'starter',
+    text: '消耗。施加 3 层易伤。',
+    art: 'sand-in-gears',
+    needsTarget: true,
+    exhaust: true,
+    effects: [
+      { kind: 'applyStatus', amount: 3, scaleMode: 'SCALAR', status: 'vulnerable', target: 'target' },
+    ],
+  },
+
+  // 窃招：把敌方意图从敌轨拿走，或照着它的形制生成一张摹本
+  {
+    id: 'light-fingers',
+    name: '顺手',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'common',
+    text: '将一个敌方意图延后一格。将一张摹刃置入你的弃牌堆。',
+    art: 'shove',
+    needsSlot: true,
+    effects: [
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-blade', pile: 'discard' },
+    ],
+    manipulations: [{ kind: 'rewind', lane: 'enemy', amount: 1 }],
+  },
+  {
+    id: 'crib-the-move',
+    name: '抄招',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'common',
+    text: '将一张摹盾置入你的手牌。抽 1 张牌。',
+    art: 'off-beat',
+    effects: [
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-ward', pile: 'hand' },
+      { kind: 'draw', amount: 1, scaleMode: 'ONCE' },
+    ],
+  },
+  {
+    id: 'armory-raid',
+    name: '劫械',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'common',
+    text: '将一张摹刃与一张摹盾置入你的弃牌堆。',
+    art: 'sidestep-gear',
+    effects: [
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-blade', pile: 'discard' },
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-ward', pile: 'discard' },
+    ],
+  },
+  {
+    id: 'pattern-theft',
+    name: '窃样',
+    type: 'disrupt',
+    cost: 2,
+    rarity: 'uncommon',
+    text: '冻结一个敌方意图，本回合末不推进。将一张摹刃置入你的手牌。',
+    art: 'dead-tick',
+    needsSlot: true,
+    effects: [
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-blade', pile: 'hand' },
+    ],
+    manipulations: [{ kind: 'freeze', lane: 'enemy' }],
+  },
+  {
+    id: 'dissect-pattern',
+    name: '剖样',
+    type: 'disrupt',
+    cost: 2,
+    rarity: 'uncommon',
+    text: '抽空一个敌方意图，按其剩余系数的 30% 立即结算后退场。将一张摹咒置入你的手牌。',
+    art: 'shear',
+    needsSlot: true,
+    effects: [
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-hex', pile: 'hand' },
+    ],
+    manipulations: [{ kind: 'evict', lane: 'enemy' }],
+  },
+  {
+    id: 'take-over',
+    name: '接手',
+    type: 'disrupt',
+    cost: 2,
+    rarity: 'uncommon',
+    text: '强制一个敌方意图立即结算，数值减半。将一张摹盾置入你的手牌。',
+    art: 'backlash',
+    needsSlot: true,
+    effects: [
+      { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'traced-ward', pile: 'hand' },
+    ],
+    manipulations: [{ kind: 'preempt', lane: 'enemy' }],
+  },
+  {
+    id: 'deep-study',
+    name: '深研',
+    type: 'disrupt',
+    cost: 3,
+    rarity: 'rare',
+    text: '窃取一个敌方意图到己方轨首，数值减半，并将其预算 +2。',
+    art: 'cross-cut',
+    needsSlot: true,
+    effects: [],
+    manipulations: [
+      { kind: 'steal', lane: 'enemy' },
+      { kind: 'sustain', lane: 'player', slot: 1, amount: 2 },
+    ],
+  },
+  {
+    id: 'borrowed-form',
+    name: '借形',
+    type: 'disrupt',
+    cost: 2,
+    rarity: 'rare',
+    text: '交换同一格位上的敌方意图与己方条目，两者归属互换。再复制换来的意图到最靠前的空格位，副本只结算一次且不可再被复制。',
+    art: 'desync',
+    needsSlot: true,
+    effects: [],
+    manipulations: [
+      { kind: 'swap', lane: 'enemy' },
+      { kind: 'copy', lane: 'player' },
+    ],
+  },
+
+  // 装备局：回溯额度、冻结开销与引爆后是否留场都由常驻修正决定，这组牌按修正后的上限结算
+  {
+    id: 'overwind',
+    name: '过卷',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'common',
+    text: '将一个己方条目向末位推 2 格，前方被占用时一并顺推；被顶出末位的条目烧毁。获得 4 点护甲。',
+    art: 'skip-tooth',
+    needsSlot: true,
+    effects: [{ kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' }],
+    manipulations: [{ kind: 'push', lane: 'player', amount: 2 }],
+  },
+  {
+    id: 'back-gear',
+    name: '退挡',
+    type: 'disrupt',
+    cost: 1,
+    rarity: 'uncommon',
+    text: '将一个己方条目回溯 2 格并可在新格位重新结算，超出回溯次数上限的部分不生效。',
+    art: 'unwind',
+    needsSlot: true,
+    effects: [],
+    manipulations: [{ kind: 'rewind', lane: 'player', amount: 2 }],
+  },
+  {
+    id: 'paired-arrest',
+    name: '双止',
+    type: 'disrupt',
+    cost: 2,
+    rarity: 'uncommon',
+    text: '冻结同一格位上的敌方意图与己方条目，本回合末都不推进，各消耗 1 点预算。',
+    art: 'jam-escapement',
+    needsSlot: true,
+    effects: [],
+    manipulations: [
+      { kind: 'freeze', lane: 'enemy' },
+      { kind: 'freeze', lane: 'player' },
+    ],
+  },
+  {
+    id: 'relight',
+    name: '复燃',
+    type: 'ignite',
+    cost: 1,
+    rarity: 'uncommon',
+    text: '引爆最旧的 1 个条目。获得 3 点护甲。抽 1 张牌。',
+    art: 'ember-tap',
+    needsTarget: true,
+    effects: [
+      { kind: 'block', amount: 3, scaleMode: 'SCALAR', target: 'self' },
+      { kind: 'draw', amount: 1, scaleMode: 'ONCE' },
+    ],
+    ignite: { filter: 'oldest', count: 1 },
   },
 
   // 诅咒：留存于手牌，清除方式是打上时间轨并占据轨位

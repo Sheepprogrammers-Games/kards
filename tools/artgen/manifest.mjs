@@ -781,7 +781,7 @@ export const MANIFEST = [
     subject:
       'a symmetrical heraldic crest of gold filigree framing a hollow clock dial, flanked by two ' +
       'folded thread motifs, ornate base scroll, the base scroll unfurling into two symmetrical curls at its lowest point',
-  },,
+  },
   // 变体批：与既有卡牌同系但效果侧重不同
   {
     id: 'thread-snap',
@@ -894,7 +894,7 @@ export const MANIFEST = [
     subject:
       'a hooked brass rod pulling a glowing golden thread out of a dark loom and drawing it away, '
       + 'the loom sagging where the thread was taken',
-  },,
+  },
 
   // 标题界面的装饰件
   {
@@ -910,7 +910,7 @@ export const MANIFEST = [
     subject:
       'an ornate circular emblem of interlocking clock rings with a single vertical hand at its '
       + 'center, layered concentric bands of engraved metal, radiating short spokes',
-  },,
+  },
 
   // 后补的遗物
   {
@@ -968,5 +968,147 @@ export const MANIFEST = [
     subject:
       'a hairspring frozen mid-coil inside a glass dome, frost feathering outward from its center '
       + 'across the inner surface of the glass',
+  },
+
+  // 装备
+  {
+    id: 'ratchet-flail',
+    category: 'equipment',
+    subject:
+      'a short flail whose striking head is a ratchet wheel of blackened steel, three ' +
+      'stubby chain links, worn leather grip wrapped in brass wire',
+  },
+  {
+    id: 'verdigris-fang',
+    category: 'equipment',
+    subject:
+      'a curved dagger cast as a single copper fang, thick green verdigris crusting the ' +
+      'blade edge, a bead of dull venom hanging at the tip',
+  },
+  {
+    id: 'hour-hand-cleaver',
+    category: 'equipment',
+    subject:
+      'a heavy cleaver forged from an oversized clock hour hand, the counterweight butt ' +
+      'still bearing its mounting hole, edge ground razor thin',
+  },
+  {
+    id: 'siphon-edge',
+    category: 'equipment',
+    subject:
+      'a slender sword with a hollow fuller running its length, warm amber light drawn ' +
+      'along the channel toward the pommel reservoir',
+  },
+  {
+    id: 'tolling-brand',
+    category: 'equipment',
+    subject:
+      'a branding iron shaped as a small bell, the bell mouth ringed with raised sigils, ' +
+      'the metal still glowing dull orange',
+  },
+  {
+    id: 'bellhouse-cuirass',
+    category: 'equipment',
+    subject:
+      'a brass breastplate hammered into the shape of a bell housing, wide flared skirt, ' +
+      'reinforcing ribs radiating from a central boss',
+  },
+  {
+    id: 'thorncase-mail',
+    category: 'equipment',
+    subject:
+      'a mail shirt woven from barbed links, short iron thorns standing out from every ' +
+      'ring, leather shoulder straps buckled at the front',
+  },
+  {
+    id: 'deadfall-mantle',
+    category: 'equipment',
+    subject:
+      'a heavy shoulder mantle of stiff grey cloth hung with small stopped pocket watches, ' +
+      'the fabric falling in frozen motionless folds',
+  },
+  {
+    id: 'pendulum-harness',
+    category: 'equipment',
+    subject:
+      'a leather torso harness carrying a polished pendulum bob on a short rod at the ' +
+      'chest, brass buckles and adjustment slides',
+  },
+  {
+    id: 'null-hour-carapace',
+    category: 'equipment',
+    subject:
+      'a segmented shell of dark plate with no seams or fasteners visible, faint violet ' +
+      'light bleeding from the joints between segments',
+  },
+  {
+    id: 'hollow-cog-charm',
+    category: 'equipment',
+    subject:
+      'a small pendant made from a single hollowed gear, the empty hub strung on a fine ' +
+      'chain, tooth edges worn smooth by handling',
+  },
+  {
+    id: 'pocket-sundial',
+    category: 'equipment',
+    subject:
+      'a folding brass pocket sundial opened flat, a hair-thin gnomon casting a sharp ' +
+      'shadow across the engraved hour scale',
+  },
+  {
+    id: 'cinder-locket',
+    category: 'equipment',
+    subject:
+      'a soot-blackened locket hanging open, live embers glowing inside the bezel instead ' +
+      'of a portrait',
+  },
+  {
+    id: 'pawnbroker-fob',
+    category: 'equipment',
+    subject:
+      'a watch fob heavy with pawn tickets and three brass tokens, the watch itself missing ' +
+      'and only the empty swivel clip remaining',
+  },
+  {
+    id: 'metronome-scepter',
+    category: 'equipment',
+    subject:
+      'a short scepter topped with an upright metronome, the weighted arm caught mid-swing, ' +
+      'tapered handle bound in dark cord',
+  },
+  {
+    id: 'overwound-core',
+    category: 'equipment',
+    subject:
+      'a clockwork movement wound past its limit, the mainspring bulging against a cracked ' +
+      'barrel, gear teeth splayed under the strain',
+  },
+  {
+    id: 'ember-core',
+    category: 'equipment',
+    subject:
+      'a compact movement whose mainspring barrel burns from within, heat shimmer above the ' +
+      'plate and scorch marks radiating outward',
+  },
+  {
+    id: 'recurrence-coil',
+    category: 'equipment',
+    subject:
+      'a movement built around four nested hairsprings of decreasing size, each coil ' +
+      'trailing a faint duplicate of the one outside it',
+  },
+  {
+    id: 'frostbound-core',
+    category: 'equipment',
+    subject:
+      'a movement sheathed in clear ice, the escapement locked mid-tick, frost crystals ' +
+      'growing along the bridge and jewel settings',
+  },
+  {
+    id: 'paradox-core',
+    category: 'equipment',
+    subject:
+      'a movement whose gear train loops back into itself in an impossible closed circuit, ' +
+      'one wheel driving and being driven at once',
   },
 ];

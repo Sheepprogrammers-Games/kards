@@ -3,9 +3,19 @@
 import { C } from './constants';
 import { resolveEntry } from './effects';
 import { intentDef } from './registry';
-import { weightedPick } from './rng';
+import { shuffle, weightedPick } from './rng';
 import { firstFreeSlotFrom, setEntry } from './track';
-import type { CombatState, EnemyState, TrackEntry } from './types';
+import type { CombatState, EnemyState, IntentDef, TrackEntry } from './types';
+
+/**
+ * 意图的指向。未声明时按效果推导：含伤害或施加负面状态的朝玩家，
+ * 只有护甲、自身状态与回复的朝自己。
+ */
+export function intentAim(def: IntentDef): 'player' | 'self' {
+  if (def.aim) return def.aim;
+  const outward = def.effects.some((e) => e.kind === 'damage' || e.kind === 'applyStatus');
+  return outward ? 'player' : 'self';
+}
 
 function makeIntentEntry(state: CombatState, enemy: EnemyState, intentId: string): TrackEntry {
   const def = intentDef(intentId);
@@ -38,6 +48,44 @@ function makeIntentEntry(state: CombatState, enemy: EnemyState, intentId: string
   return entry;
 }
 
+/** 意图的引信长度由脚本声明，牌库抽到的意图沿用同名脚本项的格位。 */
+function preferredSlotOf(enemy: EnemyState, intentId: string): number {
+  return enemy.intentScript.find((o) => o.intentId === intentId)?.preferredSlot ?? C.TRACK_SLOTS;
+}
+
+/** 从牌库顶抽一个意图，抽空后按牌库构成重洗。 */
+function drawFromDeck(state: CombatState, enemy: EnemyState): string | null {
+  if (!enemy.intentDeck?.length) {
+    const cards: string[] = [];
+    for (const item of enemy.intentPool ?? []) {
+      for (let i = 0; i < item.copies; i++) cards.push(item.intentId);
+    }
+    if (!cards.length) return null;
+    enemy.intentDeck = shuffle(state, cards);
+    state.events.push({
+      type: 'intentReshuffle',
+      enemyId: enemy.id,
+      size: enemy.intentDeck.length,
+    });
+  }
+  return enemy.intentDeck.pop() ?? null;
+}
+
+/** 有牌库的敌人从牌库抽，其余按脚本权重抽。 */
+function pickIntent(
+  state: CombatState,
+  enemy: EnemyState,
+): { intentId: string; preferredSlot: number } | null {
+  if (enemy.intentPool?.length) {
+    const intentId = drawFromDeck(state, enemy);
+    if (!intentId) return null;
+    return { intentId, preferredSlot: preferredSlotOf(enemy, intentId) };
+  }
+  const pick = weightedPick(state, enemy.intentScript);
+  if (!pick) return null;
+  return { intentId: pick.intentId, preferredSlot: pick.preferredSlot };
+}
+
 /**
  * 每个存活敌人按脚本挂载意图。敌轨已满时意图转为蓄力，
  * 使堵塞敌轨的打法只能延迟压力而不能免除。
@@ -46,7 +94,7 @@ export function scheduleIntents(state: CombatState): void {
   for (const enemy of state.enemies) {
     if (!enemy.alive) continue;
     for (let k = 0; k < enemy.intentsPerTurn; k++) {
-      const pick = weightedPick(state, enemy.intentScript);
+      const pick = pickIntent(state, enemy);
       if (!pick) continue;
 
       const preferred = Math.max(1, Math.min(C.TRACK_SLOTS, pick.preferredSlot));

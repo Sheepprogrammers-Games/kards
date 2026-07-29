@@ -16,6 +16,12 @@ export type EventOutcome =
   | { kind: 'addRelic' }
   /** 随机失去一件已持有的遗物。 */
   | { kind: 'loseRelic' }
+  /** 获得一件装备，槽位与具体条目由界面层挑选。 */
+  | { kind: 'addEquipment' }
+  /** 箱中是伏击，转入与该敌人的一场战斗。 */
+  | { kind: 'chest'; enemyId: string }
+  /** 馈赠，具体给什么由界面层按 rng 决定。 */
+  | { kind: 'gift' }
   /** 按当前时砂的比例增减，-1 为全部交出，1 为翻倍。 */
   | { kind: 'goldShare'; ratio: number }
   /** 按当前生命的比例回复或扣减。 */
@@ -35,6 +41,8 @@ export interface EventDef {
   title: string;
   body: string;
   options: EventOption[];
+  /** 为真时不展示选择，进入即结算首个选项并显示结果。 */
+  auto?: boolean;
 }
 
 export const EVENTS: EventDef[] = [
@@ -499,6 +507,297 @@ export const EVENTS: EventDef[] = [
       },
       {
         label: '捂住耳朵',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'unclaimed-coffer',
+    title: '无人认领的箱子',
+    body:
+      '箱子摆在岔路正中，锁扣是开的，扣舌却朝里弯。四周的沙压出一圈平整的印，' +
+      '像它自己挪过来的。你蹲下的时候，里面有东西轻轻换了个位置，随后又摆回原样。',
+    options: [
+      {
+        label: '掀开盖子',
+        desc: '盖子底下不是时砂。',
+        outcomes: [{ kind: 'chest', enemyId: 'warp-thief' }],
+      },
+      {
+        label: '只捞外面那层浮砂',
+        desc: '获得 30 枚时砂，手伸回来时少了一块皮：失去 6 点生命。',
+        outcomes: [{ kind: 'gold', amount: 30 }, { kind: 'damage', amount: 6 }],
+      },
+      {
+        label: '把它留在岔路上',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'bronze-locked-case',
+    title: '三道铜锁的匣子',
+    body:
+      '锁孔里没有锈，反倒是温的。挂在旁边的空钥匙牌上写着上一位开匣人的名字，' +
+      '字只写了一半，后半截像是写着写着就不必写了。贴上去听，里面的呼吸和你的错开半拍。',
+    options: [
+      {
+        label: '砸开三道锁',
+        desc: '里面的东西等这一下已经等了很久。',
+        outcomes: [{ kind: 'chest', enemyId: 'slag-sentinel' }],
+      },
+      {
+        label: '照牌子上的价买钥匙',
+        desc: '交出六成时砂，锁自己弹开，匣底躺着一件装备。',
+        outcomes: [{ kind: 'goldShare', ratio: -0.6 }, { kind: 'addEquipment' }],
+      },
+      {
+        label: '把那个名字补完',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'weeping-strongbox',
+    title: '渗水的贡匣',
+    body:
+      '匣底一直在往外渗水，水滴在石板上却不积起来，湿痕总停在同一圈边界内。' +
+      '匣子被人钉死过，钉子是从里面顶出来的，钉帽都朝着外面。',
+    options: [
+      {
+        label: '把钉子一根根拔掉',
+        desc: '顶开钉子的东西还在里面。',
+        outcomes: [{ kind: 'chest', enemyId: 'null-leech' }],
+      },
+      {
+        label: '整个翻过来倒',
+        desc: '倒出 40 枚时砂和一沓湿透的纸，纸上的字换到你牌组里去了：随机移除一张牌。',
+        outcomes: [{ kind: 'gold', amount: 40 }, { kind: 'removeCard' }],
+      },
+      {
+        label: '踩着它跨过去',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'lucky-find',
+    title: '幸运发现',
+    auto: true,
+    body:
+      '路面塌了一小块，露出底下一只早就没人记得的小袋。袋口的绳结打法比现在通行的老了几十年，' +
+      '解开时还很顺手。不是你找到它，是它先绊了你一下。',
+    options: [
+      {
+        label: '弯腰捡起来',
+        desc: '袋里的东西看运气。',
+        outcomes: [{ kind: 'gift' }],
+      },
+    ],
+  },
+  {
+    id: 'mages-tithe',
+    title: '魔法馈赠',
+    auto: true,
+    body:
+      '一段旧咒挂在半空没散干净，遇上活人就自动把剩下的音节念完。念咒的人早已不在，' +
+      '效果照发，只是不再挑对象。它落在你身上的时候，音还没收尾。',
+    options: [
+      {
+        label: '站在原地把它受完',
+        desc: '落到你身上的是哪一段，由不得你。',
+        outcomes: [{ kind: 'gift' }],
+      },
+    ],
+  },
+  {
+    id: 'roadside-trifle',
+    title: '路边的小事',
+    auto: true,
+    body:
+      '一只鞋、一枚扣子、一句刻在墙根的骂人话。全是赶路的人掉下的东西，没一样值得停下来，' +
+      '你还是停了一会儿。',
+    options: [
+      {
+        label: '蹲下翻了翻',
+        desc: '六成机会翻出 28 枚时砂，否则被墙根的什么东西划伤，失去 5 点生命。',
+        outcomes: [
+          {
+            kind: 'chance',
+            percent: 60,
+            hit: [{ kind: 'gold', amount: 28 }],
+            miss: [{ kind: 'damage', amount: 5 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'windless-hour',
+    title: '无风的一刻',
+    auto: true,
+    body:
+      '整条路的沙都停在半空，连你呼出的白气也悬着不动。这样的间隙一天只出现一次，' +
+      '撞上的人可以在里面多待一会儿，不算在自己的时间里。',
+    options: [
+      {
+        label: '在里面站到它散掉',
+        desc: '六成半的机会回复 18 点生命，否则捡到停在半空的 20 枚时砂。',
+        outcomes: [
+          {
+            kind: 'chance',
+            percent: 65,
+            hit: [{ kind: 'heal', amount: 18 }],
+            miss: [{ kind: 'gold', amount: 20 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'discarded-kit',
+    title: '卸下的行头',
+    auto: true,
+    body:
+      '路边整整齐齐码着一副卸下来的行头，扣子都系好了，摆法像是主人打算回来取。' +
+      '旁边的脚印只有去的方向，没有回来的。',
+    options: [
+      {
+        label: '挑一件穿上',
+        desc: '获得一件装备。',
+        outcomes: [{ kind: 'addEquipment' }],
+      },
+    ],
+  },
+  {
+    id: 'two-faced-token',
+    title: '两面都是正面的筹码',
+    body:
+      '庄家把筹码立在指节上转，说这枚两面都是正面，输的只可能是压上去的东西不够重。' +
+      '他不收时砂。他收你身上还没用完的那部分。',
+    options: [
+      {
+        label: '压一半的血',
+        desc: '失去当前生命的一半；六成机会换来一件遗物与 60 枚时砂，否则只落下一张诅咒。',
+        outcomes: [
+          { kind: 'hpShare', ratio: -0.5 },
+          {
+            kind: 'chance',
+            percent: 60,
+            hit: [{ kind: 'addRelic' }, { kind: 'gold', amount: 60 }],
+            miss: [{ kind: 'addCard', pool: 'curse' }],
+          },
+        ],
+      },
+      {
+        label: '压牌组里最重的一张',
+        desc: '随机移除一张牌；五成半的机会随机强化一张牌并获得 50 枚时砂，否则获得一张无尽经线。',
+        outcomes: [
+          { kind: 'removeCard' },
+          {
+            kind: 'chance',
+            percent: 55,
+            hit: [{ kind: 'upgradeCard' }, { kind: 'gold', amount: 50 }],
+            miss: [{ kind: 'addNamedCard', cardId: 'eternal-warp' }],
+          },
+        ],
+      },
+      {
+        label: '等他转完',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'hourglass-roulette',
+    title: '沙漏转盘',
+    body:
+      '六只沙漏倒扣在转盘上，只有一只里面还有沙。停在哪一只由不得你，' +
+      '围观的人押的也不是你能拿走多少，是你会不会当场老掉一截。',
+    options: [
+      {
+        label: '转一次',
+        desc: '七成机会获得 60 枚时砂，否则生命上限 -7。',
+        outcomes: [
+          {
+            kind: 'chance',
+            percent: 70,
+            hit: [{ kind: 'gold', amount: 60 }],
+            miss: [{ kind: 'maxHp', amount: -7 }],
+          },
+        ],
+      },
+      {
+        label: '转到它自己停下为止',
+        desc: '三成半的机会获得一件装备与一件遗物；否则失去当前生命的四成并获得一张诅咒。',
+        outcomes: [
+          {
+            kind: 'chance',
+            percent: 35,
+            hit: [{ kind: 'addEquipment' }, { kind: 'addRelic' }],
+            miss: [{ kind: 'hpShare', ratio: -0.4 }, { kind: 'addCard', pool: 'curse' }],
+          },
+        ],
+      },
+      {
+        label: '把手从转盘上拿开',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'unfinished-armory',
+    title: '未完工的军械间',
+    body:
+      '架上的东西都差最后一道工序：护腕缺一枚铆钉，刀身留着没磨的毛边。' +
+      '铁匠的凳子还是温的，砧上那件半成品的形状，正好照着你的尺寸。',
+    options: [
+      {
+        label: '挑一件带走',
+        desc: '获得一件装备，没磨过的边割手：失去 9 点生命。',
+        outcomes: [{ kind: 'addEquipment' }, { kind: 'damage', amount: 9 }],
+      },
+      {
+        label: '出钱把砧上那件敲完',
+        desc: '交出五成时砂请人收尾，获得一件装备并回复 10 点生命。',
+        outcomes: [
+          { kind: 'goldShare', ratio: -0.5 },
+          { kind: 'addEquipment' },
+          { kind: 'heal', amount: 10 },
+        ],
+      },
+      {
+        label: '空手出去',
+        desc: '什么也没发生。',
+        outcomes: [{ kind: 'nothing' }],
+      },
+    ],
+  },
+  {
+    id: 'quartermaster-in-arrears',
+    title: '欠饷的军需官',
+    body:
+      '他守着一屋子登记在册却没人来领的东西，账目对不上已经三十年。' +
+      '按规矩发一行要先销一行，他不在乎销掉的是谁的，只在乎册子两边的数字一样长。',
+    options: [
+      {
+        label: '销掉自己名下那一行',
+        desc: '随机失去一件遗物，换来一件装备与 40 枚时砂。',
+        outcomes: [{ kind: 'loseRelic' }, { kind: 'addEquipment' }, { kind: 'gold', amount: 40 }],
+      },
+      {
+        label: '替别人把缺口补齐',
+        desc: '交出六成时砂，获得一件装备。',
+        outcomes: [{ kind: 'goldShare', ratio: -0.6 }, { kind: 'addEquipment' }],
+      },
+      {
+        label: '不在册子上留字',
         desc: '什么也没发生。',
         outcomes: [{ kind: 'nothing' }],
       },

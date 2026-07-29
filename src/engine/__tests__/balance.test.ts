@@ -1,6 +1,8 @@
 import { describe, expect, it, beforeAll } from 'vitest';
 import { loadContent, STARTER_DECK } from '@content/index';
 import { ENEMIES } from '@content/enemies';
+import { RELICS } from '@content/relics';
+import { createRun, rollRewards } from '../run';
 import { canPlay, createCombat, reduce } from '../combat';
 import { cardDef } from '../registry';
 import { countEntries } from '../track';
@@ -167,5 +169,34 @@ describe('难度曲线', () => {
     const easy = batch('cracked-chorister', 30, 1);
     const hard = batch('cracked-chorister', 30, 2.5);
     expect(hard.rate).toBeLessThanOrEqual(easy.rate);
+  });
+});
+
+describe('内容装载', () => {
+  it('装载内容后精英奖励能直接给出遗物，不必另行注入池子', () => {
+    const relicIds = new Set(RELICS.map((def) => def.id));
+    let sawRelic = false;
+
+    for (let i = 0; i < 40; i++) {
+      const run = { ...createRun({ seedText: `pool-${i}`, deck: [...STARTER_DECK], maxHp: 70 }), cleared: i };
+      for (const offer of rollRewards(run, 'elite')) {
+        if (offer.kind !== 'relic') continue;
+        sawRelic = true;
+        for (const id of offer.options ?? []) expect(relicIds.has(id)).toBe(true);
+      }
+    }
+    expect(sawRelic).toBe(true);
+  });
+
+  it('守时者遗物不进随机奖励池', () => {
+    const bossRelics = new Set(RELICS.filter((def) => def.rarity === 'boss').map((def) => def.id));
+    expect(bossRelics.size).toBeGreaterThan(0);
+
+    for (let i = 0; i < 40; i++) {
+      const run = { ...createRun({ seedText: `boss-pool-${i}`, deck: [...STARTER_DECK], maxHp: 70 }), cleared: i };
+      for (const offer of rollRewards(run, 'boss')) {
+        for (const id of offer.options ?? []) expect(bossRelics.has(id)).toBe(false);
+      }
+    }
   });
 });

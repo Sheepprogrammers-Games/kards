@@ -283,6 +283,13 @@ export type EquipSlot = 'weapon' | 'armor' | 'trinket' | 'core';
 /** 槽位的固定排列顺序，界面与存档按此顺序遍历。 */
 export const EQUIP_SLOT_ORDER: EquipSlot[] = ['weapon', 'armor', 'trinket', 'core'];
 
+/**
+ * 钩子的触发条件，按结算当时的战斗状态判定。
+ * lowHp 与 enemyLow 比较生命与上限的半数，trackLoaded 要求己方轨道上留有条目，
+ * ignited 要求本回合打出过引牌，evenTurn 只在偶数回合成立。
+ */
+export type EquipCondition = 'lowHp' | 'enemyLow' | 'trackLoaded' | 'ignited' | 'evenTurn';
+
 export interface EquipmentDef {
   id: string;
   name: string;
@@ -293,6 +300,10 @@ export interface EquipmentDef {
   art: string;
   /** 常驻修正，与遗物共用一套字段。 */
   mods?: Partial<CombatModifiers>;
+  /** 钩子的触发条件，省略为无条件触发。 */
+  condition?: EquipCondition;
+  /** 战斗开始时结算一次。 */
+  onBattleStart?: Effect[];
   /** 玩家回合开始时结算一次。 */
   onTurnStart?: Effect[];
   /** 敌方回合结束时结算一次。 */

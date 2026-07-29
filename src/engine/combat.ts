@@ -33,6 +33,7 @@ import type {
   CombatAction,
   CombatState,
   EnemyState,
+  EquipCondition,
   Initiative,
   IntentDeckEntry,
   IntentOption,
@@ -100,8 +101,9 @@ export function createCombat(setup: CombatSetup): CombatState {
       block: 0,
       statuses: {},
       energy: 0,
-      energyPerTurn: C.ENERGY_PER_TURN + mods.energyPerTurn,
-      handSize: C.HAND_SIZE + mods.handSize,
+      // 修正可以叠加，但不能把玩家锁死在打不出牌的局面
+      energyPerTurn: Math.max(1, C.ENERGY_PER_TURN + mods.energyPerTurn),
+      handSize: Math.max(2, C.HAND_SIZE + mods.handSize),
       relics: setup.relics ?? [],
     },
     equipment: setup.equipment ?? [],
@@ -147,6 +149,9 @@ export function createCombat(setup: CombatSetup): CombatState {
   state.drawPile = shuffle(state, deck);
 
   if (mods.startingStrength !== 0) state.player.statuses.strength = mods.startingStrength;
+
+  // 开战钩子在洗牌之后结算，塞进抽牌堆的牌才会参与本场
+  triggerEquipment(state, 'onBattleStart');
 
   scheduleIntents(state);
   if (setup.enemies.some((e) => e.initiative === 'enemy')) enemyOpening(state);
@@ -371,11 +376,35 @@ function resolveInstant(
   resolveEntry(state, entry, 1, { isPlay: true, targetIndex });
 }
 
+/** trackLoaded 要求己方轨道上的条目不少于这个数量。 */
+const TRACK_LOADED_MIN = 2;
+
+/** 装备钩子的触发条件，只读当前状态。 */
+function conditionMet(state: CombatState, condition?: EquipCondition): boolean {
+  switch (condition) {
+    case 'lowHp':
+      return state.player.hp * 2 <= state.player.maxHp;
+    case 'enemyLow': {
+      const front = frontmostEnemy(state);
+      return Boolean(front && front.hp * 2 <= front.maxHp);
+    }
+    case 'trackLoaded':
+      return countEntries(state, 'player') >= TRACK_LOADED_MIN;
+    case 'ignited':
+      return state.igniteCountThisTurn > 0;
+    case 'evenTurn':
+      return state.turn % 2 === 0;
+    default:
+      return true;
+  }
+}
+
 /** 按挂钩结算已装备的效果，逐件产生事件供界面演出。 */
 function triggerEquipment(state: CombatState, hook: EquipHook): void {
   if (!state.equipment.length) return;
   for (const trigger of equipmentEffects(state.equipment, hook)) {
     if (!trigger.effects.length) continue;
+    if (!conditionMet(state, trigger.condition)) continue;
     state.events.push({ type: 'equip', slot: trigger.slot, equipId: trigger.equipId });
     resolveEntry(state, instantEntry(state, trigger.equipId, trigger.effects), 1, { isPlay: true });
   }

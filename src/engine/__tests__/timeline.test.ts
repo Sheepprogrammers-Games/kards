@@ -932,6 +932,26 @@ describe('装备触发', () => {
       art: 'test-plate',
       onTurnEnd: [{ kind: 'selfStatus', amount: 2, scaleMode: 'ONCE', status: 'ward' }],
     },
+    {
+      id: 'test-desperate',
+      name: '试炼符',
+      slot: 'trinket',
+      rarity: 'common',
+      text: '自身生命低于半数时，回合开始获得 1 层再生。',
+      art: 'test-desperate',
+      condition: 'lowHp',
+      onTurnStart: [{ kind: 'selfStatus', amount: 1, scaleMode: 'ONCE', status: 'regen' }],
+    },
+    {
+      id: 'test-metronome',
+      name: '试炼摆',
+      slot: 'core',
+      rarity: 'common',
+      text: '偶数回合开始获得 1 点能量。',
+      art: 'test-metronome',
+      condition: 'evenTurn',
+      onTurnStart: [{ kind: 'gainEnergy', amount: 1, scaleMode: 'ONCE' }],
+    },
   ];
 
   let restore: EquipmentDef[] = [];
@@ -974,5 +994,33 @@ describe('装备触发', () => {
     const state = setup({ equipment: ['test-edge'] });
     const event = state.events.find((e) => e.type === 'equip');
     expect(event?.slot).toBe('weapon');
+  });
+
+  it('条件不成立时钩子不结算，也不产生装备事件', () => {
+    const state = setup({ equipment: ['test-desperate'] });
+    expect(state.player.statuses.regen).toBeUndefined();
+    expect(state.events.some((e) => e.type === 'equip')).toBe(false);
+  });
+
+  it('生命跌到半数以下后条件成立，钩子恢复结算', () => {
+    const state = setup({ equipment: ['test-desperate'], hp: 30 });
+    expect(state.player.statuses.regen).toBe(1);
+    expect(state.events.some((e) => e.type === 'equip' && e.equipId === 'test-desperate')).toBe(
+      true,
+    );
+  });
+
+  it('偶数回合条件只在偶数回合成立', () => {
+    let state = setup({ equipment: ['test-metronome'] });
+    expect(state.turn).toBe(1);
+    expect(state.player.energy).toBe(state.player.energyPerTurn);
+
+    state = reduce(state, { type: 'endTurn' });
+    expect(state.turn).toBe(2);
+    expect(state.player.energy).toBe(state.player.energyPerTurn + 1);
+
+    state = reduce(state, { type: 'endTurn' });
+    expect(state.turn).toBe(3);
+    expect(state.player.energy).toBe(state.player.energyPerTurn);
   });
 });

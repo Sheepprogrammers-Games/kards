@@ -69,6 +69,13 @@
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
 }
 
+/* 装备按固定三列排布，末行沿列对齐，与卡牌和敌人页保持同一套网格 */
+.codex-body .equip-row {
+  display: grid;
+  grid-template-columns: repeat(3, 246px);
+  justify-content: center;
+}
+
 /* 未解锁占位。尺寸与真条目一致，只留一个问号 */
 .codex-body .codex-unknown {
   display: grid;

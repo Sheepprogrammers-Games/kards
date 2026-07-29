@@ -1,0 +1,285 @@
+/* 卡牌。三类牌靠形状语言区分，不只靠颜色。 */
+
+.card {
+  position: relative;
+  width: var(--card-w);
+  height: var(--card-h);
+  flex: 0 0 auto;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.32s var(--ease-out),
+    filter 0.24s ease;
+  will-change: transform;
+}
+
+.card-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--indigo-700), var(--indigo-900));
+  box-shadow: var(--shadow-deep);
+}
+
+.card-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 34%;
+  filter: saturate(1.05);
+}
+
+.card-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 26%,
+    rgba(11, 9, 32, 0.82) 52%,
+    rgba(9, 7, 26, 0.99) 70%
+  );
+}
+
+/* 描边与内衬分两层，避免圆角处描边被裁切 */
+.card-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--gold-dim);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 226, 170, 0.22);
+  pointer-events: none;
+}
+
+.card-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 11px 13px;
+  text-align: center;
+}
+
+.card-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: var(--gold-300);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  margin-bottom: 5px;
+}
+
+.card-text {
+  font-size: 11px;
+  line-height: 1.42;
+  color: #c2bce0;
+  min-height: 42px;
+}
+
+.card-text b {
+  color: var(--gold-400);
+  font-weight: 600;
+}
+
+.card-cost {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-num);
+  font-size: 17px;
+  color: var(--indigo-900);
+  background: radial-gradient(circle at 34% 30%, var(--gold-300), var(--gold-500) 62%, #a97a12);
+  border-radius: 50%;
+  box-shadow: var(--glow-gold);
+  z-index: 2;
+}
+
+/* 类别标记：直接写出织·引·扰，形状与配色只作辅助 */
+/* 手牌互相重叠时右侧会被邻卡压住，标记跟着费用圈留在左边缘 */
+.card-mark {
+  position: absolute;
+  top: 30px;
+  left: -3px;
+  width: 23px;
+  height: 23px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b0920;
+  border-radius: 50%;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.card[data-type='weave'] .card-mark {
+  background: radial-gradient(circle at 34% 28%, #ffe8bb, var(--gold-500));
+}
+
+.card[data-type='ignite'] .card-mark {
+  background: radial-gradient(circle at 34% 28%, #ff9ed2, var(--echo));
+  color: #2a0418;
+}
+
+.card[data-type='disrupt'] .card-mark {
+  background: radial-gradient(circle at 34% 28%, #cfe4ff, #5a8fd8);
+  color: #06152c;
+}
+
+/* 说明卡从标记右侧推出，避开左上角的费用圈与卡面正文 */
+.card-mark .stat-tip {
+  left: calc(100% + 11px);
+  right: auto;
+  bottom: auto;
+  top: 50%;
+  transform: translate(-6px, -50%);
+}
+
+.card:hover .card-mark .stat-tip,
+.card-mark:hover .stat-tip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* 拖拽中不弹说明，免得挡住落点 */
+.card.dragging .card-mark .stat-tip {
+  opacity: 0;
+}
+
+.card-mark .stat-tip::after {
+  left: 0;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: none;
+  border-left: 1px solid rgba(240, 180, 41, 0.42);
+  border-bottom: 1px solid rgba(240, 180, 41, 0.42);
+}
+
+.card[data-type='ignite'] .card-edge {
+  border-color: #8d2a5e;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 150, 210, 0.25),
+    0 0 18px rgba(224, 57, 154, 0.25);
+}
+
+.card[data-type='disrupt'] .card-edge {
+  border-color: #3c5c96;
+}
+
+.card[data-type='weave'] .card-inner {
+  background: linear-gradient(160deg, #241f52, var(--indigo-900));
+}
+
+/* 手牌区的排布与交互 */
+.hand {
+  position: relative;
+  flex: 0 0 auto;
+  margin: 10px auto clamp(76px, 10vh, 96px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: var(--card-h);
+  z-index: 6;
+  pointer-events: none;
+}
+
+.hand .card {
+  pointer-events: auto;
+  cursor: pointer;
+  margin: 0 -14px;
+}
+
+.hand .card:hover {
+  z-index: 20;
+  filter: brightness(1.12);
+}
+
+.card.playable .card-edge {
+  border-color: var(--gold-500);
+}
+
+.card.unplayable {
+  filter: grayscale(0.7) brightness(0.62);
+}
+
+.card.dragging {
+  z-index: 40;
+  pointer-events: none;
+  filter: brightness(1.16) drop-shadow(0 0 22px rgba(240, 180, 41, 0.35));
+  transition: none;
+}
+
+.card.upgraded .card-name {
+  color: var(--echo-soft);
+  text-shadow:
+    0 0 10px rgba(224, 57, 154, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.card.upgraded .card-edge {
+  border-color: var(--echo);
+}
+
+.card.refused {
+  animation: refuse 0.32s ease;
+}
+
+@keyframes refuse {
+  0%,
+  100% {
+    filter: grayscale(0.7) brightness(0.62);
+  }
+  30% {
+    filter: grayscale(0.4) brightness(0.9) drop-shadow(0 0 12px rgba(224, 72, 60, 0.7));
+    transform: translateX(-6px) rotate(-1deg);
+  }
+  65% {
+    transform: translateX(5px) rotate(1deg);
+  }
+}
+
+.hand.aiming .card:not(.dragging) {
+  opacity: 0.42;
+  filter: saturate(0.6);
+}
+
+/* 卡面说明里附带的关键词解释 */
+.keyword-row {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(240, 180, 41, 0.16);
+}
+
+.keyword-name {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 7px;
+  font-size: 11px;
+  color: var(--echo-soft);
+  background: rgba(224, 57, 154, 0.14);
+  border: 1px solid rgba(224, 57, 154, 0.35);
+}
+
+.keyword-text {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+.card-mark .stat-tip {
+  max-width: 300px;
+}

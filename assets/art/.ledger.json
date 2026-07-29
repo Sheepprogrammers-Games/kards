@@ -1,0 +1,776 @@
+{
+  "mote-gnaw": {
+    "hash": "81ff5a50f553",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T12:30:18.745Z"
+  },
+  "shove": {
+    "hash": "a2b1dd48e756",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:30:21.267Z"
+  },
+  "collapse": {
+    "hash": "46e931d8a783",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:45:24.690Z"
+  },
+  "threadbind": {
+    "hash": "53d80f98e570",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:30:20.706Z"
+  },
+  "cracked-hourglass": {
+    "hash": "93e8ddbefd54",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T12:30:56.634Z"
+  },
+  "act1-clocktower": {
+    "hash": "8cddc27e5785",
+    "size": "1536x1024",
+    "quality": "high",
+    "at": "2026-07-27T12:31:25.924Z"
+  },
+  "hourguard": {
+    "hash": "8faf6f3938c2",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:41:06.925Z"
+  },
+  "lacerate": {
+    "hash": "c64d86831085",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:41:07.231Z"
+  },
+  "foresight": {
+    "hash": "bb9acf2ba119",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:41:12.740Z"
+  },
+  "corrode": {
+    "hash": "c24657c05415",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T12:41:15.976Z"
+  },
+  "warp-lattice": {
+    "hash": "0f45422adbe9",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:00:35.588Z"
+  },
+  "spool-start": {
+    "hash": "11fb5e74800a",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:00:40.221Z"
+  },
+  "loom-anchor": {
+    "hash": "9a5d14f112dc",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:00:40.348Z"
+  },
+  "braid-of-hours": {
+    "hash": "3d0779311d74",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:00:41.164Z"
+  },
+  "gilded-seam": {
+    "hash": "995346fe83e7",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:00:43.921Z"
+  },
+  "second-hand-vow": {
+    "hash": "2fb27fe098f1",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:00:44.944Z"
+  },
+  "mending-coil": {
+    "hash": "1e5d5af58a75",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:01:14.241Z"
+  },
+  "quiet-movement": {
+    "hash": "e208d3450c8a",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:01:47.762Z"
+  },
+  "thread-doubling": {
+    "hash": "bcf5f8087fe8",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:02:23.955Z"
+  },
+  "lattice-bloom": {
+    "hash": "1ad8aa9fa92e",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:02:59.912Z"
+  },
+  "patient-weft": {
+    "hash": "13c7af7562df",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:03:37.703Z"
+  },
+  "bobbin-guard": {
+    "hash": "186ee4fe95f3",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:04:13.331Z"
+  },
+  "spiral-ward": {
+    "hash": "eb95df0e0929",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:04:59.112Z"
+  },
+  "hour-tapestry": {
+    "hash": "a389a210b6d7",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:05:34.301Z"
+  },
+  "eternal-warp": {
+    "hash": "f09e2c9f1c94",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:06:09.427Z"
+  },
+  "draw-the-arc": {
+    "hash": "1a039067cfc3",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:06:52.361Z"
+  },
+  "lens-of-noon": {
+    "hash": "0efb9b1af2ce",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:07:22.811Z"
+  },
+  "amber-conduit": {
+    "hash": "125712a6987f",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:07:59.872Z"
+  },
+  "resonance-lance": {
+    "hash": "0855ef3271bb",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:08:35.050Z"
+  },
+  "focal-hour": {
+    "hash": "8616e41b719a",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:09:16.424Z"
+  },
+  "cascade-call": {
+    "hash": "1acd5769814d",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:09:53.201Z"
+  },
+  "prism-of-echoes": {
+    "hash": "dcc4ae49a08d",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:10:28.678Z"
+  },
+  "summon-afterimage": {
+    "hash": "41ac9f650e1f",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:11:03.253Z"
+  },
+  "widening-cone": {
+    "hash": "26385f0ac548",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:11:37.631Z"
+  },
+  "golden-recital": {
+    "hash": "e69ffa489b45",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:12:17.327Z"
+  },
+  "deep-channel": {
+    "hash": "94d0c0734024",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:12:50.144Z"
+  },
+  "chorus-of-hands": {
+    "hash": "55cd3bc5e2f4",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:13:25.643Z"
+  },
+  "burning-meridian": {
+    "hash": "2bfdb1c18234",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:13:58.974Z"
+  },
+  "full-chime": {
+    "hash": "83aea7946a92",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:14:33.827Z"
+  },
+  "shear": {
+    "hash": "0a5aae56cadb",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:15:11.055Z"
+  },
+  "skip-tooth": {
+    "hash": "47ee0e051859",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:15:48.001Z"
+  },
+  "jam-escapement": {
+    "hash": "e5875eacfa60",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:16:28.798Z"
+  },
+  "backlash": {
+    "hash": "6f499228315e",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:17:08.239Z"
+  },
+  "desync": {
+    "hash": "e31c5e601f63",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:17:53.551Z"
+  },
+  "fracture-line": {
+    "hash": "02c0abe2e336",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:18:47.144Z"
+  },
+  "strip-gear": {
+    "hash": "1adfffe4da23",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:19:32.712Z"
+  },
+  "off-beat": {
+    "hash": "63dc0c884f87",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:20:09.988Z"
+  },
+  "wedge": {
+    "hash": "86121c7f660c",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:20:58.786Z"
+  },
+  "unwind": {
+    "hash": "99827207b0fe",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:21:51.025Z"
+  },
+  "cross-cut": {
+    "hash": "61fcfc623cd9",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:22:32.698Z"
+  },
+  "dead-tick": {
+    "hash": "a9f8ad96e026",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:23:15.410Z"
+  },
+  "sand-in-gears": {
+    "hash": "5ab69298dd7b",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-27T13:24:17.342Z"
+  },
+  "tick-mite": {
+    "hash": "7c7efa323e7f",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:25:02.133Z"
+  },
+  "dust-acolyte": {
+    "hash": "a6b4b16b1dc5",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:25:42.684Z"
+  },
+  "cracked-chorister": {
+    "hash": "49b3bb03f5d4",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:26:31.636Z"
+  },
+  "minute-hound": {
+    "hash": "3d74fbdd08f0",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:27:16.640Z"
+  },
+  "pendulum-wisp": {
+    "hash": "bc40e3f5214e",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:27:57.209Z"
+  },
+  "sand-crawler": {
+    "hash": "8edcec5574e1",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:28:44.925Z"
+  },
+  "brass-inquisitor": {
+    "hash": "eff8b8a3d30e",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:29:32.320Z"
+  },
+  "hour-warden": {
+    "hash": "b74de8d5fb97",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:30:24.240Z"
+  },
+  "the-unwound": {
+    "hash": "cdabc443b51e",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:31:11.146Z"
+  },
+  "glass-cardinal": {
+    "hash": "ae91377284f9",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:31:57.976Z"
+  },
+  "bell-tyrant": {
+    "hash": "67c2419d1b84",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:32:46.518Z"
+  },
+  "orrery-reversed": {
+    "hash": "be3c99bf28a0",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:33:45.536Z"
+  },
+  "first-weaver": {
+    "hash": "550e38950a85",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:35:13.655Z"
+  },
+  "weavers-thimble": {
+    "hash": "fe73f9e3dcce",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:36:48.306Z"
+  },
+  "tarot-of-the-null": {
+    "hash": "8a407295436f",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:37:53.257Z"
+  },
+  "amber-ballast": {
+    "hash": "89f5627172fb",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:38:47.249Z"
+  },
+  "brass-metronome": {
+    "hash": "842fe05fad8e",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:40:03.012Z"
+  },
+  "bent-minute-hand": {
+    "hash": "1bf7796cdcbf",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:41:07.348Z"
+  },
+  "widows-pendulum": {
+    "hash": "64d42738dbc7",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:41:43.006Z"
+  },
+  "gilded-bobbin": {
+    "hash": "36bd251811b1",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:43:20.116Z"
+  },
+  "echo-tuning-fork": {
+    "hash": "bbd33fb52dec",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:43:42.887Z"
+  },
+  "inverted-astrolabe": {
+    "hash": "0ea56492a88f",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:44:24.696Z"
+  },
+  "mainspring-heart": {
+    "hash": "168d5f3ad068",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:44:57.229Z"
+  },
+  "dust-of-noon": {
+    "hash": "bd7aa647b1df",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:45:34.230Z"
+  },
+  "sealed-escapement": {
+    "hash": "36d3b62ddf71",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:46:15.625Z"
+  },
+  "warden-key": {
+    "hash": "f05f00b38db7",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:46:58.554Z"
+  },
+  "looped-chain": {
+    "hash": "1e7f7e4775df",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:49:09.115Z"
+  },
+  "clouded-lens": {
+    "hash": "51f191022b0e",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:49:45.294Z"
+  },
+  "counterweight-crown": {
+    "hash": "1fe621f8ccc5",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:50:42.542Z"
+  },
+  "frozen-bell-clapper": {
+    "hash": "c9de5a75e264",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:51:24.304Z"
+  },
+  "spool-of-last-hour": {
+    "hash": "3a745936a8a6",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:52:57.937Z"
+  },
+  "verdigris-gnomon": {
+    "hash": "aee1f08d8449",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:54:40.713Z"
+  },
+  "patience-sigil": {
+    "hash": "30ea61e16c57",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:56:09.678Z"
+  },
+  "act2-reversed-gallery": {
+    "hash": "ad55b557b31d",
+    "size": "1536x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:57:08.538Z"
+  },
+  "act3-null-sanctum": {
+    "hash": "2654657eddbe",
+    "size": "1536x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:57:49.628Z"
+  },
+  "shattered-numeral": {
+    "hash": "22b91a734b3b",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:58:40.949Z"
+  },
+  "second-shadow": {
+    "hash": "f355832e1bda",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T13:59:24.831Z"
+  },
+  "card-back": {
+    "hash": "c02bffef5a16",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:00:35.728Z"
+  },
+  "null-anchor": {
+    "hash": "b3c35dc96265",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:01:26.381Z"
+  },
+  "energy-sigil": {
+    "hash": "1dcd41899e57",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:02:11.191Z"
+  },
+  "track-slot-frame": {
+    "hash": "28db4bc6870a",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:02:56.837Z"
+  },
+  "act-crest": {
+    "hash": "102a2723ed19",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:03:38.753Z"
+  },
+  "weaver-portrait": {
+    "hash": "7cb3f66cfb76",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:17:57.731Z"
+  },
+  "late-shade": {
+    "hash": "c1383805621b",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:53:19.994Z"
+  },
+  "null-leech": {
+    "hash": "1a2b3a1a7ee1",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:53:22.634Z"
+  },
+  "flare-moth": {
+    "hash": "b2ba499f4892",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:53:25.449Z"
+  },
+  "warp-thief": {
+    "hash": "48dc7bf8ac4d",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T14:53:26.922Z"
+  },
+  "deep-winder": {
+    "hash": "7c30658e3ed7",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T15:06:20.573Z"
+  },
+  "chain-vicar": {
+    "hash": "c233fa168a79",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T15:14:05.404Z"
+  },
+  "slag-sentinel": {
+    "hash": "7d99013ee919",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T15:14:11.793Z"
+  },
+  "plumb-magistrate": {
+    "hash": "30f01474dab6",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-27T15:14:17.508Z"
+  },
+  "stone-warp": {
+    "hash": "f5309e2d46d8",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:07.061Z"
+  },
+  "slow-spindle": {
+    "hash": "462676e99e70",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:07.083Z"
+  },
+  "thread-snap": {
+    "hash": "a3f129d59c7a",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:08.256Z"
+  },
+  "twin-anchor": {
+    "hash": "5adbda2a3dc6",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:09.049Z"
+  },
+  "burr-thread": {
+    "hash": "a7bd8e5e134b",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:09.312Z"
+  },
+  "double-weft": {
+    "hash": "fc9091a40bba",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:10.210Z"
+  },
+  "frayed-hem": {
+    "hash": "31aed83aceaf",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:27:47.223Z"
+  },
+  "knot-of-thirds": {
+    "hash": "49c57e6f820f",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:28:24.255Z"
+  },
+  "pinhole-burst": {
+    "hash": "b7dd904b220f",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:28:54.689Z"
+  },
+  "ember-tap": {
+    "hash": "276a8180fa26",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:29:28.339Z"
+  },
+  "split-flare": {
+    "hash": "8e2c114a0d10",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:30:03.672Z"
+  },
+  "last-toll": {
+    "hash": "176457667bc1",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:30:34.506Z"
+  },
+  "sidestep-gear": {
+    "hash": "d3a4cec1fa0d",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:31:08.624Z"
+  },
+  "reverse-pawl": {
+    "hash": "fae8888bf046",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:31:53.041Z"
+  },
+  "hold-fast": {
+    "hash": "1b9be82b8605",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:32:28.365Z"
+  },
+  "thread-theft": {
+    "hash": "0545c01f6794",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-28T16:33:06.748Z"
+  },
+  "title-frame": {
+    "hash": "c689b9d2b752",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-28T17:39:12.354Z"
+  },
+  "title-sigil": {
+    "hash": "8deee9a85d0d",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-28T17:39:18.164Z"
+  },
+  "ember-reliquary": {
+    "hash": "c3127ae1a468",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:13:32.899Z"
+  },
+  "even-dial": {
+    "hash": "b8f5ba2260e5",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:13:34.166Z"
+  },
+  "homing-spool": {
+    "hash": "ce3c6c77cf7a",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:13:35.440Z"
+  },
+  "first-thread-key": {
+    "hash": "2da1b77a1cae",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:13:58.334Z"
+  },
+  "counter-spindle": {
+    "hash": "d71bcc78af28",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:14:24.651Z"
+  },
+  "unpaid-wager": {
+    "hash": "f9b6196f06ed",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:14:31.892Z"
+  },
+  "conspirators-mask": {
+    "hash": "7ce17a18b852",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:14:53.903Z"
+  },
+  "silent-spring": {
+    "hash": "62f922758048",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T06:15:21.507Z"
+  }
+}

@@ -1,0 +1,765 @@
+/* 时间轨。敌方泳道在上，玩家泳道在下，条目自左向右推进。 */
+
+.track {
+  position: relative;
+  width: min(1080px, 76vw);
+  margin: 0 auto;
+  padding: 14px 16px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(20, 17, 52, 0.86), rgba(9, 7, 26, 0.92));
+  border: 1px solid rgba(240, 180, 41, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.14),
+    inset 0 -14px 30px rgba(0, 0, 0, 0.5),
+    0 16px 44px rgba(0, 0, 0, 0.55);
+  z-index: 5;
+}
+
+/* 面板四角的铆钉 */
+.track::before,
+.track::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  width: 5px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(240, 180, 41, 0.35), rgba(240, 180, 41, 0.05));
+  pointer-events: none;
+}
+
+.track::before {
+  left: 7px;
+}
+
+.track::after {
+  right: 7px;
+}
+
+/* 中央导轨：黄铜条带加等距刻度 */
+.track-rail {
+  position: relative;
+  height: 9px;
+  margin: 9px 2px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #7a5d22 0%, #2c2009 52%, #55401a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.42),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.7),
+    0 0 20px rgba(240, 180, 41, 0.16);
+}
+
+.track-rail::after {
+  content: '';
+  position: absolute;
+  inset: 2px 6px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 20px,
+    rgba(0, 0, 0, 0.42) 20px 22px
+  );
+}
+
+.lane {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.slot {
+  position: relative;
+  height: clamp(60px, 8.2vh, 88px);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(40, 36, 94, 0.55), rgba(12, 10, 34, 0.75));
+  border: 1px solid rgba(240, 180, 41, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.16),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.45);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* 内衬线，让空格位也有厚度 */
+.slot::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 5px;
+  border: 1px solid rgba(240, 180, 41, 0.09);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.lane-enemy .slot {
+  border-color: rgba(224, 72, 60, 0.3);
+  background: linear-gradient(180deg, rgba(72, 26, 46, 0.5), rgba(14, 9, 28, 0.78));
+}
+
+.lane-enemy .slot::before {
+  border-color: rgba(224, 72, 60, 0.12);
+}
+
+/* 格位徽章骑在边框上，不占用内部空间 */
+.slot-label {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1.5px 10px;
+  border-radius: 9px;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #2b2460, #120f38);
+  border: 1px solid rgba(240, 180, 41, 0.4);
+  font-family: var(--font-num);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--gold-400);
+}
+
+.lane-enemy .slot-label {
+  background: linear-gradient(180deg, #4a1b30, #16091c);
+  border-color: rgba(224, 72, 60, 0.45);
+  color: #ff9d92;
+}
+
+.slot-coef {
+  position: absolute;
+  z-index: 4;
+  bottom: 4px;
+  right: 7px;
+  font-family: var(--font-num);
+  font-size: 10.5px;
+  color: rgba(240, 180, 41, 0.62);
+}
+
+.slot.droppable {
+  border-color: var(--gold-500);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.2),
+    var(--glow-gold);
+}
+
+/* 轨上条目：卡面缩略 + 强度条 */
+.entry {
+  position: absolute;
+  z-index: 1;
+  inset: 5px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center 30%;
+  border: 1px solid rgba(240, 180, 41, 0.45);
+  animation: entry-in 0.34s var(--ease-snap);
+}
+
+.entry::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(11, 9, 32, 0.92) 8%, transparent 62%);
+}
+
+.entry-name {
+  position: absolute;
+  z-index: 2;
+  left: 6px;
+  right: 6px;
+  bottom: 4px;
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--gold-300);
+  text-shadow: 0 1px 3px #000;
+  z-index: 2;
+}
+
+.entry-budget {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  z-index: 2;
+}
+
+.entry-budget i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold-400);
+  box-shadow: 0 0 4px rgba(240, 180, 41, 0.8);
+}
+
+.entry.intent {
+  border-color: rgba(224, 72, 60, 0.6);
+}
+
+/* 意图剩余的延后额度 */
+.entry-delay {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  z-index: 3;
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(238, 132, 122, 0.9);
+}
+
+.entry-delay i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--echo-300, #7fd4e8);
+  box-shadow: 0 0 4px rgba(127, 212, 232, 0.75);
+}
+
+.entry-delay i.used {
+  background: rgba(120, 132, 168, 0.4);
+  box-shadow: none;
+}
+
+.entry-delay[data-state='spent'] i {
+  background: rgba(224, 72, 60, 0.5);
+  box-shadow: none;
+}
+
+.entry-intent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  z-index: 2;
+  padding: 2px 6px;
+}
+
+.entry-intent-value {
+  font-family: var(--font-num);
+  font-size: 23px;
+  line-height: 1.05;
+  color: #ffb4ac;
+  text-shadow: 0 2px 8px #000;
+}
+
+.entry-intent-label {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: #ffc9c2;
+  text-shadow: 0 1px 3px #000;
+  text-align: center;
+}
+
+.entry-intent-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 回响触发时的残影重播。强度分档对应格位系数 */
+.entry.echoing {
+  animation: echo-pulse 0.5s var(--ease-out);
+}
+
+.entry.echoing[data-power='full'] {
+  animation: echo-pulse-full 0.52s var(--ease-out);
+}
+
+.entry.echoing[data-power='strong'] {
+  animation: echo-pulse-strong 0.5s var(--ease-out);
+}
+
+.entry.echoing[data-power='mid'] {
+  animation: echo-pulse 0.46s var(--ease-out);
+}
+
+.entry.echoing[data-power='faint'] {
+  animation: echo-pulse-faint 0.42s var(--ease-out);
+}
+
+/* 本次回响的系数读数 */
+.entry-coef {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  bottom: 17px;
+  text-align: center;
+  font-family: var(--font-num);
+  font-size: 13px;
+  color: var(--echo-soft);
+  text-shadow:
+    0 0 10px rgba(224, 57, 154, 0.9),
+    0 1px 3px #000;
+  animation: coef-rise 0.6s var(--ease-out) forwards;
+}
+
+.slot.echo-active {
+  border-color: var(--echo);
+  box-shadow: var(--glow-echo);
+}
+
+.slot.echo-active .slot-coef {
+  color: var(--echo-soft);
+  text-shadow: 0 0 10px rgba(224, 57, 154, 0.9);
+  animation: coef-flare 0.5s var(--ease-snap);
+}
+
+/* 位移过渡。placed 抑制重挂节点时的入场动画 */
+.entry.placed {
+  animation: none;
+}
+
+.entry.sliding {
+  transition: transform 0.26s var(--ease-out);
+  z-index: 3;
+}
+
+.entry.cast {
+  animation: entry-in 0.34s var(--ease-snap);
+}
+
+/* 自然退场 */
+.entry.leaving {
+  animation: entry-leave 0.26s var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+/* 引爆前的蓄力 */
+.entry.charging {
+  filter: brightness(1.22) saturate(1.15);
+}
+
+/* 光晕挂在格位上，条目自身裁剪溢出。阴影只栅格化一次，逐帧变化的只有透明度 */
+.slot:has(> .entry.charging)::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 16px 3px rgba(240, 180, 41, 0.75);
+  pointer-events: none;
+  animation: entry-charge 0.9s ease-in-out infinite;
+}
+
+.entry.frozen {
+  animation: entry-frost 0.5s var(--ease-out);
+}
+
+/* 溢出烧毁：永久移出战斗 */
+.entry.burning {
+  animation: entry-burn 0.44s ease-in forwards;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* 意图脱轨飞向玩家 */
+.entry.launching {
+  animation: intent-fly 0.24s cubic-bezier(0.42, 0, 0.9, 0.62) forwards;
+  z-index: 6;
+  pointer-events: none;
+}
+
+@keyframes coef-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(1);
+  }
+}
+
+@keyframes coef-flare {
+  50% {
+    transform: scale(1.5);
+  }
+}
+
+@keyframes echo-pulse-full {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 57, 154, 0.95);
+    filter: brightness(2.1) saturate(1.3);
+    transform: scale(1.09);
+  }
+  100% {
+    box-shadow: 0 0 0 30px rgba(224, 57, 154, 0);
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+@keyframes echo-pulse-strong {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 57, 154, 0.85);
+    filter: brightness(1.8) saturate(1.2);
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 23px rgba(224, 57, 154, 0);
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+@keyframes echo-pulse-faint {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 57, 154, 0.5);
+    filter: brightness(1.25);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(224, 57, 154, 0);
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+@keyframes entry-leave {
+  to {
+    opacity: 0;
+    filter: brightness(1.5);
+    transform: translateY(-8px) scale(0.9);
+  }
+}
+
+@keyframes entry-charge {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes entry-frost {
+  0% {
+    filter: brightness(1.8) hue-rotate(160deg);
+    box-shadow: 0 0 0 0 rgba(127, 179, 255, 0.9);
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 16px rgba(127, 179, 255, 0);
+  }
+}
+
+@keyframes entry-burn {
+  0% {
+    filter: brightness(1) saturate(1);
+    transform: scale(1);
+  }
+  22% {
+    filter: brightness(3.4) saturate(2.4) sepia(0.6);
+    transform: scale(1.16) rotate(-2deg);
+    border-color: #ff8a3c;
+  }
+  100% {
+    filter: brightness(0.35) saturate(0) blur(5px);
+    transform: translateY(30px) scale(0.72) rotate(9deg);
+    opacity: 0;
+  }
+}
+
+@keyframes intent-fly {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.34);
+    opacity: 0;
+    filter: brightness(2.4);
+  }
+}
+
+@keyframes entry-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.86);
+  }
+}
+
+@keyframes echo-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 57, 154, 0.75);
+    filter: brightness(1.5);
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgba(224, 57, 154, 0);
+    filter: brightness(1);
+  }
+}
+
+.lane-player .slot.empty::after {
+  content: '空';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: rgba(99, 93, 140, 0.45);
+}
+
+.lane-enemy .slot.empty::after {
+  content: '';
+}
+
+/* 下一次回响的产出预览 */
+.entry-preview {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: 6px;
+  text-align: center;
+  font-family: var(--font-num);
+  font-size: 19px;
+  color: var(--gold-300);
+  text-shadow:
+    0 0 10px rgba(240, 180, 41, 0.7),
+    0 2px 4px #000;
+}
+
+
+/* 敌方泳道做成浮层，靠近提示条或拖拽扰牌时才出现 */
+.lane-enemy {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(100% + 10px);
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(26, 21, 62, 0.98), rgba(9, 7, 26, 0.99));
+  border: 1px solid rgba(224, 72, 60, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.1),
+    0 14px 34px rgba(0, 0, 0, 0.72);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.2s var(--ease-out);
+  z-index: 14;
+}
+
+.lane-enemy::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%) rotate(45deg) translateY(-6px);
+  background: rgba(9, 7, 26, 0.99);
+  border-right: 1px solid rgba(224, 72, 60, 0.45);
+  border-bottom: 1px solid rgba(224, 72, 60, 0.45);
+}
+
+.track.reveal .lane-enemy {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 导轨上方的提示条，标出敌轨哪几格有意图 */
+.enemy-hint {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  height: 14px;
+  margin-bottom: 2px;
+  cursor: help;
+}
+
+.hint-dot {
+  justify-self: center;
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(157, 151, 196, 0.26);
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s var(--ease-snap);
+}
+
+.hint-dot.filled {
+  background: #e0483c;
+  box-shadow: 0 0 9px rgba(224, 72, 60, 0.9);
+}
+
+.enemy-hint:hover .hint-dot.filled {
+  transform: scale(1.35);
+}
+
+.track.reveal .enemy-hint .hint-dot.filled {
+  transform: scale(1.35);
+}
+
+/* 拖拽期间标出该牌能落的那一侧 */
+.lane-hot .slot {
+  border-color: rgba(240, 180, 41, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 170, 0.2),
+    0 0 14px rgba(240, 180, 41, 0.22);
+}
+
+.lane-hot .slot:not(.droppable)::before {
+  border-color: rgba(240, 180, 41, 0.72);
+  animation: lane-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes lane-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 轨上条目的说明卡 */
+.slot {
+  overflow: visible;
+}
+
+.slot:hover {
+  z-index: 30;
+}
+
+.entry-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(5px);
+  width: max-content;
+  max-width: 270px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  text-align: left;
+  background: linear-gradient(180deg, rgba(26, 21, 62, 0.98), rgba(9, 7, 26, 0.99));
+  border: 1px solid rgba(240, 180, 41, 0.44);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.18s var(--ease-out);
+  z-index: 32;
+}
+
+.slot:hover .entry-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.entry-tip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg) translateY(-6px);
+  background: rgba(9, 7, 26, 0.99);
+  border-right: 1px solid rgba(240, 180, 41, 0.44);
+  border-bottom: 1px solid rgba(240, 180, 41, 0.44);
+}
+
+/* 敌方浮层已经贴着屏幕上方，说明卡改向下弹 */
+.lane-enemy .entry-tip {
+  bottom: auto;
+  top: calc(100% + 12px);
+  transform: translateX(-50%) translateY(-5px);
+  border-color: rgba(224, 72, 60, 0.5);
+}
+
+.lane-enemy .slot:hover .entry-tip {
+  transform: translateX(-50%) translateY(0);
+}
+
+.lane-enemy .entry-tip::after {
+  top: auto;
+  bottom: 100%;
+  transform: translateX(-50%) rotate(45deg) translateY(6px);
+  border: none;
+  border-left: 1px solid rgba(224, 72, 60, 0.5);
+  border-top: 1px solid rgba(224, 72, 60, 0.5);
+}
+
+.entry-tip-head {
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--gold-400);
+  margin-bottom: 6px;
+}
+
+.entry-tip-body {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+.entry-tip-yield {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(240, 180, 41, 0.18);
+  font-family: var(--font-num);
+  font-size: 12px;
+  color: var(--gold-300);
+}
+
+.entry-tip-ignite {
+  margin-top: 5px;
+  font-family: var(--font-num);
+  font-size: 12px;
+  color: rgba(238, 150, 96, 0.92);
+}
+
+/* 多个敌人时标出这一格属于谁 */
+.entry-owner {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  top: 2px;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 180, 172, 0.72);
+  text-shadow: 0 1px 3px #000;
+  transition:
+    color 0.18s ease,
+    text-shadow 0.18s ease;
+}
+
+.entry-owner.owner-lit {
+  color: var(--gold-300);
+  text-shadow:
+    0 0 10px rgba(240, 180, 41, 0.8),
+    0 1px 3px #000;
+}
+
+/* 有归属标签时数值下移让位 */
+.entry-intent {
+  padding-top: 12px;
+}

@@ -1,0 +1,48 @@
+/* 设计变量。颜色与美术素材同源。 */
+
+:root {
+  --indigo-900: #0b0920;
+  --indigo-800: #131033;
+  --indigo-700: #1d1b4b;
+  --indigo-600: #2a2764;
+  --indigo-500: #3b3785;
+
+  --gold-500: #f0b429;
+  --gold-400: #ffd27a;
+  --gold-300: #ffe8bb;
+  --gold-dim: #8a6a22;
+
+  --echo: #e0399a;
+  --echo-soft: #ff7ac4;
+
+  --danger: #e0483c;
+  --poison: #7ad46a;
+  --block: #7fb3ff;
+
+  --ink: #e8e3ff;
+  --ink-dim: #9d97c4;
+  --ink-faint: #635d8c;
+
+  --slot-1: 1;
+  --slot-2: 0.7;
+  --slot-3: 0.45;
+  --slot-4: 0.25;
+
+  --card-w: clamp(124px, 10.2vw, 152px);
+  --card-h: clamp(190px, 15.7vw, 234px);
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --font-display: 'Cinzel', 'Songti SC', 'STSong', serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  --font-num: 'Cinzel', 'Menlo', monospace;
+
+  --glow-gold: 0 0 12px rgba(240, 180, 41, 0.45), 0 0 32px rgba(240, 180, 41, 0.18);
+  --glow-echo: 0 0 14px rgba(224, 57, 154, 0.5), 0 0 40px rgba(224, 57, 154, 0.2);
+  --shadow-deep: 0 18px 48px rgba(0, 0, 0, 0.65);
+}

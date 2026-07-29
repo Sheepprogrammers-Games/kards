@@ -1,0 +1,25 @@
+{
+  "name": "echoes",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "art": "node tools/artgen/gen.mjs"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/howler": "^2.2.13",
+    "@types/node": "^26.1.1",
+    "puppeteer-core": "^25.4.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "howler": "^2.2.4",
+    "motion": "^12.42.2"
+  },
+  "private": true
+}

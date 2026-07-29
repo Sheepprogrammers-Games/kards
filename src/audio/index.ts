@@ -35,6 +35,8 @@ interface NoiseOptions {
   drive?: number;
 }
 
+const MASTER_GAIN = 0.82;
+
 class Sfx {
   private ctx: AudioContext | null = null;
   private dry: GainNode | null = null;
@@ -42,6 +44,7 @@ class Sfx {
   private master: GainNode | null = null;
   private noiseBuffer: AudioBuffer | null = null;
   private muted = false;
+  private volume = 1;
 
   /** 浏览器要求音频上下文在用户手势后创建。 */
   private ensure(): AudioContext | null {
@@ -64,7 +67,7 @@ class Sfx {
     comp.release.value = 0.18;
 
     const master = ctx.createGain();
-    master.gain.value = 0.82;
+    master.gain.value = MASTER_GAIN * this.volume;
     comp.connect(master).connect(ctx.destination);
     this.master = master;
 
@@ -417,7 +420,13 @@ class Sfx {
 
   setMuted(value: boolean): void {
     this.muted = value;
-    if (this.master) this.master.gain.value = value ? 0 : 0.5;
+    if (this.master) this.master.gain.value = value ? 0 : MASTER_GAIN * this.volume;
+  }
+
+  /** 音效总音量倍率，0 到 1。 */
+  setVolume(value: number): void {
+    this.volume = Math.max(0, Math.min(1, value));
+    if (this.master && !this.muted) this.master.gain.value = MASTER_GAIN * this.volume;
   }
 }
 

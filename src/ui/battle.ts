@@ -3,6 +3,7 @@
 import { canPlay, costOf, manipulationLane as targetLaneOf, reduce } from '@engine/combat';
 import { countEntries, entriesOf, rewindsLeft } from '@engine/track';
 import { C, coefOf } from '@engine/constants';
+import { intentAim } from '@engine/intents';
 import { cardDef, intentDef } from '@engine/registry';
 import type {
   Effect,
@@ -15,6 +16,7 @@ import type {
   TrackEntry,
 } from '@engine/types';
 import { ENEMIES } from '@content/enemies';
+import { EQUIPMENT } from '@content/equipment';
 import { RELICS } from '@content/relics';
 import { art } from './assets';
 import { fx } from '@fx/index';
@@ -81,6 +83,7 @@ export class BattleScene {
   private elPiles!: { draw: HTMLElement; discard: HTMLElement };
   private elBanner!: HTMLElement;
   private elRelics!: HTMLElement;
+  private elEquips!: HTMLElement;
   private elPortrait!: HTMLElement;
   private elBar!: HTMLElement;
   private elTrack!: HTMLElement;
@@ -170,7 +173,8 @@ export class BattleScene {
     piles.addEventListener('click', () => showPiles(this.root, this.state));
 
     this.elRelics = el('div', 'relic-bar');
-    bar.append(portrait, hpWrap, this.elEnergy, this.elBlock, piles, this.elRelics);
+    this.elEquips = el('div', 'relic-bar equip-bar');
+    bar.append(portrait, hpWrap, this.elEnergy, this.elBlock, piles, this.elRelics, this.elEquips);
     scene.append(bar);
 
     const book = el('button', 'codex-button');
@@ -212,6 +216,7 @@ export class BattleScene {
   /** still 为真时轨上条目直接就位，位移由事件播放单独驱动。 */
   private render(track?: Record<Lane, (TrackEntry | null)[]>, still = false): void {
     this.renderRelics();
+    this.renderEquips();
     this.renderEnemies();
     this.renderTrack(track ?? this.state.track, still);
     this.renderHand();
@@ -583,6 +588,34 @@ export class BattleScene {
       });
       this.elRelics.append(more);
     }
+  }
+
+  /** 在身装备与遗物并排常驻，结算时点亮对应的那一格。 */
+  private renderEquips(): void {
+    this.elEquips.innerHTML = '';
+    for (const id of this.state.equipment) {
+      const def = EQUIPMENT.find((e) => e.id === id);
+      if (!def) continue;
+      const slot = el('div', 'relic-slot equip-worn');
+      const url = art.equipment(def.art);
+      if (url) slot.style.backgroundImage = `url(${url})`;
+      slot.dataset.equip = id;
+
+      const tip = el('div', 'relic-tip');
+      tip.append(el('div', 'relic-tip-head', def.name), el('div', 'relic-tip-body', def.text));
+      slot.append(tip);
+      this.elEquips.append(slot);
+    }
+  }
+
+  /** 装备结算时闪一下对应的槽位。 */
+  private fireEquip(id: string): void {
+    const slot = this.elEquips.querySelector(`[data-equip="${id}"]`) as HTMLElement | null;
+    if (!slot) return;
+    slot.classList.remove('firing');
+    void slot.offsetWidth;
+    slot.classList.add('firing');
+    setTimeout(() => slot.classList.remove('firing'), 900);
   }
 
   /** 遗物生效时点亮它并说明发生了什么。 */
@@ -1189,6 +1222,11 @@ export class BattleScene {
           await wait(160);
           break;
 
+        case 'equip':
+          this.fireEquip(String(ev.equipId));
+          await wait(120);
+          break;
+
         case 'intentStrike': {
           const node = this.nodeForCombatant(String(ev.enemyId));
 
@@ -1199,7 +1237,11 @@ export class BattleScene {
           const entry = this.elLanes.enemy.querySelector(
             `.entry[data-uid="${ev.uid}"]`,
           ) as HTMLElement | null;
-          const landing = centerOf(this.elPortrait);
+
+          // 朝自己的意图打回敌人身上，攻向玩家的才落到肖像上
+          const def = safeIntentDef(String(ev.cardId));
+          const inward = def ? intentAim(def) === 'self' : false;
+          const landing = centerOf(inward && node ? node : this.elPortrait);
 
           if (entry) {
             const from = centerOf(entry);
@@ -1209,7 +1251,7 @@ export class BattleScene {
             fx.bolt(from, landing, 0.3);
           }
           sfx.intent();
-          fx.nudge(4);
+          if (!inward) fx.nudge(4);
 
           if (node) {
             node.classList.remove('striking');
@@ -1217,7 +1259,7 @@ export class BattleScene {
             node.classList.add('striking');
             setTimeout(() => node.classList.remove('striking'), 440);
 
-            const acting = effectLabel(safeIntentDef(String(ev.cardId))?.effects ?? []);
+            const acting = effectLabel(def?.effects ?? []);
             if (acting) {
               const r = node.getBoundingClientRect();
               this.castLabel(acting, { x: r.left + r.width / 2, y: r.top + 12 });

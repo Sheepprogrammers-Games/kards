@@ -60,7 +60,7 @@ class Music {
   private resumeId: TrackId | null = null;
 
   private levelOf(id: TrackId | StingerId): number {
-    return Math.min(1, BASE * (TRIM[id] ?? 1));
+    return Math.min(1, BASE * (TRIM[id] ?? 1) * settings().musicVolume);
   }
 
   /** 切到指定曲目。缺文件时把当前曲目淡出后留空。 */

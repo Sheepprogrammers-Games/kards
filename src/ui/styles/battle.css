@@ -1458,3 +1458,12 @@
     transform: scale(1);
   }
 }
+
+/* 在身装备与遗物并排，槽位为方形以示区分 */
+.equip-bar {
+  max-width: 112px;
+}
+
+.relic-slot.equip-worn {
+  border-radius: var(--radius-sm);
+}

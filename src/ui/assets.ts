@@ -20,6 +20,12 @@ const relics = import.meta.glob('../../assets/art/relic/*.webp', {
   import: 'default',
 }) as UrlMap;
 
+const equipment = import.meta.glob('../../assets/art/equipment/*.webp', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as UrlMap;
+
 const backgrounds = import.meta.glob('../../assets/art/bg/*.webp', {
   eager: true,
   query: '?url',
@@ -43,6 +49,7 @@ export const art = {
   card: (id: string) => pick(cards, id),
   enemy: (id: string) => pick(enemies, id),
   relic: (id: string) => pick(relics, id),
+  equipment: (id: string) => pick(equipment, id),
   bg: (id: string) => pick(backgrounds, id),
   ui: (id: string) => pick(ui, id),
 };

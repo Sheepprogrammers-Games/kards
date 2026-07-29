@@ -4,7 +4,8 @@ import { availableNodes, type MapNode, type NodeKind } from '@engine/map';
 import type { RunState } from '@engine/run';
 import { cardDef } from '@engine/registry';
 import { effectsOf, upgradedCost } from '@engine/combat';
-import type { CardDef } from '@engine/types';
+import { EQUIP_SLOT_ORDER, type CardDef, type EquipSlot, type RewardOffer } from '@engine/types';
+import { equipmentDef } from '@engine/equipment';
 import { RELICS } from '@content/relics';
 import { art } from './assets';
 import { sfx } from '@audio/index';
@@ -106,8 +107,75 @@ export function renderRunBar(run: RunState, host?: HTMLElement): HTMLElement {
     icon.append(tip);
     relics.append(icon);
   }
-  bar.append(relics);
+  bar.append(relics, renderLoadout(run));
   return bar;
+}
+
+const SLOT_NAME: Record<EquipSlot, string> = {
+  weapon: '武器',
+  armor: '护甲',
+  trinket: '饰品',
+  core: '机芯',
+};
+
+const SLOT_GLYPH: Record<EquipSlot, string> = {
+  weapon: '⚔',
+  armor: '⛨',
+  trinket: '❈',
+  core: '⚙',
+};
+
+/** 四个装备槽常驻显示，空槽留一个占位符。 */
+function renderLoadout(run: RunState): HTMLElement {
+  const box = el('div', 'loadout');
+  for (const slot of EQUIP_SLOT_ORDER) {
+    const id = run.equipment?.[slot] ?? null;
+    const cell = el('div', 'equip-slot');
+    cell.dataset.slot = slot;
+
+    const tip = el('div', 'relic-tip');
+    if (id) {
+      const def = equipmentDef(id);
+      const url = art.equipment(def.art);
+      if (url) cell.style.backgroundImage = `url(${url})`;
+      else cell.textContent = SLOT_GLYPH[slot];
+      tip.append(
+        el('div', 'relic-tip-head', `${def.name}　${SLOT_NAME[slot]}`),
+        el('div', 'relic-tip-body', def.text),
+      );
+    } else {
+      cell.classList.add('empty');
+      cell.textContent = SLOT_GLYPH[slot];
+      tip.append(
+        el('div', 'relic-tip-head', SLOT_NAME[slot]),
+        el('div', 'relic-tip-body', '尚未装备。'),
+      );
+    }
+    cell.append(tip);
+    box.append(cell);
+  }
+  return box;
+}
+
+/** 装备的展示卡，用于奖励、商店与手册。 */
+export function renderEquipCard(id: string): HTMLElement {
+  const def = equipmentDef(id);
+  const node = el('div', 'equip-card');
+  node.dataset.rarity = def.rarity;
+
+  const icon = el('div', 'equip-card-art');
+  const url = art.equipment(def.art);
+  if (url) icon.style.backgroundImage = `url(${url})`;
+  else icon.textContent = SLOT_GLYPH[def.slot];
+
+  const body = el('div', 'equip-card-body');
+  body.append(
+    el('div', 'equip-card-name', def.name),
+    el('div', 'equip-card-slot', SLOT_NAME[def.slot]),
+    el('div', 'equip-card-text', def.text),
+  );
+  node.append(icon, body);
+  return node;
 }
 
 /** 地图。行自下而上排列，最上方是本幕的守时者。 */
@@ -302,55 +370,111 @@ function drawEdges(
   }
 }
 
-export interface RewardOffer {
-  cards: string[];
-  gold: number;
-  relic?: string;
+/** 奖励界面把每一项交互交回调用方，取走后该项自行消失。 */
+export interface RewardHandlers {
+  onCard: (defId: string, claim: () => void) => void;
+  onRelic: (id: string, claim: () => void) => void;
+  onEquipment: (id: string, claim: () => void) => void;
+  onRemoveCard: (claim: () => void) => void;
+  onUpgradeCard: (claim: () => void) => void;
+  onDone: () => void;
 }
 
-export function renderReward(
-  offer: RewardOffer,
-  onTakeCard: (defId: string) => void,
-  onTakeRelic: (id: string) => void,
-  onSkip: () => void,
-): HTMLElement {
+const REWARD_TITLE: Record<string, string> = {
+  card: '取一张牌织入牌组',
+  relic: '一件遗物',
+  equipment: '取一件装备穿上',
+  gold: '时砂',
+  heal: '伤口收拢',
+  removeCard: '洗去一张牌',
+  upgradeCard: '重录一张牌',
+  nothing: '什么也没留下',
+};
+
+export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): HTMLElement {
   const overlay = el('div', 'overlay');
-  const panel = el('div', 'panel');
+  const panel = el('div', 'panel reward-panel');
   panel.append(el('h2', '', '回响余烬'));
-  panel.append(el('p', '', `获得 ${offer.gold} 枚时砂。选择一张牌织入牌组。`));
 
-  if (offer.relic) {
-    const def = RELICS.find((r) => r.id === offer.relic);
-    const row = el('div', 'relic-reward');
-    const img = document.createElement('img');
-    const url = art.relic(def?.art ?? offer.relic);
-    if (url) img.src = url;
-    const info = el('div');
-    info.append(el('div', 'choice-title', def?.name ?? offer.relic));
-    info.append(el('div', 'choice-desc', def?.text ?? ''));
-    row.append(img, info);
-    row.addEventListener('click', () => {
-      sfx.play('relic');
-      onTakeRelic(offer.relic!);
-      row.remove();
-    });
-    panel.append(row);
+  for (const offer of offers) {
+    const block = el('div', 'reward-block');
+    block.append(el('div', 'reward-title', REWARD_TITLE[offer.kind] ?? offer.kind));
+    const claim = () => block.remove();
+
+    switch (offer.kind) {
+      case 'card': {
+        const row = el('div', 'card-row');
+        for (const defId of offer.options ?? []) {
+          const node = renderStaticCard(defId);
+          node.addEventListener('click', () => {
+            sfx.play(defId);
+            handlers.onCard(defId, claim);
+          });
+          row.append(node);
+        }
+        block.append(row);
+        break;
+      }
+      case 'equipment': {
+        const row = el('div', 'equip-row');
+        for (const id of offer.options ?? []) {
+          const node = renderEquipCard(id);
+          node.addEventListener('click', () => {
+            sfx.play('relic');
+            handlers.onEquipment(id, claim);
+          });
+          row.append(node);
+        }
+        block.append(row);
+        break;
+      }
+      case 'relic': {
+        for (const id of offer.options ?? []) {
+          const def = RELICS.find((r) => r.id === id);
+          const row = el('div', 'relic-reward');
+          const img = document.createElement('img');
+          const url = art.relic(def?.art ?? id);
+          if (url) img.src = url;
+          const info = el('div');
+          info.append(el('div', 'choice-title', def?.name ?? id));
+          info.append(el('div', 'choice-desc', def?.text ?? ''));
+          row.append(img, info);
+          row.addEventListener('click', () => {
+            sfx.play('relic');
+            handlers.onRelic(id, claim);
+          });
+          block.append(row);
+        }
+        break;
+      }
+      case 'gold':
+        block.append(el('div', 'reward-note', `获得 ${offer.amount ?? 0} 枚时砂。`));
+        break;
+      case 'heal':
+        block.append(el('div', 'reward-note', `回复 ${offer.amount ?? 0} 点生命。`));
+        break;
+      case 'removeCard': {
+        const button = el('button', 'ghost-button', '挑一张洗去');
+        button.addEventListener('click', () => handlers.onRemoveCard(claim));
+        block.append(button);
+        break;
+      }
+      case 'upgradeCard': {
+        const button = el('button', 'ghost-button', '挑一张重录');
+        button.addEventListener('click', () => handlers.onUpgradeCard(claim));
+        block.append(button);
+        break;
+      }
+      case 'nothing':
+        block.append(el('div', 'reward-note', '余烬散得很干净。'));
+        break;
+    }
+    panel.append(block);
   }
 
-  const row = el('div', 'card-row');
-  for (const defId of offer.cards) {
-    const node = renderStaticCard(defId);
-    node.addEventListener('click', () => {
-      sfx.play(defId);
-      onTakeCard(defId);
-    });
-    row.append(node);
-  }
-  panel.append(row);
-
-  const skip = el('button', 'ghost-button', '不取，继续前行');
-  skip.addEventListener('click', onSkip);
-  panel.append(skip);
+  const done = el('button', 'ghost-button', '继续前行');
+  done.addEventListener('click', handlers.onDone);
+  panel.append(done);
 
   overlay.append(panel);
   return overlay;
@@ -407,6 +531,41 @@ export function renderEvent(
     });
     row.append(node);
   }
+  panel.append(row);
+  overlay.append(panel);
+  return overlay;
+}
+
+/** 战斗失败后的抉择：花时砂回到节点开头重来，或者就此收手。 */
+export function renderDefeat(
+  run: RunState,
+  opts: { retryCost: number; retryLimit: number; canRetry: boolean; onRetry: () => void; onAbandon: () => void },
+): HTMLElement {
+  const overlay = el('div', 'overlay');
+  const panel = el('div', 'panel');
+  panel.append(el('h2', '', '织线断了'));
+  panel.append(
+    el(
+      'p',
+      '',
+      `你倒在第 ${run.act} 幕。回响还没散尽，付出代价可以把这一节点重走一遍：` +
+        `已重挑 ${run.retries}/${opts.retryLimit} 次。`,
+    ),
+  );
+
+  const row = el('div', 'confirm-row');
+  const retry = el('button', 'title-button primary', `重挑 · ◈${opts.retryCost}`) as HTMLButtonElement;
+  if (opts.canRetry) {
+    retry.addEventListener('click', opts.onRetry);
+  } else {
+    retry.disabled = true;
+    retry.textContent = run.retries >= opts.retryLimit ? '重挑次数已用尽' : `时砂不足 · ◈${opts.retryCost}`;
+  }
+
+  const give = el('button', 'title-button', '放弃这一局');
+  give.addEventListener('click', opts.onAbandon);
+
+  row.append(retry, give);
   panel.append(row);
   overlay.append(panel);
   return overlay;

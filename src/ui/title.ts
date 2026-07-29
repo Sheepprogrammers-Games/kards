@@ -3,7 +3,7 @@
 import { art } from './assets';
 import { el } from './screens';
 import { sfx } from '@audio/index';
-import { openSettings, settings, updateSettings } from './settings';
+import { onSettingsChange, openSettings, settings, updateSettings } from './settings';
 import { openCodex } from './codex';
 
 export interface TitleActions {
@@ -77,45 +77,63 @@ export function renderTitle(actions: TitleActions): HTMLElement {
   menu.append(config);
 
   stack.append(menu);
-  screen.append(stack, quickToggles(screen));
+  screen.append(stack, quickToggles());
   return screen;
 }
 
-/** 右下角常驻的音效与音乐开关。 */
-function quickToggles(host: HTMLElement): HTMLElement {
+/** 右下角常驻的音效与音乐开关，状态跟随设置面板。 */
+function quickToggles(): HTMLElement {
   const bar = el('div', 'quick-toggles');
 
   const make = (
     icon: string,
-    title: string,
+    name: string,
+    body: string,
     get: () => boolean,
     set: (value: boolean) => void,
-  ): HTMLElement => {
-    const button = el('button', 'quick-toggle');
-    button.title = title;
+  ): { node: HTMLElement; paint: () => void } => {
+    const button = el('button', 'quick-toggle', icon);
+
+    const tip = el('div', 'stat-tip');
+    const head = el('div', 'stat-tip-head');
+    tip.append(head, el('div', 'stat-tip-body', body));
+    button.append(tip);
+    button.classList.add('has-tip');
+
     const paint = () => {
-      button.textContent = icon;
-      button.classList.toggle('off', !get());
+      const on = get();
+      button.classList.toggle('off', !on);
+      head.textContent = `${name}　${on ? '开' : '关'}`;
+      button.setAttribute('aria-pressed', String(on));
     };
+
     button.addEventListener('click', () => {
       set(!get());
-      paint();
       if (get()) sfx.pick();
     });
     paint();
-    return button;
+    return { node: button, paint };
   };
 
-  bar.append(
-    make('♪', '音乐', () => settings().music, (v) => updateSettings({ music: v })),
-    make('◈', '音效', () => settings().sound, (v) => updateSettings({ sound: v })),
-  );
+  const controls = [
+    make('♪', '音乐', '场景切换时自动更换曲目。音量在设置里单独调。', () => settings().music, (v) =>
+      updateSettings({ music: v }),
+    ),
+    make('◈', '音效', '出牌、结算与受击的反馈声。音量在设置里单独调。', () => settings().sound, (v) =>
+      updateSettings({ sound: v }),
+    ),
+  ];
 
-  const gear = el('button', 'quick-toggle');
-  gear.textContent = '⚙';
-  gear.title = '设置';
-  gear.addEventListener('click', () => openSettings(host));
-  bar.append(gear);
+  for (const control of controls) bar.append(control.node);
+
+  // 设置面板里改动同样要反映到这里，界面卸载后自行注销
+  const stop = onSettingsChange(() => {
+    if (!bar.isConnected) {
+      stop();
+      return;
+    }
+    for (const control of controls) control.paint();
+  });
 
   return bar;
 }

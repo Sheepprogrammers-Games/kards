@@ -5,12 +5,20 @@ import { sfx } from '@audio/index';
 export interface Settings {
   sound: boolean;
   music: boolean;
+  /** 音效音量倍率。 */
+  soundVolume: number;
+  /** 音乐音量倍率。 */
+  musicVolume: number;
   /** 屏幕震动强度倍率。 */
   shake: number;
   /** 动画节奏倍率，越小越快。 */
   speed: number;
   /** 特效密度倍率，同时决定画布渲染倍率。 */
   quality: number;
+  /** 战斗中显示伤害与产出的预估数字。 */
+  showNumbers: boolean;
+  /** 敌方轨道常驻展开，不再需要悬停。 */
+  pinEnemyLane: boolean;
 }
 
 const KEY = 'echoes.settings';
@@ -18,9 +26,13 @@ const KEY = 'echoes.settings';
 const DEFAULTS: Settings = {
   sound: true,
   music: true,
+  soundVolume: 0.8,
+  musicVolume: 0.7,
   shake: 1,
   speed: 1,
   quality: 1,
+  showNumbers: true,
+  pinEnemyLane: false,
 };
 
 let current: Settings = load();
@@ -55,6 +67,7 @@ export function updateSettings(patch: Partial<Settings>): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(current));
   } catch {}
+  sfx.setVolume(current.soundVolume);
   sfx.setMuted(!current.sound);
   void import('@audio/music').then((m) => m.music.applyVolume());
   for (const fn of listeners) fn();
@@ -62,6 +75,7 @@ export function updateSettings(patch: Partial<Settings>): void {
 
 /** 启动时把已保存的设置应用到各系统。 */
 export function applySettings(): void {
+  sfx.setVolume(current.soundVolume);
   sfx.setMuted(!current.sound);
 }
 
@@ -102,6 +116,8 @@ export function openSettings(host: HTMLElement, options: SettingsPanelOptions = 
     options.onClose?.();
   };
 
+  panel.append(sectionTitle('声音'));
+
   panel.append(
     toggleRow('音效', '出牌、结算与受击的反馈声', () => current.sound, (v) => {
       updateSettings({ sound: v });
@@ -110,10 +126,25 @@ export function openSettings(host: HTMLElement, options: SettingsPanelOptions = 
   );
 
   panel.append(
+    sliderRow('音效音量', '', () => current.soundVolume, (v) => {
+      updateSettings({ soundVolume: v });
+      sfx.pick();
+    }),
+  );
+
+  panel.append(
     toggleRow('音乐', '场景切换时自动更换曲目', () => current.music, (v) =>
       updateSettings({ music: v }),
     ),
   );
+
+  panel.append(
+    sliderRow('音乐音量', '', () => current.musicVolume, (v) =>
+      updateSettings({ musicVolume: v }),
+    ),
+  );
+
+  panel.append(sectionTitle('画面'));
 
   panel.append(
     choiceRow('屏幕震动', SHAKE_LEVELS, () => current.shake, (v) => updateSettings({ shake: v })),
@@ -129,6 +160,26 @@ export function openSettings(host: HTMLElement, options: SettingsPanelOptions = 
       QUALITY_LEVELS,
       () => current.quality,
       (v) => updateSettings({ quality: v }),
+    ),
+  );
+
+  panel.append(sectionTitle('操作'));
+
+  panel.append(
+    toggleRow(
+      '产出预估',
+      '在条目与意图上直接标出这一次会打出多少',
+      () => current.showNumbers,
+      (v) => updateSettings({ showNumbers: v }),
+    ),
+  );
+
+  panel.append(
+    toggleRow(
+      '常驻展开敌方轨道',
+      '不必悬停也能一直看到敌人的意图排布',
+      () => current.pinEnemyLane,
+      (v) => updateSettings({ pinEnemyLane: v }),
     ),
   );
 
@@ -209,6 +260,39 @@ function toggleRow(
   paint();
 
   row.append(button);
+  return row;
+}
+
+function sectionTitle(text: string): HTMLElement {
+  return div('setting-section', text);
+}
+
+/** 0 到 1 的连续滑杆，右侧读出百分比。 */
+function sliderRow(
+  title: string,
+  hint: string,
+  get: () => number,
+  set: (value: number) => void,
+): HTMLElement {
+  const row = div('setting-row');
+  row.append(labelBlock(title, hint));
+
+  const group = div('setting-slider');
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = '0';
+  input.max = '100';
+  input.step = '5';
+  input.value = String(Math.round(get() * 100));
+
+  const readout = div('setting-readout', `${input.value}%`);
+  input.addEventListener('input', () => {
+    readout.textContent = `${input.value}%`;
+    set(Number(input.value) / 100);
+  });
+
+  group.append(input, readout);
+  row.append(group);
   return row;
 }
 

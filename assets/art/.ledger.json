@@ -772,5 +772,473 @@
     "size": "1024x1024",
     "quality": "high",
     "at": "2026-07-29T06:15:21.507Z"
+  },
+  "siphon-edge": {
+    "hash": "a4aa6dd3a7ee",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:30:22.712Z"
+  },
+  "verdigris-fang": {
+    "hash": "6a781c7d48d0",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:30:23.205Z"
+  },
+  "hour-hand-cleaver": {
+    "hash": "051e0612a1b6",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:30:25.872Z"
+  },
+  "ratchet-flail": {
+    "hash": "429f140c452f",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:30:28.524Z"
+  },
+  "tolling-brand": {
+    "hash": "2dd941c1a8c1",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:30:54.378Z"
+  },
+  "bellhouse-cuirass": {
+    "hash": "14ea213945cd",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:31:22.639Z"
+  },
+  "thorncase-mail": {
+    "hash": "4654b7fc4c39",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:31:49.490Z"
+  },
+  "deadfall-mantle": {
+    "hash": "14c823711d1e",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:32:16.559Z"
+  },
+  "pendulum-harness": {
+    "hash": "e9b7a05efac0",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:32:43.928Z"
+  },
+  "null-hour-carapace": {
+    "hash": "513327407364",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:33:07.980Z"
+  },
+  "hollow-cog-charm": {
+    "hash": "f833bef7e284",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:33:35.987Z"
+  },
+  "pocket-sundial": {
+    "hash": "b5e41ec8af6c",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:34:02.958Z"
+  },
+  "cinder-locket": {
+    "hash": "e5701887c7e3",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:34:23.165Z"
+  },
+  "pawnbroker-fob": {
+    "hash": "a3dd75521ed0",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:34:49.221Z"
+  },
+  "metronome-scepter": {
+    "hash": "6d9dc1bc2d87",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:35:12.811Z"
+  },
+  "overwound-core": {
+    "hash": "c1bc74c70a64",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:35:52.544Z"
+  },
+  "ember-core": {
+    "hash": "63c2d7f5cb59",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:36:23.910Z"
+  },
+  "recurrence-coil": {
+    "hash": "7cb0c203dedb",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:36:54.271Z"
+  },
+  "frostbound-core": {
+    "hash": "098654ca56fd",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:37:25.927Z"
+  },
+  "paradox-core": {
+    "hash": "593c039a4c33",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T18:37:55.318Z"
+  },
+  "awl-thread": {
+    "hash": "3d08016149d3",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:38:16.718Z"
+  },
+  "needle-run": {
+    "hash": "0952fec812a6",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:38:44.315Z"
+  },
+  "siphon-weft": {
+    "hash": "aa44f4058043",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:39:12.145Z"
+  },
+  "crimson-spindle": {
+    "hash": "47844f2dbcc8",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:39:45.166Z"
+  },
+  "barb-mail": {
+    "hash": "71f1a2e7af6e",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:40:11.206Z"
+  },
+  "bramble-bulwark": {
+    "hash": "1d5428cbb6a1",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:40:39.467Z"
+  },
+  "shell-winding": {
+    "hash": "e63faeca0388",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:41:11.219Z"
+  },
+  "terminal-tick": {
+    "hash": "5299c3be7d94",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:41:41.508Z"
+  },
+  "guillotine-hour": {
+    "hash": "db31bb692008",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:42:13.604Z"
+  },
+  "chain-cleave": {
+    "hash": "dba36942ba58",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:42:45.820Z"
+  },
+  "hedged-thread": {
+    "hash": "fd591928eda1",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:43:13.408Z"
+  },
+  "grace-period": {
+    "hash": "fffa4a6f0e20",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:43:38.093Z"
+  },
+  "stake-the-spool": {
+    "hash": "a4d8f2d7aa14",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:44:07.885Z"
+  },
+  "slow-fortune": {
+    "hash": "1d38b3b50a00",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:44:44.643Z"
+  },
+  "covered-call": {
+    "hash": "505ef9c97f81",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:45:20.141Z"
+  },
+  "interest-accrues": {
+    "hash": "2d6c1aee8943",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:45:49.571Z"
+  },
+  "all-or-nothing": {
+    "hash": "8ab9fe31f4d5",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:46:15.297Z"
+  },
+  "borrowed-hour": {
+    "hash": "5b42d0e82339",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:46:42.131Z"
+  },
+  "pawn-the-hour": {
+    "hash": "a3c209c7b655",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:47:12.070Z"
+  },
+  "mirror-stance": {
+    "hash": "c16de735d4fc",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:47:39.001Z"
+  },
+  "recoil-plate": {
+    "hash": "99b4cc745b77",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:48:11.556Z"
+  },
+  "hollow-toll": {
+    "hash": "3ca9706e6b1d",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:48:38.728Z"
+  },
+  "noon-verdict": {
+    "hash": "0924f4ae9ca1",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:49:09.526Z"
+  },
+  "spill-hour": {
+    "hash": "d567459dc5cb",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:49:36.014Z"
+  },
+  "bell-shell": {
+    "hash": "88a6de42232b",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:50:02.706Z"
+  },
+  "mirror-cascade": {
+    "hash": "7f2add34e256",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:50:31.574Z"
+  },
+  "relight": {
+    "hash": "2d24b7eabe01",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:51:01.635Z"
+  },
+  "bait-the-blow": {
+    "hash": "13ba674a982a",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:51:25.397Z"
+  },
+  "set-shell": {
+    "hash": "bc8a0301f0c5",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:51:49.721Z"
+  },
+  "blood-wedge": {
+    "hash": "20c5d3e21230",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:52:19.477Z"
+  },
+  "bared-throat": {
+    "hash": "5ba69d7fc3ea",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:52:50.906Z"
+  },
+  "write-off": {
+    "hash": "f5c6ea8081d1",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:53:20.878Z"
+  },
+  "settle-early": {
+    "hash": "977864da0eff",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:53:48.777Z"
+  },
+  "ledger-lock": {
+    "hash": "5f403c850ac7",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:54:18.881Z"
+  },
+  "traced-blade": {
+    "hash": "d3668c69e4d5",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:54:46.749Z"
+  },
+  "traced-ward": {
+    "hash": "772161d614d6",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:55:16.894Z"
+  },
+  "traced-hex": {
+    "hash": "1e6e00a36be5",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:55:44.264Z"
+  },
+  "light-fingers": {
+    "hash": "61b5edb4f05f",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:56:13.558Z"
+  },
+  "crib-the-move": {
+    "hash": "cbd172c55176",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:56:43.777Z"
+  },
+  "armory-raid": {
+    "hash": "171393fe5e6e",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:57:11.541Z"
+  },
+  "pattern-theft": {
+    "hash": "275f15a74cf6",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:57:39.800Z"
+  },
+  "dissect-pattern": {
+    "hash": "c7a587593f36",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:58:04.694Z"
+  },
+  "take-over": {
+    "hash": "fef1a3bb5617",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:58:32.834Z"
+  },
+  "deep-study": {
+    "hash": "afd02b05672a",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:59:00.645Z"
+  },
+  "borrowed-form": {
+    "hash": "1083c80d0817",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:59:28.284Z"
+  },
+  "overwind": {
+    "hash": "9df344200a78",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T18:59:55.484Z"
+  },
+  "back-gear": {
+    "hash": "b8c60c60aa80",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T19:00:23.310Z"
+  },
+  "paired-arrest": {
+    "hash": "48dd55698ab3",
+    "size": "1024x1536",
+    "quality": "high",
+    "at": "2026-07-29T19:00:54.474Z"
+  },
+  "second-wasp": {
+    "hash": "4b68eb892a6a",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:01:22.892Z"
+  },
+  "rust-pilgrim": {
+    "hash": "9ed0905698b8",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:01:53.816Z"
+  },
+  "ember-tender": {
+    "hash": "5c216676730c",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:02:25.986Z"
+  },
+  "hollow-cantor": {
+    "hash": "5a07a1f040e2",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:02:59.445Z"
+  },
+  "mirror-fry": {
+    "hash": "a1b530ba3908",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:03:27.000Z"
+  },
+  "grave-winder": {
+    "hash": "376ca04209f8",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:03:57.783Z"
+  },
+  "quarter-stalker": {
+    "hash": "70d748f393b6",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:04:22.941Z"
+  },
+  "oath-anvil": {
+    "hash": "e90f0002b11d",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:04:57.064Z"
+  },
+  "silent-conductor": {
+    "hash": "7a71dd7e8e24",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:05:31.724Z"
+  },
+  "codex-unknown": {
+    "hash": "d29436505069",
+    "size": "1024x1024",
+    "quality": "high",
+    "at": "2026-07-29T19:06:24.417Z"
   }
 }

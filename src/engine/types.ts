@@ -257,6 +257,8 @@ export interface CombatModifiers {
   freeFreeze: boolean;
   /** 玩家条目的回拨次数上限增量。 */
   rewindBonus: number;
+  /** 每回合延后敌方意图的额度增量。 */
+  delayBonus: number;
 }
 
 export const NO_MODIFIERS: CombatModifiers = {
@@ -276,6 +278,7 @@ export const NO_MODIFIERS: CombatModifiers = {
   fullSteal: false,
   freeFreeze: false,
   rewindBonus: 0,
+  delayBonus: 0,
 };
 
 export type EquipSlot = 'weapon' | 'armor' | 'trinket' | 'core';
@@ -355,6 +358,8 @@ export interface CombatState {
   mods: CombatModifiers;
 
   weavePlays: number;
+  /** 本回合已经用掉的延后格数。 */
+  delaysThisTurn: number;
   igniteCountThisTurn: number;
   advanceCount: number;
 

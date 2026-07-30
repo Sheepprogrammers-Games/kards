@@ -221,13 +221,21 @@ function shiftOne(
   return true;
 }
 
-/** 条目还能被向低索引移动几次。敌方意图为延后，玩家条目为回溯。 */
+/** 本回合还剩多少格延后额度。额度按回合结算，不分摊到单个意图。 */
+export function delayBudgetLeft(state: CombatState): number {
+  return Math.max(0, C.INTENT_DELAY_PER_TURN + state.mods.delayBonus - state.delaysThisTurn);
+}
+
+/**
+ * 条目还能被向低索引移动几次。敌方意图同时受本回合的公共额度与
+ * 自身累计上限约束，后者使同一击无法被反复推回。
+ */
 export function rewindsLeft(state: CombatState, e: TrackEntry, lane: Lane): number {
   if (lane === 'player') {
     return Math.max(0, C.REWIND_LIMIT + state.mods.rewindBonus - e.rewindCount);
   }
   if (e.undelayable) return 0;
-  return Math.max(0, C.INTENT_DELAY_LIMIT - e.delayCount);
+  return Math.min(delayBudgetLeft(state), Math.max(0, C.INTENT_DELAY_CAP - e.delayCount));
 }
 
 /** 条目是否还能被向低索引移动。 */
@@ -284,8 +292,13 @@ function shiftBack(
   setEntry(state, lane, dst, e);
   setEntry(state, lane, slot, null);
   e.resolvedHere = false;
-  if (lane === 'player') e.rewindCount += 1;
-  else e.delayCount += 1;
+  if (lane === 'player') {
+    e.rewindCount += 1;
+  } else {
+    e.delayCount += 1;
+    state.delaysThisTurn += 1;
+    state.events.push({ type: 'delaySpent', left: delayBudgetLeft(state) });
+  }
   state.events.push({ type: 'shift', lane, from: slot, to: dst, uid: e.uid, rewind: true });
   return true;
 }

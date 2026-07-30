@@ -34,6 +34,8 @@ export interface RelicDef {
   freeFreeze?: boolean;
   /** 玩家条目的回拨次数上限增量。 */
   rewindBonus?: number;
+  /** 每回合延后敌方意图的额度增量。 */
+  delayBonus?: number;
 }
 
 export const RELICS: RelicDef[] = [
@@ -329,6 +331,7 @@ export interface RelicModifiers {
   fullSteal: boolean;
   freeFreeze: boolean;
   rewindBonus: number;
+  delayBonus: number;
 }
 
 /** 合并玩家持有的全部遗物。后取得的系数表覆盖先前的。 */
@@ -350,6 +353,7 @@ export function collectModifiers(relicIds: string[]): RelicModifiers {
     fullSteal: false,
     freeFreeze: false,
     rewindBonus: 0,
+    delayBonus: 0,
   };
 
   for (const id of relicIds) {
@@ -372,6 +376,7 @@ export function collectModifiers(relicIds: string[]): RelicModifiers {
     mods.fullSteal ||= def.fullSteal ?? false;
     mods.freeFreeze ||= def.freeFreeze ?? false;
     mods.rewindBonus += def.rewindBonus ?? 0;
+    mods.delayBonus += def.delayBonus ?? 0;
   }
   return mods;
 }

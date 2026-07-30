@@ -12,7 +12,10 @@ export const C = raw as {
   IGNITE_MIN_ENTRIES: number;
   IGNITE_RESIDUAL: number;
   IGNITE_COST_ESCALATION: number;
-  INTENT_DELAY_LIMIT: number;
+  /** 玩家每回合可以延后敌方意图的总格数。 */
+  INTENT_DELAY_PER_TURN: number;
+  /** 单个意图累计可被延后的格数，防止同一击被无限推回。 */
+  INTENT_DELAY_CAP: number;
   PREEMPT_RATE: number;
   STOLEN_RATE: number;
   EVICT_RATE: number;

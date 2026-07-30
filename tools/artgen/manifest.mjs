@@ -1559,6 +1559,406 @@ export const MANIFEST = [
       'body, a reversed-running dial at its chest, nothing but shadow under the raised hood',
   },
 
+  // intent · attack：炽热橙红，画招式落点或落点前的一瞬
+  {
+    id: 'gnaw',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a ring of needle mandibles closed on a taut luminous thread and biting through it, ' +
+      'the two severed ends snapping apart in a spray of hot sparks, nothing behind the mandibles',
+  },
+  {
+    id: 'swarm',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a dense cloud of biting motes converging on one spot of a brass dial from three ' +
+      'directions at once, three bore tracks already chewed clean through the plate',
+  },
+  {
+    id: 'discord',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'two tuning forks struck out of phase, the interference between them tearing a jagged ' +
+      'rift open in the air, the dial behind splitting along the same line',
+  },
+  {
+    id: 'pounce',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a mainspring released to full extension driving a set of hooked claws off the ground, ' +
+      'the stone buckling under the launch point in a flat shock ring, dust thrown backward',
+  },
+  {
+    id: 'burrow',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a spiral brass drill head boring down into sand, the sand funnelling into a vortex ' +
+      'around it while a packed ridge of it heaves up on the near side',
+  },
+  {
+    id: 'verdict',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a heavy gavel of brass and dark stone landing on a clock dial, the dial fracturing ' +
+      'radially out of the contact point, splinters of enamel lifting off the face',
+  },
+  {
+    id: 'shatterpoint',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'the origin point of a fracture in a pane of clock glass, a single blazing stress node ' +
+      'from which four hairline cracks have just started to run outward',
+  },
+  {
+    id: 'toll',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a bell clapper at the instant it meets the bell wall, the metal denting visibly under it ' +
+      'and concentric pressure rings punching outward from the strike',
+  },
+  {
+    id: 'reversal',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'an hourglass caught mid-flip, the falling sand column stalled halfway and driving back ' +
+      'up against itself, the glass stressed white where the two flows collide',
+  },
+  {
+    id: 'unmake',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a clockwork movement flying apart into its own wheels, screws and jewels along clean ' +
+      'radial lines, holding the shape of the whole for one last instant',
+  },
+  {
+    id: 'chaff',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a fistful of brass filings and snapped gear teeth flung forward in a loose shallow fan, ' +
+      'each fragment tumbling and catching a hard edge of light',
+  },
+  {
+    id: 'flare-burst',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a sealed glass ampoule bursting in a single flash, spear-shaped shards riding outward on ' +
+      'a hard-edged ring of light, the brass cage around it blown open',
+  },
+  {
+    id: 'slow-swing',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a massive pendulum bob hanging at the very top of its arc one instant before it falls, ' +
+      'its chain drawn dead straight, its shadow already stretched across the ground below',
+  },
+  {
+    id: 'anvil-fall',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'an anvil dropping from above at the last instant before impact, the air flattened into a ' +
+      'compression ring beneath it, the stone below dished and beginning to split',
+  },
+  {
+    id: 'bound-blow',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a chain-wrapped fist driven three times along one straight line, the links snapping taut ' +
+      'at full reach, three impact rings staggered along the path',
+  },
+  {
+    id: 'wind-deep',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a spindle winding a braided cable past its breaking twist, individual strands shearing ' +
+      'and standing out from the lay, the whole cable knotting into itself',
+  },
+  {
+    id: 'plumb-drop',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a plumb bob cut free of its line and falling dead vertical, the slack line whipping back ' +
+      'upward, one small point of raised dust marking where it will land',
+  },
+  {
+    id: 'arc-sweep',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a wide crescent sweep cut twice along the same arc, two overlapping blade traces slightly ' +
+      'out of register, the far end of the arc scoring a stone lip',
+  },
+  {
+    id: 'spite-lash',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a barbed whip cracking forward while the same stroke drives spines backward out of its ' +
+      'handle, one motion cutting in both directions at once',
+  },
+  {
+    id: 'mirror-verdict',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a gavel head striking a mirror while its own reflection rises to meet it, the impact ' +
+      'opening one shared crack that belongs to both sides of the glass',
+  },
+  {
+    id: 'scuttle-bite',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a small pair of chitin pincers snapping shut on the edge of a brass rim and already ' +
+      'pulling back, one clean notch bitten out of the metal',
+  },
+  {
+    id: 'tempo-lash',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a metronome rod whipped past its stop twice in quick succession, the two strokes leaving ' +
+      'crossed trails, the beat pin bent out of true by the force',
+  },
+  {
+    id: 'sunder-note',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a struck bell splitting along two lines at once, the note leaving as a pair of hard ' +
+      'visible wedges driven out through the openings',
+  },
+  {
+    id: 'ratchet-slam',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a ratchet wheel driven one tooth forward under a hammer blow, the pawl slamming home into ' +
+      'the next notch, a flat shock ring around the loaded tooth',
+  },
+  {
+    id: 'ember-spit',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a jet of burning cinders forced out of a narrow brass nozzle, the embers still hooked in ' +
+      'the air in the shape of the blast, the nozzle lip glowing from the pass',
+  },
+  {
+    id: 'hour-siphon',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a curved fang-shaped tube bitten into a dial and drawing a bright thread of hours back ' +
+      'up through itself, the near end of the tube filling while the dial face goes dead',
+  },
+  {
+    id: 'long-toll',
+    category: 'intent',
+    kind: 'attack',
+    subject:
+      'a great bell struck twice on the same spot, two concentric shock rings still expanding ' +
+      'through the metal, the bell wall bulging outward where they overlap',
+  },
+
+  // intent · defend：冷冽青蓝，画阻挡结构成形的瞬间
+  {
+    id: 'harden',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'overlapping chitin and brass plates snapping shut into one seamless dome, the last ' +
+      'hairline gap closing at the centre with a thin line of light still escaping it',
+  },
+  {
+    id: 'slag-guard',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'a poured wall of metal already crusted over and setting into a scabbed grey face, only ' +
+      'the hairline seams between the pours still live',
+  },
+  {
+    id: 'bristle-up',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'a bed of brass barbs snapping upright out of a smooth plate all at once, each spike still ' +
+      'trembling from the release, one of them already fouled with what it caught',
+  },
+  {
+    id: 'carapace',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'a layered shell of overlapping brass scales settling down over one another, the outer ' +
+      'layer dull and pitted, a thin band of light caught in every seam',
+  },
+  {
+    id: 'turnback-veil',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'a hanging veil of taut thread catching a thrown dart, dimpling inward around it and ' +
+      'springing back to throw the dart out the way it came',
+  },
+  {
+    id: 'brace-cog',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'a stout wedge cog jammed hard between two turning wheels and stopping the whole train, ' +
+      'the locked teeth biting into one another and deforming at the contact',
+  },
+  {
+    id: 'quench-plate',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'an armour plate plunged into water and going hard and grey in an instant, a shell of ' +
+      'steam sealing tight around its face',
+  },
+  {
+    id: 'gilded-recoil',
+    category: 'intent',
+    kind: 'defend',
+    subject:
+      'a gilded convex buckler an instant after taking a hit, the incoming dart bouncing clean ' +
+      'off the gold face, a bright recoil ring spreading from the point of contact',
+  },
+
+  // intent · debuff：病态紫绿，画施加与侵蚀的痕迹
+  {
+    id: 'sap',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a hollow brass needle sunk into a knot of woven thread and drawing a thinning strand of ' +
+      'light out of it, the weave slackening and going grey around the puncture',
+  },
+  {
+    id: 'dust-cough',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a burst of fine grave dust blown out of a cracked bellows mouth, the cloud already ' +
+      'settling into the teeth of a gear and packing them solid',
+  },
+  {
+    id: 'seal',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a wax seal pressed shut over a keyhole with thread bound across it, the sigil struck into ' +
+      'the wax a clock face with no hands',
+  },
+  {
+    id: 'first-thread',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'the first strand of a web sunk through woven cloth, the thread darkening along its length ' +
+      'as it draws something up out of the puncture',
+  },
+  {
+    id: 'drain-hour',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a siphon tube driven into the rim of a clock dial, the hours pulled out of it as a thick ' +
+      'descending column of dull light, the numerals behind the tap wiped blank',
+  },
+  {
+    id: 'graft-noise',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a foreign gear of dead grey metal wedged into a clean brass train and pinned there, the ' +
+      'mismatched teeth grating and throwing a visible rasp through the neighbouring wheels',
+  },
+  {
+    id: 'oath-brand',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a branding iron shaped as a snapped clock hand lifting away from a surface, the mark it ' +
+      'left still cooking into the material and spreading at the edges',
+  },
+  {
+    id: 'hollow-choir',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a ring of open bell mouths facing inward with nothing hanging inside them, the air ' +
+      'between them thinned into a visible standing void',
+  },
+  {
+    id: 'weave-theft',
+    category: 'intent',
+    kind: 'debuff',
+    subject:
+      'a hooked needle dragging a whole finished run of weave out of a loom, the fabric ' +
+      'unravelling in long loose loops along the direction of the pull',
+  },
+
+  // intent · buff：明亮暗金，画自身被强化的机构动作
+  {
+    id: 'drift',
+    category: 'intent',
+    kind: 'buff',
+    subject:
+      'a clock hand lifting off its own arbor and sliding sideways out of its socket, four ' +
+      'thinning afterimages left standing where it used to sit',
+  },
+  {
+    id: 'wind-back',
+    category: 'intent',
+    kind: 'buff',
+    subject:
+      'two brass gears meshing in reverse, the teeth riding backward over their own wear marks, ' +
+      'a ratchet pawl kicked up out of its detent, filings thrown against the normal direction',
+  },
+  {
+    id: 'coil-tight',
+    category: 'intent',
+    kind: 'buff',
+    subject:
+      'a mainspring wound far past its rest position, the coils packed flat against one another, ' +
+      'the arbor square straining and light building in the gaps between turns',
+  },
+  {
+    id: 'mirror-shell',
+    category: 'intent',
+    kind: 'buff',
+    subject:
+      'a faceted shell of polished mirror plates folding closed, every facet throwing a ' +
+      'reflected blade of light back out of itself',
+  },
+  {
+    id: 'reversion-halo',
+    category: 'intent',
+    kind: 'buff',
+    subject:
+      'a closed ring of polished brass mirrors hanging in the air all facing inward, every line ' +
+      'of light that enters the ring turned back along the exact path it came in on',
+  },
+
   // ui：图鉴未解锁条目的占位
   {
     id: 'codex-unknown',

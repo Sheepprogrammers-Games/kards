@@ -15,6 +15,7 @@ import {
   entryAt,
   push,
   rewind,
+  delayBudgetLeft,
   rewindsLeft,
   setEntry,
   slotOfEntry,
@@ -237,9 +238,7 @@ describe('不变量', () => {
       if (uid === undefined) break;
       state = reduce(state, { type: 'playCard', uid, slot: 4, laneTarget: 'enemy' });
     }
-    for (const { entry } of entriesOf(state, 'enemy')) {
-      expect(entry.delayCount).toBeLessThanOrEqual(C.INTENT_DELAY_LIMIT);
-    }
+    expect(state.delaysThisTurn).toBeLessThanOrEqual(C.INTENT_DELAY_PER_TURN);
   });
 });
 
@@ -683,28 +682,39 @@ describe('多格延后', () => {
     expect(slotOfEntry(state, 'enemy', before.entry.uid)).toBe(C.TRACK_SLOTS - 2);
   });
 
-  it('延后次数上限只允许两格', () => {
+  it('每回合的延后额度用尽后推不动', () => {
     const state = enemyTrack(1);
     const entry = entriesOf(state, 'enemy')[0]!;
-    rewind(state, 'enemy', entry.slot, 2);
-    expect(entry.entry.delayCount).toBe(C.INTENT_DELAY_LIMIT);
+    rewind(state, 'enemy', entry.slot, C.INTENT_DELAY_PER_TURN);
+    expect(state.delaysThisTurn).toBe(C.INTENT_DELAY_PER_TURN);
 
-    // 再想延后就不动了
     const at = slotOfEntry(state, 'enemy', entry.entry.uid)!;
     expect(rewind(state, 'enemy', at, 1)).toBe(false);
   });
 
-  it('剩余延后次数随每次延后递减，用尽后归零', () => {
-    const state = enemyTrack(1);
+  it('额度是全轨公用的，不按意图分摊', () => {
+    const state = enemyTrack(2);
+    const list = entriesOf(state, 'enemy');
+    expect(list.length).toBeGreaterThanOrEqual(2);
+
+    // 第一个意图吃满整回合的额度，第二个就一格也推不动了
+    rewind(state, 'enemy', list[0]!.slot, C.INTENT_DELAY_PER_TURN);
+    expect(delayBudgetLeft(state)).toBe(0);
+
+    const other = slotOfEntry(state, 'enemy', list[1]!.entry.uid)!;
+    expect(rewind(state, 'enemy', other, 1)).toBe(false);
+  });
+
+  it('剩余额度随每次延后递减，回合开始时补满', () => {
+    let state = enemyTrack(1);
     const entry = entriesOf(state, 'enemy')[0]!;
-    expect(rewindsLeft(state, entry.entry, 'enemy')).toBe(C.INTENT_DELAY_LIMIT);
+    expect(delayBudgetLeft(state)).toBe(C.INTENT_DELAY_PER_TURN);
 
     rewind(state, 'enemy', entry.slot, 1);
-    expect(rewindsLeft(state, entry.entry, 'enemy')).toBe(C.INTENT_DELAY_LIMIT - 1);
+    expect(delayBudgetLeft(state)).toBe(C.INTENT_DELAY_PER_TURN - 1);
 
-    const at = slotOfEntry(state, 'enemy', entry.entry.uid)!;
-    rewind(state, 'enemy', at, 1);
-    expect(rewindsLeft(state, entry.entry, 'enemy')).toBe(0);
+    state = reduce(state, { type: 'endTurn' });
+    expect(delayBudgetLeft(state)).toBe(C.INTENT_DELAY_PER_TURN);
   });
 
   it('不可延后的意图剩余次数直接为零', () => {

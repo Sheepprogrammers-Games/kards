@@ -286,6 +286,43 @@
   font-size: 15px;
 }
 
+/* 本回合的延后额度 */
+.delay-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(127, 212, 232, 0.12);
+  border: 1px solid rgba(127, 212, 232, 0.42);
+  color: #9fe0ef;
+  font-size: 12px;
+}
+
+.delay-badge[data-state='spent'] {
+  background: rgba(120, 132, 168, 0.1);
+  border-color: rgba(120, 132, 168, 0.3);
+  color: var(--ink-faint);
+}
+
+.delay-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.delay-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7fd4e8;
+  box-shadow: 0 0 5px rgba(127, 212, 232, 0.8);
+}
+
+.delay-dots i.used {
+  background: rgba(120, 132, 168, 0.38);
+  box-shadow: none;
+}
+
 .piles {
   display: flex;
   flex-direction: column;

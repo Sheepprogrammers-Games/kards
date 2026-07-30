@@ -1,7 +1,7 @@
 /** 战斗场景的 DOM 渲染与输入处理。 */
 
 import { canPlay, costOf, manipulationLane as targetLaneOf, reduce } from '@engine/combat';
-import { countEntries, entriesOf, rewindsLeft } from '@engine/track';
+import { countEntries, delayBudgetLeft, entriesOf, rewindsLeft } from '@engine/track';
 import { C, coefOf } from '@engine/constants';
 import { intentAim } from '@engine/intents';
 import { cardDef, intentDef } from '@engine/registry';
@@ -83,6 +83,7 @@ export class BattleScene {
   private elHand!: HTMLElement;
   private elEnergy!: HTMLElement;
   private elBlock!: HTMLElement;
+  private elDelay!: HTMLElement;
   private elHp!: HTMLElement;
   private elHpFill!: HTMLElement;
   private elStatuses!: HTMLElement;
@@ -163,6 +164,7 @@ export class BattleScene {
     this.elEnergy = el('div', 'energy');
     withTip(this.elEnergy, '能量', '每回合重置。打出手牌需要消耗，引牌每多打一次还会涨价。');
     this.elBlock = el('div', 'block-badge');
+    this.elDelay = el('div', 'delay-badge');
     this.elStatuses = el('div', 'status-row');
 
     const hpWrap = el('div', 'player-hp');
@@ -181,7 +183,7 @@ export class BattleScene {
     piles.addEventListener('click', () => showPiles(this.root, this.state));
 
     this.elRelics = el('div', 'relic-bar');
-    bar.append(portrait, hpWrap, this.elEnergy, this.elBlock, piles, this.elRelics);
+    bar.append(portrait, hpWrap, this.elEnergy, this.elBlock, this.elDelay, piles, this.elRelics);
     scene.append(bar);
 
     this.elEquips = el('div', 'equip-rack');
@@ -468,6 +470,13 @@ export class BattleScene {
       node.dataset.intent = entry.cardId;
       node.dataset.enemy = String(entry.sourceEnemy ?? 0);
 
+      const intentArt = safeIntentDef(entry.cardId);
+      const intentUrl = intentArt ? art.intent(intentArt.art ?? intentArt.id) : null;
+      if (intentUrl) {
+        node.style.backgroundImage = `url(${intentUrl})`;
+        node.classList.add('has-art');
+      }
+
       const box = el('div', 'entry-intent');
       const kind = intentKindOf(entry);
       const damage = entry.effects.find((e) => e.kind === 'damage');
@@ -488,28 +497,42 @@ export class BattleScene {
         tag.dataset.enemy = String(entry.sourceEnemy ?? 0);
         node.append(tag);
       }
-      node.append(box, this.delayMeter(entry));
+      node.append(box);
+      const lock = this.delayMeter(entry);
+      if (lock) node.append(lock);
     }
     return node;
   }
 
-  /** 意图还剩几次可被延后，点亮的点表示尚未用掉的额度。 */
-  private delayMeter(entry: TrackEntry): HTMLElement {
+  /** 完全推不动的意图挂一个锁标，可延后的不占角标。 */
+  private delayMeter(entry: TrackEntry): HTMLElement | null {
+    if (!entry.undelayable) return null;
     const meter = el('div', 'entry-delay');
-    if (entry.undelayable) {
-      meter.dataset.state = 'locked';
-      meter.textContent = '⊘';
-      return meter;
-    }
+    meter.dataset.state = 'locked';
+    meter.textContent = '⊘';
+    return meter;
+  }
 
-    const left = rewindsLeft(this.state, entry, 'enemy');
-    meter.dataset.state = left > 0 ? 'open' : 'spent';
-    for (let i = 0; i < C.INTENT_DELAY_LIMIT; i++) {
+  /** 本回合的公共延后额度，点亮的点表示还没用掉的格数。 */
+  private renderDelayBudget(): void {
+    const total = C.INTENT_DELAY_PER_TURN + this.state.mods.delayBonus;
+    const left = delayBudgetLeft(this.state);
+    this.elDelay.dataset.state = left > 0 ? 'open' : 'spent';
+    this.elDelay.innerHTML = '';
+
+    this.elDelay.append(el('span', 'delay-label', '延后'));
+    const dots = el('div', 'delay-dots');
+    for (let i = 0; i < total; i++) {
       const dot = document.createElement('i');
       if (i >= left) dot.className = 'used';
-      meter.append(dot);
+      dots.append(dot);
     }
-    return meter;
+    this.elDelay.append(dots);
+    withTip(
+      this.elDelay,
+      `本回合还能延后 ${left} 格`,
+      '把敌方意图往回推的公共额度，每格消耗一点，回合开始时补满。带 ⊘ 的意图完全推不动。',
+    );
   }
 
   /** 条目在下一次回响时的实际产出，向下取整后与结算一致。 */
@@ -730,6 +753,7 @@ export class BattleScene {
     }
     this.elPiles.draw.textContent = `抽牌 ${this.state.drawPile.length}`;
     this.elPiles.discard.textContent = `弃牌 ${this.state.discardPile.length}`;
+    this.renderDelayBudget();
   }
 
   private startDrag(ev: PointerEvent, card: CardInstance, node: HTMLElement): void {
@@ -820,7 +844,7 @@ export class BattleScene {
     switch (op.kind) {
       case 'rewind':
         if (rewindsLeft(this.state, entry, lane) > 0) return null;
-        return lane === 'enemy' ? `${name} 的延后次数已经用尽` : `${name} 不能再向前回溯`;
+        return lane === 'enemy' ? '本回合的延后额度已经用尽' : `${name} 不能再向前回溯`;
       case 'steal':
         return entry.unstealable ? `${name} 无法被窃取` : null;
       case 'freeze':
@@ -1692,7 +1716,7 @@ function intentLaunches(events: CombatEvent[]): Map<number, number> {
 
 /** 位移失败时说明卡住在哪一步。 */
 const MANIPULATE_FAIL: Record<string, string> = {
-  rewind: '延后次数已用尽，或前方已经排满',
+  rewind: '本回合的延后额度已用尽，或前方已经排满',
   push: '前方被占住，推不动',
   swap: '没有可以交换的目标',
   copy: '副本不能再被复制，或轨上没有空位',
@@ -1836,8 +1860,8 @@ function intentTitle(state: CombatState, entry: TrackEntry, slot: number): strin
 
   const left = rewindsLeft(state, entry, 'enemy');
   if (entry.undelayable) flags.push('不可延后');
-  else if (left > 0) flags.push(`还能延后 ${left} 次`);
-  else flags.push('延后次数已用尽');
+  else if (left > 0) flags.push(`本回合还能延后 ${left} 格`);
+  else flags.push('本回合额度已用尽');
 
   return `${turns} 回合后落地　${flags.join('・')}`;
 }

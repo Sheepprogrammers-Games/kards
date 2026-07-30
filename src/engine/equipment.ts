@@ -86,6 +86,7 @@ export function mergeModifiers(
   mods.startingStrength += patch.startingStrength ?? 0;
   mods.drawPerTurn += patch.drawPerTurn ?? 0;
   mods.rewindBonus += patch.rewindBonus ?? 0;
+  mods.delayBonus += patch.delayBonus ?? 0;
   mods.salvageBurn ||= patch.salvageBurn ?? false;
   mods.steadyIgnite ||= patch.steadyIgnite ?? false;
   mods.salvageToDraw ||= patch.salvageToDraw ?? false;

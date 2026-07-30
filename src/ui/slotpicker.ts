@@ -70,7 +70,7 @@ export function pickSlot(host: HTMLElement, state: CombatState, options: SlotPic
         el(
           'div',
           'picker-meta',
-          entry.undelayable ? '不可延后' : left > 0 ? `还能延后 ${left} 次` : '延后次数已用尽',
+          entry.undelayable ? '不可延后' : left > 0 ? `本回合还能延后 ${left} 格` : '本回合额度已用尽',
         ),
       );
     }
@@ -127,8 +127,11 @@ function nameOf(entry: TrackEntry, lane: Lane): string {
 }
 
 function artOf(entry: TrackEntry, lane: Lane): string | null {
-  if (lane === 'enemy') return null;
   try {
+    if (lane === 'enemy') {
+      const def = intentDef(entry.cardId);
+      return art.intent(def.art ?? def.id);
+    }
     const def = cardDef(entry.cardId);
     return art.card(def.art ?? def.id);
   } catch {

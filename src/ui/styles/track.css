@@ -196,6 +196,17 @@
   border-color: rgba(224, 72, 60, 0.6);
 }
 
+/* 有立绘的意图：主体居中，中央压暗一层让读数压得住画面 */
+.entry.intent.has-art {
+  background-position: center center;
+}
+
+.entry.intent.has-art::after {
+  background:
+    radial-gradient(ellipse at 50% 54%, rgba(11, 9, 32, 0.52) 14%, rgba(11, 9, 32, 0.04) 70%),
+    linear-gradient(to top, rgba(11, 9, 32, 0.8) 4%, transparent 46%);
+}
+
 /* 意图剩余的延后额度 */
 .entry-delay {
   position: absolute;

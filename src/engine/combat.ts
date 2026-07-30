@@ -136,6 +136,7 @@ export function createCombat(setup: CombatSetup): CombatState {
     igniteEfficiencyMod: mods.igniteEfficiency,
     mods,
     weavePlays: 0,
+    delaysThisTurn: 0,
     igniteCountThisTurn: 0,
     advanceCount: 0,
     events: [],
@@ -638,6 +639,7 @@ function startPlayerTurn(state: CombatState): void {
   drawCards(state, Math.max(0, state.player.handSize - state.hand.length) + state.mods.drawPerTurn);
 
   state.weavePlays = 0;
+  state.delaysThisTurn = 0;
   state.igniteCountThisTurn = 0;
 
   triggerEquipment(state, 'onTurnStart');

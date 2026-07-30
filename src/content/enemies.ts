@@ -34,6 +34,7 @@ export const INTENTS: IntentDef[] = [
     name: '啃噬',
     kind: 'attack',
     aim: 'player',
+    art: 'gnaw',
     effects: [{ kind: 'damage', amount: 7, scaleMode: 'SCALAR' }],
   },
   {
@@ -41,6 +42,7 @@ export const INTENTS: IntentDef[] = [
     name: '抽丝',
     kind: 'debuff',
     aim: 'player',
+    art: 'sap',
     effects: [
       { kind: 'damage', amount: 4, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 1, scaleMode: 'SCALAR', status: 'weak' },
@@ -51,6 +53,7 @@ export const INTENTS: IntentDef[] = [
     name: '蚀群',
     kind: 'attack',
     aim: 'player',
+    art: 'swarm',
     effects: [{ kind: 'damage', amount: 3, hits: 3, scaleMode: 'SCALAR' }],
   },
   {
@@ -66,6 +69,7 @@ export const INTENTS: IntentDef[] = [
     name: '扬尘',
     kind: 'debuff',
     aim: 'player',
+    art: 'dust-cough',
     effects: [{ kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'vulnerable' }],
   },
   {
@@ -73,6 +77,7 @@ export const INTENTS: IntentDef[] = [
     name: '失谐',
     kind: 'attack',
     aim: 'player',
+    art: 'discord',
     effects: [
       { kind: 'damage', amount: 9, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 1, scaleMode: 'SCALAR', status: 'weak' },
@@ -99,6 +104,7 @@ export const INTENTS: IntentDef[] = [
     name: '掘沙',
     kind: 'attack',
     aim: 'player',
+    art: 'burrow',
     effects: [
       { kind: 'damage', amount: 6, scaleMode: 'SCALAR' },
       { kind: 'block', amount: 6, scaleMode: 'SCALAR' },
@@ -147,6 +153,7 @@ export const INTENTS: IntentDef[] = [
     name: '鸣钟',
     kind: 'attack',
     aim: 'player',
+    art: 'toll',
     effects: [{ kind: 'damage', amount: 22, scaleMode: 'SCALAR' }],
     unstealable: true,
     undelayable: true,
@@ -189,6 +196,7 @@ export const INTENTS: IntentDef[] = [
     name: '碎屑',
     kind: 'attack',
     aim: 'player',
+    art: 'chaff',
     effects: [{ kind: 'damage', amount: 4, scaleMode: 'SCALAR' }],
   },
   {
@@ -196,6 +204,7 @@ export const INTENTS: IntentDef[] = [
     name: '曜爆',
     kind: 'attack',
     aim: 'player',
+    art: 'flare-burst',
     effects: [{ kind: 'damage', amount: 15, scaleMode: 'SCALAR' }],
     undelayable: true,
   },
@@ -204,6 +213,7 @@ export const INTENTS: IntentDef[] = [
     name: '汲时',
     kind: 'debuff',
     aim: 'player',
+    art: 'drain-hour',
     effects: [
       { kind: 'damage', amount: 3, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak' },
@@ -215,6 +225,7 @@ export const INTENTS: IntentDef[] = [
     name: '缓摆',
     kind: 'attack',
     aim: 'player',
+    art: 'slow-swing',
     effects: [{ kind: 'damage', amount: 20, scaleMode: 'SCALAR' }],
   },
   {
@@ -222,6 +233,7 @@ export const INTENTS: IntentDef[] = [
     name: '熔壁',
     kind: 'defend',
     aim: 'self',
+    art: 'slag-guard',
     effects: [
       { kind: 'block', amount: 14, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'strength' },
@@ -240,6 +252,7 @@ export const INTENTS: IntentDef[] = [
     name: '缚击',
     kind: 'attack',
     aim: 'player',
+    art: 'bound-blow',
     effects: [{ kind: 'damage', amount: 6, hits: 3, scaleMode: 'SCALAR' }],
     unstealable: true,
   },
@@ -248,6 +261,7 @@ export const INTENTS: IntentDef[] = [
     name: '深绞',
     kind: 'attack',
     aim: 'player',
+    art: 'wind-deep',
     effects: [{ kind: 'damage', amount: 13, scaleMode: 'SCALAR' }],
   },
   {
@@ -255,6 +269,7 @@ export const INTENTS: IntentDef[] = [
     name: '紧簧',
     kind: 'buff',
     aim: 'self',
+    art: 'coil-tight',
     effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'strength' }],
   },
   {
@@ -262,6 +277,7 @@ export const INTENTS: IntentDef[] = [
     name: '垂锤',
     kind: 'attack',
     aim: 'player',
+    art: 'plumb-drop',
     effects: [{ kind: 'damage', amount: 18, scaleMode: 'SCALAR' }],
     unstealable: true,
     undelayable: true,
@@ -271,6 +287,7 @@ export const INTENTS: IntentDef[] = [
     name: '嫁接杂响',
     kind: 'debuff',
     aim: 'player',
+    art: 'graft-noise',
     effects: [
       { kind: 'damage', amount: 5, scaleMode: 'SCALAR' },
       { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'quiet-movement', pile: 'discard' },
@@ -281,6 +298,7 @@ export const INTENTS: IntentDef[] = [
     name: '弧扫',
     kind: 'attack',
     aim: 'player',
+    art: 'arc-sweep',
     effects: [
       { kind: 'damage', amount: 5, hits: 2, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'vulnerable' },
@@ -292,6 +310,7 @@ export const INTENTS: IntentDef[] = [
     name: '竖棘',
     kind: 'defend',
     aim: 'self',
+    art: 'bristle-up',
     effects: [
       { kind: 'block', amount: 6, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 4, scaleMode: 'SCALAR', status: 'thorns' },
@@ -303,6 +322,7 @@ export const INTENTS: IntentDef[] = [
     name: '甲壳',
     kind: 'defend',
     aim: 'self',
+    art: 'carapace',
     effects: [
       { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'ward' },
       { kind: 'block', amount: 4, scaleMode: 'SCALAR' },
@@ -313,6 +333,7 @@ export const INTENTS: IntentDef[] = [
     name: '反鞭',
     kind: 'attack',
     aim: 'player',
+    art: 'spite-lash',
     effects: [
       { kind: 'damage', amount: 10, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'thorns' },
@@ -336,6 +357,7 @@ export const INTENTS: IntentDef[] = [
     name: '折返幕',
     kind: 'defend',
     aim: 'self',
+    art: 'turnback-veil',
     effects: [
       { kind: 'block', amount: 6, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect' },
@@ -389,6 +411,7 @@ export const INTENTS: IntentDef[] = [
     name: '裂音击',
     kind: 'attack',
     aim: 'player',
+    art: 'sunder-note',
     effects: [{ kind: 'damage', amount: 6, hits: 2, scaleMode: 'SCALAR' }],
   },
   {
@@ -404,6 +427,7 @@ export const INTENTS: IntentDef[] = [
     name: '燃吐',
     kind: 'attack',
     aim: 'player',
+    art: 'ember-spit',
     effects: [
       { kind: 'damage', amount: 5, scaleMode: 'SCALAR' },
       { kind: 'applyStatus', amount: 3, scaleMode: 'SCALAR', status: 'burn' },
@@ -425,6 +449,7 @@ export const INTENTS: IntentDef[] = [
     name: '汲刻',
     kind: 'attack',
     aim: 'player',
+    art: 'hour-siphon',
     effects: [{ kind: 'damage', amount: 9, scaleMode: 'SCALAR', lifesteal: 0.5 }],
   },
   {
@@ -432,6 +457,7 @@ export const INTENTS: IntentDef[] = [
     name: '空唱',
     kind: 'debuff',
     aim: 'player',
+    art: 'hollow-choir',
     effects: [
       { kind: 'applyStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak' },
       { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'patient-weft', pile: 'discard' },
@@ -442,6 +468,7 @@ export const INTENTS: IntentDef[] = [
     name: '夺织',
     kind: 'debuff',
     aim: 'player',
+    art: 'weave-theft',
     effects: [
       { kind: 'damage', amount: 7, scaleMode: 'SCALAR' },
       { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'eternal-warp', pile: 'discard' },
@@ -452,6 +479,7 @@ export const INTENTS: IntentDef[] = [
     name: '长鸣',
     kind: 'attack',
     aim: 'player',
+    art: 'long-toll',
     effects: [{ kind: 'damage', amount: 13, hits: 2, scaleMode: 'SCALAR' }],
     unstealable: true,
     undelayable: true,
@@ -483,6 +511,7 @@ export const INTENTS: IntentDef[] = [
     name: '镀金回挡',
     kind: 'defend',
     aim: 'self',
+    art: 'gilded-recoil',
     effects: [
       { kind: 'block', amount: 8, scaleMode: 'SCALAR' },
       { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect' },

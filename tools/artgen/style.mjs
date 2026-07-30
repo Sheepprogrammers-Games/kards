@@ -57,6 +57,21 @@ const SLOT_FRAMING = {
 };
 
 /**
+ * 意图色调。四类招式各占一段色相，玩家扫一眼轨道即可分辨威胁类型。
+ * 只改发光与高光，深靛底色不动。
+ */
+const INTENT_TONE = {
+  attack: 'for this image the emissive light is incandescent orange-red #ff5a1f and ember ' +
+    'scarlet instead of gold, the hue of metal heated past working temperature',
+  defend: 'for this image the emissive light is cold cyan-blue #4fd8ea and pale quenched ' +
+    'steel instead of gold, the hue of metal dropped into water',
+  debuff: 'for this image the emissive light is sickly violet #8b46cf shot through with ' +
+    'corroded verdigris green instead of gold, the hue of something rotting from inside',
+  buff: 'for this image the emissive light is bright clean antique gold and clear amber, ' +
+    'noticeably hotter and purer than the dull brass it sits on',
+};
+
+/**
  * 可用尺寸为 1024x1024、1024x1536、1536x1024。
  * 接口会按比例回落到 848x1264 / 1024x1024 / 1264x848，版式按比例设计而非绝对像素。
  */
@@ -108,6 +123,29 @@ export const PRESETS = {
       `${SLOT_FRAMING[opts.slot ?? 'trinket']}. ` +
       'Clean product shot of one object, three-quarter view, worn metal and leather with ' +
       'visible craftsmanship, faint arcane glow at the seams. ' +
+      `${CHROMA_BG}. ${NEGATIVE}.`,
+  },
+
+  /**
+   * 轨道格里的意图图标，绿幕抠像后补成正方形。
+   * 成品以 cover 铺满横向窄条，只有画面正中的横带会露出，主体必须挤在正中。
+   * kind 决定色调倾向。
+   */
+  intent: {
+    size: '1024x1024',
+    quality: 'high',
+    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 320, quality: 74 },
+    wrap: (subject, opts = {}) =>
+      `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
+      `${INTENT_TONE[opts.kind ?? 'attack']}. ` +
+      'This depicts one action caught mid-event, or the physical sign that the action is about ' +
+      'to happen. No creature, no character, no full figure. ' +
+      'Composition is centre-locked: the entire readable subject sits as a wide shallow cluster ' +
+      'on the exact centre of the canvas and stays inside the middle third of the height, ' +
+      'while the top third and the bottom third hold nothing but background. ' +
+      'The finished image is cropped down to a wide horizontal band through that centre, so ' +
+      'anything placed high, low or in a corner is thrown away, and what remains in the band ' +
+      'must still be identifiable on its own. ' +
       `${CHROMA_BG}. ${NEGATIVE}.`,
   },
 

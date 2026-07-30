@@ -111,7 +111,7 @@ export function firstFreeSlotFrom(state: CombatState, lane: Lane, preferred: num
 }
 
 /**
- * 插入推挤。为 T+1 腾出空位，占满时把末位挤出战斗。
+ * 插入推挤。为首格腾出空位，占满时把末位挤出战斗。
  */
 export function pushLane(state: CombatState, lane: Lane): void {
   const last = entryAt(state, lane, C.TRACK_SLOTS);

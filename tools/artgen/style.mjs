@@ -65,7 +65,7 @@ export const PRESETS = {
   card: {
     size: '1024x1536',
     quality: 'high',
-    output: { key: 'none', maxSize: 768 },
+    output: { key: 'none', maxSize: 560, quality: 74 },
     wrap: (subject) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
       'Vertical trading card key art, single central subject, symmetrical arcane composition, ' +
@@ -80,7 +80,7 @@ export const PRESETS = {
   enemy: {
     size: '1024x1024',
     quality: 'high',
-    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.03, maxSize: 640 },
+    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.03, maxSize: 600, quality: 74 },
     wrap: (subject, opts = {}) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
       `${TIER_FRAMING[opts.tier ?? 'minion']}. ` +
@@ -91,7 +91,7 @@ export const PRESETS = {
   relic: {
     size: '1024x1024',
     quality: 'high',
-    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 384 },
+    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 384, quality: 74 },
     wrap: (subject) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
       'Single ornate artifact object, three-quarter view, museum lighting, glowing arcane core. ' +
@@ -102,7 +102,7 @@ export const PRESETS = {
   equipment: {
     size: '1024x1024',
     quality: 'high',
-    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 384 },
+    output: { key: 'green', threshold: 0.42, trim: true, pad: 0.06, square: true, maxSize: 384, quality: 74 },
     wrap: (subject, opts = {}) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
       `${SLOT_FRAMING[opts.slot ?? 'trinket']}. ` +
@@ -115,7 +115,7 @@ export const PRESETS = {
   bg: {
     size: '1536x1024',
     quality: 'high',
-    output: { key: 'none', maxSize: 1600, quality: 84 },
+    output: { key: 'none', maxSize: 1280, quality: 76 },
     wrap: (subject) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
       'Wide environment matte painting, strong atmospheric depth and haze, ' +
@@ -145,7 +145,7 @@ export const PRESETS = {
   ui: {
     size: '1024x1024',
     quality: 'high',
-    output: { key: 'green', threshold: 0.4, trim: true, pad: 0.02, maxSize: 256 },
+    output: { key: 'green', threshold: 0.4, trim: true, pad: 0.02, maxSize: 256, quality: 78 },
     wrap: (subject) =>
       `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
       'Ornamental game UI element, perfectly symmetrical, crisp metallic edges. ' +

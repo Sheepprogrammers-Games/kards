@@ -6,7 +6,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "art": "node tools/artgen/gen.mjs"
+    "art": "node tools/artgen/gen.mjs",
+    "audio": "node tools/audiopack.mjs",
+    "pack": "node tools/artpack.mjs"
   },
   "type": "module",
   "devDependencies": {

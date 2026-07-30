@@ -5,17 +5,17 @@ import type { CardVariant } from '@engine/types';
 export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   shove: [
     {
-      text: '将一个敌方意图向末位推 1 格。被顶出末位的意图立刻落地。对最靠前的敌人施加 2 层易伤。',
+      text: '将一个敌方意图延后 2 格。使你获得 1 层虚弱。',
       effects: [
         {
-          kind: 'applyStatus',
-          amount: 2,
+          kind: 'selfStatus',
+          amount: 1,
           scaleMode: 'SCALAR',
-          status: 'vulnerable',
-          target: 'frontmost',
+          status: 'weak',
+          target: 'self',
         },
       ],
-      manipulations: [{ kind: 'push', lane: 'enemy', amount: 1 }],
+      manipulations: [{ kind: 'rewind', lane: 'enemy', amount: 2 }],
     },
   ],
   foresight: [

@@ -43,7 +43,8 @@ const TRIM: Partial<Record<TrackId | StingerId, number>> = {
 
 function urlOf(id: string): string | null {
   for (const [path, url] of Object.entries(TRACKS)) {
-    if (path.includes(`/${id}.`)) return url;
+    // 源文件路径是 /title.m4a，产物是 /title-DcfTJreF.m4a，用 id 开头加扩展名或连字符都能命中
+    if (path.includes(`/${id}.`) || path.includes(`/${id}-`)) return url;
   }
   return null;
 }
@@ -151,6 +152,12 @@ class Music {
     if (on && this.current.paused) {
       void this.current.play().catch(() => {});
     }
+  }
+
+  /** 页面首次点击后取回被浏览器挡下的播放权。 */
+  resumeAfterGesture(): void {
+    if (!this.current || !this.current.paused) return;
+    void this.current.play().catch(() => {});
   }
 
   private fadeOut(audio: HTMLAudioElement, duration: number): void {

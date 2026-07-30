@@ -222,6 +222,16 @@
   justify-content: flex-start;
   overflow-y: auto;
   padding-bottom: 26px;
+  height: 100%;
+}
+
+.shop-screen .shop-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 0;
+  margin-top: auto;
+  background: linear-gradient(to top, rgba(11,9,32,0.96) 30%, transparent);
+  z-index: 10;
 }
 
 .shop-panel {

@@ -753,6 +753,19 @@ export const MANIFEST = [
       'depths lit only by magenta echo light, gold edges burned white',
   },
 
+  // cover：封面主视觉，标题留在右上暗部
+  {
+    id: 'cover-key-art',
+    category: 'cover',
+    subject:
+      'a lone weaver in a tattered indigo coat standing on a vast brass clock face, ' +
+      'four translucent afterimages of herself trailing behind in a receding row, ' +
+      'each one fainter than the last, the nearest still solid and the farthest almost gone, ' +
+      'magenta echo light threading between them like a drawn wire, ' +
+      'a collapsing clocktower interior looming above with gears frozen mid-turn, ' +
+      'shafts of tarnished gold light from the upper left',
+  },
+
   // ui：对称装饰构件，抠像底色，运行时按幕做色调映射
   {
     id: 'card-back',

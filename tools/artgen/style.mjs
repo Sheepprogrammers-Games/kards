@@ -150,6 +150,20 @@ export const PRESETS = {
   },
 
   /** 横版场景背景，下方中部留空放置战斗单位。 */
+  cover: {
+    size: '1536x1024',
+    quality: 'high',
+    output: { key: 'none', maxSize: 1600, quality: 82 },
+    wrap: (subject) =>
+      `${subject}. ${STYLE_CORE}. ${PALETTE}. ` +
+      'Single dramatic key illustration for a game cover, one clear focal subject, ' +
+      'cinematic composition with the subject slightly left of center, ' +
+      'the upper-right quadrant kept as calm dark sky so a title can be laid over it, ' +
+      'strong depth with foreground silhouette, mid-ground subject and hazed background, ' +
+      'no text, no logo, no watermark, no UI. ' +
+      `${NEGATIVE}.`,
+  },
+
   bg: {
     size: '1536x1024',
     quality: 'high',

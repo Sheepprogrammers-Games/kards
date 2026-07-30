@@ -499,3 +499,44 @@
     font-size: 21px;
   }
 }
+
+/* 卡牌详情里的多种写法 */
+.codex-versions {
+  margin-top: 14px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(240, 180, 41, 0.2);
+}
+
+.codex-versions-head {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--gold-400);
+}
+
+.codex-version-row {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  padding: 6px 9px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+.codex-version-row.current {
+  background: rgba(240, 180, 41, 0.1);
+  border: 1px solid rgba(240, 180, 41, 0.34);
+  color: var(--ink);
+}
+
+.codex-version-tag {
+  flex: 0 0 auto;
+  font-family: var(--font-num);
+  font-size: 11px;
+  color: var(--gold-400);
+}
+
+.codex-version-text {
+  flex: 1 1 auto;
+}

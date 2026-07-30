@@ -111,6 +111,25 @@ export interface CardDef {
   retain?: boolean;
   exhaust?: boolean;
   unplayable?: boolean;
+  /** 每局开局时在基础版与这些变体之间抽定一版。 */
+  variants?: CardVariant[];
+}
+
+/**
+ * 同一张牌在不同局里的另一种写法。立绘与类别不变，
+ * 只改写卡面文案与结算内容，未列出的字段沿用基础版。
+ */
+export interface CardVariant {
+  text: string;
+  cost?: number;
+  effects?: Effect[];
+  payoff?: Effect[];
+  manipulations?: Manipulation[];
+  ignite?: IgniteParams;
+  needsTarget?: boolean;
+  needsSlot?: boolean;
+  retain?: boolean;
+  exhaust?: boolean;
 }
 
 export interface CardInstance {

@@ -27,7 +27,7 @@ import {
   type RunState,
 } from '@engine/run';
 import { rerollPrice, rollShop } from '@engine/shop';
-import { allCards } from '@engine/registry';
+import { allCards, applyVariants } from '@engine/registry';
 import type { EquipSlot, RewardOffer, ShopItem } from '@engine/types';
 import { ENEMIES } from '@content/enemies';
 import { EQUIPMENT } from '@content/equipment';
@@ -116,6 +116,7 @@ export class App {
 
   private setRun(next: RunState): void {
     this.run = next;
+    applyVariants(next.variants);
     recordSeen('cards', next.deck.map((card) => card.defId));
     recordSeen('relics', next.relics);
     recordSeen('equipment', equippedIds(next.equipment));
@@ -131,6 +132,7 @@ export class App {
 
   private render(): void {
     if (this.atTitle) return;
+    applyVariants(this.run.variants);
     this.battle?.destroy();
     this.battle = null;
     this.unbindPause?.();
@@ -225,6 +227,9 @@ export class App {
     this.battle?.destroy();
     this.battle = null;
     this.root.innerHTML = '';
+
+    // 教学关讲的是基础写法，不跟着本局的版本走
+    applyVariants({});
 
     const state = createCombat({
       seed: 20260101,
@@ -1244,6 +1249,7 @@ export function loadSavedRun(): RunState | null {
       equipment: { ...emptyLoadout(), ...(saved.equipment ?? {}) },
       checkpoint: saved.checkpoint ?? null,
       retries: saved.retries ?? 0,
+      variants: saved.variants ?? {},
     };
   } catch {
     return null;

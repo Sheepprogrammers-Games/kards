@@ -48,6 +48,8 @@ export interface RunState extends RngHolder {
   checkpoint: RunState | null;
   /** 本节点已重挑次数。 */
   retries: number;
+  /** 本局每张牌选定的版本号，0 为基础版。 */
+  variants: Record<string, number>;
 
   /** 已结算的节点数，用于难度曲线。 */
   cleared: number;
@@ -66,10 +68,24 @@ export function emptyLoadout(): EquipmentLoadout {
   return { weapon: null, armor: null, trinket: null, core: null };
 }
 
+/**
+ * 为本局的每张牌抽定一个版本。0 为基础版，其余对应各自的变体。
+ * 同一颗种子必然抽出同一套，重开才会换。
+ */
+export function rollVariants(holder: RngHolder): Record<string, number> {
+  const choices: Record<string, number> = {};
+  for (const def of allCards()) {
+    const total = (def.variants?.length ?? 0) + 1;
+    if (total > 1) choices[def.id] = nextInt(holder, total);
+  }
+  return choices;
+}
+
 export function createRun(setup: RunSetup): RunState {
   const seed = seedFrom(setup.seedText);
   const holder: RngHolder = { rng: seed };
   const map = generateMap(holder, 1);
+  const variants = rollVariants(holder);
 
   return {
     seedText: setup.seedText,
@@ -86,6 +102,7 @@ export function createRun(setup: RunSetup): RunState {
     equipment: emptyLoadout(),
     checkpoint: null,
     retries: 0,
+    variants,
     cleared: 0,
     result: 'ongoing',
   };

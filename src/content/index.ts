@@ -6,6 +6,7 @@ import { CARDS } from './cards';
 import { ENEMIES, INTENTS } from './enemies';
 import { EQUIPMENT } from './equipment';
 import { RELICS } from './relics';
+import { VARIANTS } from './variants/index';
 
 function byId<T extends { id: string }>(items: T[]): Record<string, T> {
   return Object.fromEntries(items.map((it) => [it.id, it]));
@@ -31,10 +32,15 @@ function relicSummaries(): RelicSummary[] {
   return RELICS.map((def) => ({ id: def.id, rarity: def.rarity }));
 }
 
+/** 变体表挂到对应的卡牌定义上，卡表本身不记录版本。 */
+function withVariants(cards: CardDef[]): CardDef[] {
+  return cards.map((def) => (VARIANTS[def.id] ? { ...def, variants: VARIANTS[def.id] } : def));
+}
+
 export function loadContent(): void {
   validate(CARDS, INTENTS);
   setRegistry({
-    cards: byId(CARDS),
+    cards: byId(withVariants(CARDS)),
     intents: byId(INTENTS),
     equipment: byId(EQUIPMENT),
     relics: byId(relicSummaries()),

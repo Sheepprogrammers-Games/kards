@@ -1,6 +1,12 @@
 /** 手册。分页展示规则、术语、卡牌、遗物、装备与敌人，未见过的条目只留占位。 */
 
-import { allCards } from '@engine/registry';
+import {
+  allCards,
+  baseCardDef,
+  variantCount,
+  variantIndexOf,
+  variantOf,
+} from '@engine/registry';
 import { emptyCodex, markSeen, type CodexState } from '@engine/codex';
 import { intentAim } from '@engine/intents';
 import type { CardDef, Effect, EquipmentDef, IntentDef } from '@engine/types';
@@ -604,6 +610,25 @@ function cardDetail(def: CardDef): HTMLElement {
   if (flags.length) {
     const box = el('div', 'codex-flags');
     for (const flag of flags) box.append(el('span', 'codex-flag', flag));
+    info.append(box);
+  }
+
+  const versions = variantCount(def.id);
+  if (versions > 1) {
+    const base = baseCardDef(def.id);
+    const current = variantIndexOf(def.id);
+    const box = el('div', 'codex-versions');
+    box.append(
+      el('div', 'codex-versions-head', `这张牌有 ${versions} 种写法　本局是第 ${current + 1} 种`),
+    );
+
+    for (let i = 0; i < versions; i++) {
+      const row = el('div', 'codex-version-row');
+      if (i === current) row.classList.add('current');
+      row.append(el('span', 'codex-version-tag', `其${i + 1}`));
+      row.append(el('span', 'codex-version-text', base ? variantOf(base, i).text : def.text));
+      box.append(row);
+    }
     info.append(box);
   }
 

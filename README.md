@@ -1,6 +1,21 @@
-# 回响 · ECHOES
+<p align="center">
+  <img src="docs/screenshots/cover.jpg" width="720" alt="回响 · ECHOES 封面">
+</p>
+
+<h1 align="center">回响 · ECHOES</h1>
+
+<p align="center">一款浏览器上的策略卡牌 Roguelike</p>
 
 一款浏览器上的策略卡牌 Roguelike。你打出的牌不会消失，它会在接下来的回合里一遍遍重演。
+
+## 美术
+
+<p align="center">
+  <img src="docs/screenshots/01-first-weaver.jpg" width="24%" alt="敌人立绘">
+  <img src="docs/screenshots/02-silent-conductor.jpg" width="24%" alt="敌人立绘">
+  <img src="docs/screenshots/03-cracked-hourglass.jpg" width="24%" alt="遗物立绘">
+  <img src="docs/screenshots/04-covered-call.jpg" width="24%" alt="卡牌立绘">
+</p>
 
 ## 核心机制：回响时间轨
 

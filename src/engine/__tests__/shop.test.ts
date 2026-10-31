@@ -100,6 +100,16 @@ describe('残市货架', () => {
     }
   });
 
+  it('已经装备的同一件装备不再上架', () => {
+    const state = run();
+    state.equipment.weapon = 'equip-a';
+
+    for (let rerolls = 0; rerolls < 12; rerolls++) {
+      const equipment = rollShop(state, rerolls).filter((item) => item.kind === 'equipment');
+      expect(equipment.every((item) => item.id !== 'equip-a')).toBe(true);
+    }
+  });
+
   it('刷新价格随次数递增，基准与步长取自平衡表', () => {
     const prices = [0, 1, 2, 3].map((n) => rerollPrice(n));
     for (let i = 1; i < prices.length; i++) {
@@ -127,6 +137,13 @@ describe('残市货架', () => {
         expect(item.price).toBeLessThanOrEqual(anchor * 2.6);
       }
     }
+  });
+
+  it('基础商品价格与普通战斗奖励处于同一经济区间', () => {
+    expect(C.SHOP_PRICE_CARD).toBeLessThanOrEqual(C.REWARD_GOLD_MAX + 5);
+    expect(C.SHOP_PRICE_RELIC).toBeLessThanOrEqual(C.REWARD_GOLD_MAX * 2.5);
+    expect(C.SHOP_PRICE_EQUIPMENT).toBeLessThanOrEqual(C.REWARD_GOLD_MAX * 2);
+    expect(C.SHOP_REROLL_BASE).toBeLessThan(C.REWARD_GOLD_MIN);
   });
 
   it('补给的回血量不低于平衡表下限，售价随回血量走高', () => {

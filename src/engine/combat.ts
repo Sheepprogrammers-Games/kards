@@ -6,7 +6,12 @@ import { equipmentEffects, type EquipHook } from './equipment';
 import { resolveIntent, scheduleIntents } from './intents';
 import { cardDef } from './registry';
 import { shuffle } from './rng';
-import { decayStatusStacks, tickStatusEndOfTurn, tickStatusStartOfTurn } from './status';
+import {
+  decayPlayerWeak,
+  decayStatusStacks,
+  tickStatusEndOfTurn,
+  tickStatusStartOfTurn,
+} from './status';
 import {
   advanceTrack,
   setPayoffResolver,
@@ -197,7 +202,8 @@ export function reduce(state: CombatState, action: CombatAction): CombatState {
       endTurn(next);
       break;
   }
-  return next;
+  // 非法目标、无效操作等不会产生事件，也不应伪装成一次状态更新。
+  return next.events.length === 0 ? state : next;
 }
 
 function snapshotOf(state: CombatState): CasterSnapshot {
@@ -291,10 +297,15 @@ export function canPlay(state: CombatState, uid: number): boolean {
   if (state.player.energy < costOf(state, def, card.upgraded)) return false;
   if (def.type === 'ignite' && countEntries(state, 'player') < C.IGNITE_MIN_ENTRIES) return false;
 
-  // 需要指定格位的牌，目标泳道上必须真的有东西可作用
+  // 需要指定格位的牌，至少一条声明过的泳道上要有可作用的条目
   if (def.needsSlot) {
-    const lane = manipulationLane(def);
-    if (lane && countEntries(state, lane) === 0) return false;
+    const lanes = [...new Set((def.manipulations ?? []).map((op) => op.lane).filter(Boolean))] as Lane[];
+    if (!lanes.length) {
+      const lane = manipulationLane(def);
+      if (lane && countEntries(state, lane) === 0) return false;
+    } else if (lanes.every((lane) => countEntries(state, lane) === 0)) {
+      return false;
+    }
   }
   return true;
 }
@@ -311,6 +322,16 @@ function playCard(
   const card = state.hand[index] as CardInstance;
   const def = cardDef(card.defId);
   const cost = costOf(state, def, card.upgraded);
+
+  if (def.needsSlot) {
+    if (slot === undefined || slot < 1 || slot > C.TRACK_SLOTS) return;
+    if (
+      (def.manipulations?.length ?? 0) > 0 &&
+      !manipulationWouldWork(state, def, slot, laneTarget, targetIndex)
+    ) {
+      return;
+    }
+  }
 
   state.player.energy -= cost;
   state.hand.splice(index, 1);
@@ -344,6 +365,20 @@ function playCard(
   }
 
   settleDeaths(state);
+}
+
+/** 需要格位的轨道牌至少要有一项操作能生效，避免附带效果掩盖无效目标。 */
+function manipulationWouldWork(
+  state: CombatState,
+  def: CardDef,
+  slot: number,
+  laneTarget?: Lane,
+  targetIndex?: number,
+): boolean {
+  const preview = structuredClone(state);
+  preview.events = [];
+  applyManipulations(preview, def, slot, laneTarget, targetIndex);
+  return preview.events.some((event) => event.type === 'manipulate' && event.ok === true);
 }
 
 /** 一次性结算用的临时条目，不占用轨位也不回响。 */
@@ -483,21 +518,32 @@ function applyManipulations(
         break;
       case 'rewind':
         // 被挤出轨道的意图不会消失，转成该敌人的蓄力
-        done = rewind(state, lane, s, n, (e) => {
-          const owner = state.enemies[e.sourceEnemy ?? 0];
-          if (owner) {
-            owner.charge += 1;
-            state.events.push({ type: 'charge', enemyId: owner.id, charge: owner.charge });
-          }
-        });
-        break;
-      case 'swap':
-        done = swap(
+        done = rewind(
           state,
-          { lane, slot: s },
-          { lane: op.lane === 'enemy' ? 'player' : 'enemy', slot: op.slotB ?? s },
+          lane,
+          s,
+          n,
+          lane === 'enemy'
+            ? (e) => {
+                const owner = state.enemies[e.sourceEnemy ?? 0];
+                if (owner) {
+                  owner.charge += 1;
+                  state.events.push({ type: 'charge', enemyId: owner.id, charge: owner.charge });
+                }
+              }
+            : undefined,
         );
         break;
+      case 'swap': {
+        const other = { lane: op.lane === 'enemy' ? 'player' : 'enemy', slot: op.slotB ?? s } as const;
+        const moving = [entryAt(state, lane, s), entryAt(state, other.lane, other.slot)];
+        done = swap(state, { lane, slot: s }, other);
+        // 换过泳道的条目按窃取的同一套规则改写，否则交换会成为绕开折扣的窃取
+        if (done && lane !== other.lane) {
+          for (const entry of moving) if (entry) adoptAcrossLanes(state, entry);
+        }
+        break;
+      }
       case 'freeze':
         done = freeze(state, lane, s);
         break;
@@ -551,6 +597,26 @@ function copyEntry(state: CombatState, slot: number): boolean {
   return true;
 }
 
+/**
+ * 换手后的条目改写。换来的东西只结算一次且拿不到全额，
+ * 无论它是被窃取的还是被交换过来的。
+ */
+function adoptAcrossLanes(state: CombatState, entry: TrackEntry): void {
+  entry.stolen = true;
+  entry.echoBudget = 1;
+  entry.copyDepth = 1;
+  entry.resolvedHere = false;
+  entry.rateMod = state.mods.fullSteal && entry.owner === 'player' ? 1 : C.STOLEN_RATE;
+  if (entry.owner === 'player') entry.snapshot = snapshotOf(state);
+
+  // 意图离开原主时，原主立刻开始为下一击蓄力
+  const source = state.enemies[entry.sourceEnemy ?? -1];
+  if (source && entry.owner === 'player') {
+    source.charge += 1;
+    state.events.push({ type: 'charge', enemyId: source.id, charge: source.charge });
+  }
+}
+
 /** 窃取占用一个玩家轨位，并使原持有者立即蓄力。 */
 function stealIntent(state: CombatState, slot: number): boolean {
   const intent = entryAt(state, 'enemy', slot);
@@ -560,16 +626,9 @@ function stealIntent(state: CombatState, slot: number): boolean {
   setEntry(state, 'enemy', slot, null);
 
   intent.owner = 'player';
-  intent.stolen = true;
-  intent.echoBudget = 1;
-  intent.copyDepth = 1;
-  intent.rateMod = state.mods.fullSteal ? 1 : C.STOLEN_RATE;
-  intent.resolvedHere = false;
-  intent.snapshot = snapshotOf(state);
+  adoptAcrossLanes(state, intent);
   setEntry(state, 'player', 1, intent);
 
-  const owner = state.enemies[intent.sourceEnemy ?? 0];
-  if (owner) owner.charge += 1;
   state.events.push({ type: 'steal', slot, uid: intent.uid });
   return true;
 }
@@ -624,7 +683,7 @@ function resolveEchoes(state: CombatState): void {
 function startPlayerTurn(state: CombatState): void {
   state.turn += 1;
   state.phase = 'playerTurn';
-  state.player.block = 0;
+  state.player.block = Math.floor(state.player.block * 0.5);
   state.events.push({ type: 'turnStart', turn: state.turn });
 
   tickStatusStartOfTurn(state, state.player);
@@ -636,7 +695,13 @@ function startPlayerTurn(state: CombatState): void {
   if (state.result !== 'ongoing') return;
 
   state.player.energy = state.player.energyPerTurn;
-  drawCards(state, Math.max(0, state.player.handSize - state.hand.length) + state.mods.drawPerTurn);
+  drawCards(
+    state,
+    Math.min(
+      Math.max(0, state.player.handSize - state.hand.length),
+      Math.max(0, C.DRAW_PER_TURN + state.mods.drawPerTurn),
+    ),
+  );
 
   state.weavePlays = 0;
   state.delaysThisTurn = 0;
@@ -650,13 +715,7 @@ function endTurn(state: CombatState): void {
   state.phase = 'enemyTurn';
   state.events.push({ type: 'turnEnd', turn: state.turn });
 
-  for (let i = state.hand.length - 1; i >= 0; i--) {
-    const card = state.hand[i] as CardInstance;
-    if (cardDef(card.defId).retain) continue;
-    state.hand.splice(i, 1);
-    state.discardPile.push(card);
-  }
-
+  decayPlayerWeak(state);
   tickStatusEndOfTurn(state, state.player);
   for (const enemy of state.enemies) {
     if (enemy.alive) tickStatusStartOfTurn(state, enemy);
@@ -706,7 +765,6 @@ function checkPhases(state: CombatState): void {
 }
 
 function settleDeaths(state: CombatState): void {
-  checkPhases(state);
   for (const enemy of state.enemies) {
     if (enemy.alive && enemy.hp <= 0) {
       enemy.alive = false;
@@ -714,6 +772,7 @@ function settleDeaths(state: CombatState): void {
       clearEnemyIntents(state, enemy);
     }
   }
+  checkPhases(state);
   if (state.player.hp <= 0) {
     state.result = 'defeat';
     state.phase = 'finished';

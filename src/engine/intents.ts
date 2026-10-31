@@ -19,8 +19,10 @@ export function intentAim(def: IntentDef): 'player' | 'self' {
 
 function makeIntentEntry(state: CombatState, enemy: EnemyState, intentId: string): TrackEntry {
   const def = intentDef(intentId);
-  const chargeScale = 1 + enemy.charge * C.CHARGE_BONUS;
-  enemy.charge = 0;
+  // 蓄力是攒下来还给玩家的那一击，护甲与自我增益的意图不该把它花掉
+  const strikes = intentAim(def) === 'player';
+  const chargeScale = strikes ? 1 + enemy.charge * C.CHARGE_BONUS : 1;
+  if (strikes) enemy.charge = 0;
 
   const entry: TrackEntry = {
     uid: state.uidCounter++,

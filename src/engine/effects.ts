@@ -15,7 +15,7 @@ export interface ResolveContext {
   isPlay: boolean;
   /** 玩家指定的敌人下标。 */
   targetIndex?: number;
-  /** 窃取、抢拍、抽空等固定倍率。 */
+  /** 覆盖条目自带的倍率，省略时沿用 entry.rateMod。 */
   rateMod?: number;
   /** 系数过低时把取整为零的产出抬到 1，用于一次性清算。 */
   minYield?: boolean;
@@ -151,6 +151,7 @@ export function gainBlock(state: CombatState, target: Combatant, amount: number)
 
 export function drawCards(state: CombatState, count: number): void {
   for (let i = 0; i < count; i++) {
+    if (state.hand.length >= state.player.handSize) return;
     if (!state.drawPile.length) {
       if (!state.discardPile.length) return;
       state.drawPile = shuffle(state, state.discardPile);
@@ -165,7 +166,7 @@ export function drawCards(state: CombatState, count: number): void {
 }
 
 /** 攻击方修正取自快照，缩放后向下取整，无最小值保底。 */
-function scaledAmount(effect: Effect, entry: TrackEntry, coef: number, rate: number): number {
+export function scaledAmount(effect: Effect, entry: TrackEntry, coef: number, rate: number): number {
   const snap = entry.snapshot;
   let base = effect.amount;
   if (effect.kind === 'damage') {
@@ -176,6 +177,32 @@ function scaledAmount(effect: Effect, entry: TrackEntry, coef: number, rate: num
     base += snap.statusPotency;
   }
   return Math.floor(base * coef * rate);
+}
+
+/** 条目在某个系数下的可见产出，公式与结算一致。 */
+export function previewYield(
+  entry: TrackEntry,
+  coef: number,
+): { kind: Effect['kind']; value: number; hits: number; status?: string }[] {
+  const rate = entry.rateMod ?? 1;
+  const parts: { kind: Effect['kind']; value: number; hits: number; status?: string }[] = [];
+  for (const effect of entry.effects) {
+    if (effect.scaleMode === 'ONCE') continue;
+    let value = 0;
+    let hits = effect.hits ?? 1;
+    if (effect.scaleMode === 'THRESHOLD') {
+      if (coef < (effect.threshold ?? 1)) continue;
+      value = scaledAmount(effect, entry, 1, rate);
+    } else if (effect.scaleMode === 'COUNT') {
+      hits = Math.floor((effect.hits ?? 1) * coef * rate);
+      value = scaledAmount(effect, entry, 1, 1);
+    } else {
+      value = scaledAmount(effect, entry, coef, rate);
+    }
+    if (value <= 0 || hits <= 0) continue;
+    parts.push({ kind: effect.kind, value, hits, status: effect.status });
+  }
+  return parts;
 }
 
 /** 单个效果原子。coef 为当前格位系数，isPlay 决定 ONCE 是否触发。 */
@@ -313,26 +340,34 @@ function applyEffect(
   }
 }
 
-/** 条目在某个格位的一次完整结算。 */
+/**
+ * 条目在某个格位的一次完整结算。
+ * 倍率默认取条目自带的 rateMod，窃取与抢拍的折扣因此在回响、引爆与抽空时同样生效。
+ */
 export function resolveEntry(
   state: CombatState,
   entry: TrackEntry,
   coef: number,
   ctx: ResolveContext,
 ): void {
+  const rate = ctx.rateMod ?? entry.rateMod ?? 1;
   state.events.push({
     type: 'resolve',
     uid: entry.uid,
     cardId: entry.cardId,
     owner: entry.owner,
     coef,
+    rate,
     isPlay: ctx.isPlay,
   });
-  for (const effect of entry.effects) applyEffect(state, entry, effect, coef, ctx);
+  for (const effect of entry.effects) {
+    applyEffect(state, entry, effect, coef, { ...ctx, rateMod: rate });
+  }
 }
 
 /** 判断条目在下一格位是否全部取整为 0，用于提前退场。 */
 export function isNullAt(entry: TrackEntry, coef: number): boolean {
+  const rate = entry.rateMod ?? 1;
   for (const effect of entry.effects) {
     if (effect.scaleMode === 'ONCE') continue;
     if (effect.scaleMode === 'THRESHOLD') {
@@ -340,10 +375,10 @@ export function isNullAt(entry: TrackEntry, coef: number): boolean {
       continue;
     }
     if (effect.scaleMode === 'COUNT') {
-      if (Math.floor((effect.hits ?? 1) * coef) > 0) return false;
+      if (Math.floor((effect.hits ?? 1) * coef * rate) > 0) return false;
       continue;
     }
-    if (scaledAmount(effect, entry, coef, 1) > 0) return false;
+    if (scaledAmount(effect, entry, coef, rate) > 0) return false;
   }
   return true;
 }

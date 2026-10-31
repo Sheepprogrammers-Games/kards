@@ -221,14 +221,14 @@ function shiftOne(
   return true;
 }
 
-/** 本回合还剩多少格延后额度。额度按回合结算，不分摊到单个意图。 */
+/** 本回合还剩多少次延后操作。额度按回合结算，不分摊到单个意图。 */
 export function delayBudgetLeft(state: CombatState): number {
   return Math.max(0, C.INTENT_DELAY_PER_TURN + state.mods.delayBonus - state.delaysThisTurn);
 }
 
 /**
- * 条目还能被向低索引移动几次。敌方意图同时受本回合的公共额度与
- * 自身累计上限约束，后者使同一击无法被反复推回。
+ * 条目还能被向低索引操作几次。敌方意图同时受本回合的公共额度与
+ * 自身累计上限约束，后者使同一击无法被反复延后。
  */
 export function rewindsLeft(state: CombatState, e: TrackEntry, lane: Lane): number {
   if (lane === 'player') {
@@ -257,6 +257,21 @@ export function rewind(
   const e = entryAt(state, lane, slot);
   if (!e) return false;
 
+  if (lane === 'enemy') {
+    if (!canRewind(state, e, lane)) return false;
+    const steps = enemyRewindSteps(state, n, e.uid, Boolean(onPushedOut));
+    if (steps <= 0) return false;
+
+    for (let step = 0; step < steps; step++) {
+      const from = slotOfEntry(state, lane, e.uid);
+      if (from === null || !shiftBack(state, lane, from, onPushedOut, false)) break;
+    }
+    e.delayCount += 1;
+    state.delaysThisTurn += 1;
+    state.events.push({ type: 'delaySpent', left: delayBudgetLeft(state) });
+    return true;
+  }
+
   let moved = false;
   for (let step = 0; step < n; step++) {
     const from = slotOfEntry(state, lane, e.uid);
@@ -267,15 +282,76 @@ export function rewind(
   return moved;
 }
 
+/** 敌方意图的本次延后操作是否至少能移动一格。 */
+export function canRewindAt(
+  state: CombatState,
+  slot: number,
+  n: number,
+  canPushOut = false,
+): boolean {
+  const e = entryAt(state, 'enemy', slot);
+  return Boolean(
+    e &&
+      canRewind(state, e, 'enemy') &&
+      enemyRewindSteps(state, n, e.uid, canPushOut) > 0,
+  );
+}
+
+/** 己方条目的本次回溯是否至少能移动一格。 */
+export function canRewindPlayerAt(state: CombatState, slot: number, n: number): boolean {
+  const preview = structuredClone(state);
+  preview.events = [];
+  return rewind(preview, 'player', slot, n);
+}
+
+/** 预演敌方意图的连锁移动，返回本次操作能完整移动的格数。 */
+function enemyRewindSteps(
+  state: CombatState,
+  n: number,
+  uid: number,
+  canPushOut: boolean,
+): number {
+  const track = state.track.enemy.slice();
+  let moved = 0;
+  for (let step = 0; step < n; step++) {
+    const from = track.findIndex((entry) => entry?.uid === uid);
+    if (from < 0 || !previewShiftBack(track, from, canPushOut)) break;
+    moved += 1;
+  }
+  return moved;
+}
+
+/** 在轨道副本上预演一次左移，确保实际移动不会留下半截连锁。 */
+function previewShiftBack(
+  track: (TrackEntry | null)[],
+  index: number,
+  canPushOut: boolean,
+): boolean {
+  const e = track[index];
+  if (!e || e.undelayable) return false;
+  const dst = index - 1;
+  if (dst < 0) {
+    if (!canPushOut) return false;
+    track[index] = null;
+    return true;
+  }
+  if (track[dst] && !previewShiftBack(track, dst, canPushOut)) return false;
+  if (track[dst]) return false;
+  track[dst] = e;
+  track[index] = null;
+  return true;
+}
+
 /** 把单个条目左移一格，必要时先把前方条目继续左移腾位。 */
 function shiftBack(
   state: CombatState,
   lane: Lane,
   slot: number,
   onPushedOut?: (e: TrackEntry) => void,
+  spendDelay = true,
 ): boolean {
   const e = entryAt(state, lane, slot);
-  if (!e || !canRewind(state, e, lane)) return false;
+  if (!e || (lane === 'player' ? !canRewind(state, e, lane) : e.undelayable)) return false;
 
   const dst = slot - 1;
   if (dst < 1) {
@@ -286,7 +362,7 @@ function shiftBack(
     state.events.push({ type: 'pushedOut', lane, uid: e.uid, cardId: e.cardId, back: true });
     return true;
   }
-  if (entryAt(state, lane, dst) && !shiftBack(state, lane, dst, onPushedOut)) return false;
+  if (entryAt(state, lane, dst) && !shiftBack(state, lane, dst, onPushedOut, spendDelay)) return false;
   if (entryAt(state, lane, dst)) return false;
 
   setEntry(state, lane, dst, e);
@@ -294,7 +370,7 @@ function shiftBack(
   e.resolvedHere = false;
   if (lane === 'player') {
     e.rewindCount += 1;
-  } else {
+  } else if (spendDelay) {
     e.delayCount += 1;
     state.delaysThisTurn += 1;
     state.events.push({ type: 'delaySpent', left: delayBudgetLeft(state) });
@@ -313,6 +389,7 @@ export function swap(
   const eb = entryAt(state, b.lane, b.slot);
   if (!ea && !eb) return false;
   if (a.lane !== b.lane) {
+    if (!ea || !eb) return false;
     if (ea?.unstealable || eb?.unstealable) return false;
   }
   setEntry(state, a.lane, a.slot, eb);
@@ -329,9 +406,20 @@ export function swap(
   return true;
 }
 
+/**
+ * 冻结。己方条目原地多结算一轮，敌方意图则被按住不前进——
+ * 后者等同于一次延后，因此受与回溯相同的额度与不可延后标记约束，
+ * 否则免费冻结可以把守时者的核心大招永久锁在轨上。
+ */
 export function freeze(state: CombatState, lane: Lane, slot: number): boolean {
   const e = entryAt(state, lane, slot);
-  if (!e || e.echoBudget <= 0) return false;
+  if (!e || e.frozen || e.echoBudget <= 0) return false;
+  if (lane === 'enemy') {
+    if (rewindsLeft(state, e, lane) <= 0) return false;
+    e.delayCount += 1;
+    state.delaysThisTurn += 1;
+    state.events.push({ type: 'delaySpent', left: delayBudgetLeft(state) });
+  }
   e.frozen = true;
   if (!state.mods.freeFreeze) e.echoBudget -= 1;
   state.events.push({ type: 'freeze', lane, slot, uid: e.uid });
@@ -340,8 +428,10 @@ export function freeze(state: CombatState, lane: Lane, slot: number): boolean {
 
 export function sustain(state: CombatState, lane: Lane, slot: number, n: number): boolean {
   const e = entryAt(state, lane, slot);
-  if (!e) return false;
-  e.echoBudget = Math.min(C.ECHO_BUDGET_MAX, e.echoBudget + n);
+  if (!e || n <= 0) return false;
+  const next = Math.min(C.ECHO_BUDGET_MAX, e.echoBudget + n);
+  if (next <= e.echoBudget) return false;
+  e.echoBudget = next;
   state.events.push({ type: 'sustain', lane, slot, uid: e.uid, budget: e.echoBudget });
   return true;
 }

@@ -57,6 +57,7 @@ class Music {
   private current: HTMLAudioElement | null = null;
   private currentId: TrackId | null = null;
   private stinger: HTMLAudioElement | null = null;
+  private waitingForGesture = false;
   /** 演出音放完后自动接上的曲目。中途手动切曲会取消。 */
   private resumeId: TrackId | null = null;
 
@@ -93,9 +94,7 @@ class Music {
     audio.preload = 'auto';
     this.current = audio;
 
-    void audio.play().catch(() => {
-      // 尚未发生用户手势时浏览器会拒绝，等下一次切换再试
-    });
+    this.tryPlay(audio);
     this.ramp(audio, settings().music ? this.levelOf(id) : 0, FADE_MS);
   }
 
@@ -131,7 +130,7 @@ class Music {
       if (next) this.play(next);
     });
 
-    void audio.play().catch(() => {});
+    this.tryPlay(audio);
   }
 
   stop(): void {
@@ -150,14 +149,34 @@ class Music {
     if (!this.current || !this.currentId) return;
     this.ramp(this.current, on ? this.levelOf(this.currentId) : 0, 300);
     if (on && this.current.paused) {
-      void this.current.play().catch(() => {});
+      this.tryPlay(this.current);
     }
   }
 
   /** 页面首次点击后取回被浏览器挡下的播放权。 */
   resumeAfterGesture(): void {
-    if (!this.current || !this.current.paused) return;
-    void this.current.play().catch(() => {});
+    const audio = this.stinger ?? this.current;
+    if (!audio || !audio.paused) return;
+    this.tryPlay(audio);
+  }
+
+  private tryPlay(audio: HTMLAudioElement): void {
+    void audio.play().catch(() => this.waitForGesture());
+  }
+
+  /** 自动播放被拒绝后，在下一次真实用户手势里同步重试。 */
+  private waitForGesture(): void {
+    if (this.waitingForGesture) return;
+    this.waitingForGesture = true;
+
+    const wake = () => {
+      document.removeEventListener('pointerdown', wake, true);
+      document.removeEventListener('keydown', wake, true);
+      this.waitingForGesture = false;
+      this.resumeAfterGesture();
+    };
+    document.addEventListener('pointerdown', wake, { once: true, capture: true });
+    document.addEventListener('keydown', wake, { once: true, capture: true });
   }
 
   private fadeOut(audio: HTMLAudioElement, duration: number): void {

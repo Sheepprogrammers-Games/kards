@@ -3,6 +3,7 @@ import { loadContent, STARTER_DECK } from '@content/index';
 import { INTENTS } from '@content/enemies';
 import { C, coefOf } from '../constants';
 import {
+  canPlay,
   createCombat,
   ignitePayload,
   reduce,
@@ -11,20 +12,31 @@ import {
 } from '../combat';
 import {
   countEntries,
+  canRewindPlayerAt,
   entriesOf,
   entryAt,
+  freeze,
   push,
   rewind,
   delayBudgetLeft,
   rewindsLeft,
   setEntry,
   slotOfEntry,
+  sustain,
+  swap,
 } from '../track';
-import { intentAim, resolveIntent } from '../intents';
+import { intentAim, resolveIntent, scheduleIntents } from '../intents';
 import { allEquipment, setEquipmentRegistry } from '../equipment';
-import { NO_MODIFIERS, type CombatState, type Effect, type EquipmentDef } from '../types';
-import { dealDamage } from '../effects';
+import {
+  NO_MODIFIERS,
+  type CombatState,
+  type Effect,
+  type EquipmentDef,
+  type TrackEntry,
+} from '../types';
+import { addStatus, dealDamage, drawCards, previewYield, resolveEntry } from '../effects';
 import { generateMap } from '../map';
+import { tickStatusStartOfTurn } from '../status';
 
 beforeAll(() => loadContent());
 
@@ -60,6 +72,41 @@ function stack(state: CombatState, defIds: string[]): CombatState {
   }
   return next;
 }
+
+describe('回合资源', () => {
+  it('未打出的手牌跨回合保留，并只摸到手牌上限', () => {
+    let state = setup();
+    state.track.enemy.fill(null);
+    state.enemies[0]!.intentsPerTurn = 0;
+    const kept = state.hand.map((card) => card.uid);
+
+    expect(state.hand).toHaveLength(C.DRAW_PER_TURN);
+    state = reduce(state, { type: 'endTurn' });
+
+    expect(kept.every((uid) => state.hand.some((card) => card.uid === uid))).toBe(true);
+    expect(state.hand).toHaveLength(state.player.handSize);
+  });
+
+  it('额外摸牌也不能突破手牌上限', () => {
+    const state = setup();
+    drawCards(state, 99);
+    expect(state.hand).toHaveLength(state.player.handSize);
+  });
+
+  it('玩家护甲跨回合保留，护盾层数可以继续叠加', () => {
+    let state = setup();
+    state.track.enemy.fill(null);
+    state.enemies[0]!.intentsPerTurn = 0;
+    state.player.block = 8;
+    addStatus(state, state.player, 'ward', 2);
+    addStatus(state, state.player, 'ward', 3);
+
+    state = reduce(state, { type: 'endTurn' });
+
+    expect(state.player.block).toBe(4);
+    expect(state.player.statuses.ward).toBe(5);
+  });
+});
 
 describe('轨道结构', () => {
   it('每条泳道恰有 4 格，每格至多 1 个条目', () => {
@@ -240,6 +287,42 @@ describe('不变量', () => {
     }
     expect(state.delaysThisTurn).toBeLessThanOrEqual(C.INTENT_DELAY_PER_TURN);
   });
+
+  it('纯位移牌指定空格时不会扣能量或吞牌', () => {
+    let state = stack(setup(), ['shove']);
+    state.player.energy = 9;
+    const uid = handUidOf(state, 'shove');
+    const energy = state.player.energy;
+
+    const next = reduce(state, {
+      type: 'playCard',
+      uid,
+      slot: 1,
+      laneTarget: 'enemy',
+    });
+
+    expect(next).toBe(state);
+    expect(next.player.energy).toBe(energy);
+    expect(next.hand.some((card) => card.uid === uid)).toBe(true);
+    expect(next.events.some((event) => event.type === 'play')).toBe(false);
+  });
+
+  it('带附加效果的位移牌指定无效格时同样不会吞牌', () => {
+    let state = stack(setup(), ['strip-gear']);
+    state.player.energy = 9;
+    const uid = handUidOf(state, 'strip-gear');
+
+    const next = reduce(state, {
+      type: 'playCard',
+      uid,
+      targetIndex: 0,
+      slot: 1,
+      laneTarget: 'enemy',
+    });
+
+    expect(next).toBe(state);
+    expect(next.hand.some((card) => card.uid === uid)).toBe(true);
+  });
 });
 
 describe('敌方意图', () => {
@@ -408,6 +491,194 @@ describe('延后的连锁', () => {
       snapshot,
     );
   });
+
+  it('己方首格条目不能被回溯出轨或给敌人蓄力', () => {
+    let state = stack(setup(), ['threadbind']);
+    state.player.energy = 9;
+    state = reduce(state, {
+      type: 'playCard',
+      uid: handUidOf(state, 'threadbind'),
+      targetIndex: 0,
+    });
+    const uid = entryAt(state, 'player', 1)!.uid;
+
+    expect(canRewindPlayerAt(state, 1, 1)).toBe(false);
+    expect(rewind(state, 'player', 1, 1)).toBe(false);
+    expect(entryAt(state, 'player', 1)?.uid).toBe(uid);
+    expect(state.enemies[0]!.charge).toBe(0);
+  });
+});
+
+describe('轨道操作边界', () => {
+  it('跨泳道交换要求两边都有条目', () => {
+    const state = setup();
+    expect(entryAt(state, 'player', 4)).toBeNull();
+    expect(entryAt(state, 'enemy', 4)).not.toBeNull();
+
+    expect(swap(state, { lane: 'enemy', slot: 4 }, { lane: 'player', slot: 4 })).toBe(false);
+    expect(entryAt(state, 'enemy', 4)).not.toBeNull();
+    expect(entryAt(state, 'player', 4)).toBeNull();
+  });
+
+  it('重复冻结和满预算续写不会伪报成功', () => {
+    const state = setup();
+    const intent = entriesOf(state, 'enemy')[0]!;
+    expect(freeze(state, 'enemy', intent.slot)).toBe(true);
+    expect(freeze(state, 'enemy', intent.slot)).toBe(false);
+
+    intent.entry.echoBudget = C.ECHO_BUDGET_MAX;
+    expect(sustain(state, 'enemy', intent.slot, 1)).toBe(false);
+    expect(intent.entry.echoBudget).toBe(C.ECHO_BUDGET_MAX);
+  });
+});
+
+describe('冻结与延后额度', () => {
+  it('冻结敌方意图消耗本回合的延后额度', () => {
+    const state = setup();
+    const intent = entriesOf(state, 'enemy')[0]!;
+    const before = delayBudgetLeft(state);
+
+    expect(freeze(state, 'enemy', intent.slot)).toBe(true);
+    expect(delayBudgetLeft(state)).toBe(before - 1);
+    expect(intent.entry.delayCount).toBe(1);
+  });
+
+  it('不可延后的意图也不能被冻结住', () => {
+    const state = setup();
+    const intent = entriesOf(state, 'enemy')[0]!;
+    intent.entry.undelayable = true;
+    const before = delayBudgetLeft(state);
+
+    expect(freeze(state, 'enemy', intent.slot)).toBe(false);
+    expect(intent.entry.frozen).toBeFalsy();
+    expect(delayBudgetLeft(state)).toBe(before);
+  });
+
+  it('免费冻结省下的是预算而不是延后额度', () => {
+    const state = setup({ mods: { ...NO_MODIFIERS, freeFreeze: true } });
+    const intent = entriesOf(state, 'enemy')[0]!;
+    const budget = intent.entry.echoBudget;
+
+    expect(freeze(state, 'enemy', intent.slot)).toBe(true);
+    expect(intent.entry.echoBudget).toBe(budget);
+    expect(delayBudgetLeft(state)).toBe(C.INTENT_DELAY_PER_TURN - 1);
+
+    // 额度用尽后同一击就按不住了，大招不会被永久锁在轨上
+    intent.entry.frozen = false;
+    state.delaysThisTurn = C.INTENT_DELAY_PER_TURN;
+    expect(freeze(state, 'enemy', intent.slot)).toBe(false);
+  });
+
+  it('己方条目的冻结不占用延后额度', () => {
+    let state = stack(setup(), ['threadbind']);
+    state.player.energy = 9;
+    state = reduce(state, {
+      type: 'playCard',
+      uid: handUidOf(state, 'threadbind'),
+      targetIndex: 0,
+    });
+    const before = delayBudgetLeft(state);
+
+    expect(freeze(state, 'player', 1)).toBe(true);
+    expect(delayBudgetLeft(state)).toBe(before);
+  });
+});
+
+describe('换手条目的结算倍率', () => {
+  /** 把一个纯伤害意图挂到敌轨末位，返回它的原始伤害值。 */
+  function loadStrike(state: CombatState): { entry: TrackEntry; damage: number } {
+    const entry = entriesOf(state, 'enemy').at(-1)!.entry;
+    const damage = entry.effects.find((e) => e.kind === 'damage')!.amount;
+    return { entry, damage };
+  }
+
+  it('窃取来的意图在玩家轨上回响时仍然减半', () => {
+    const state = setup();
+    const { entry, damage } = loadStrike(state);
+    const slot = slotOfEntry(state, 'enemy', entry.uid)!;
+
+    // 手动走一遍窃取的改写，再让它在玩家轨上按首格系数结算
+    setEntry(state, 'enemy', slot, null);
+    entry.owner = 'player';
+    entry.rateMod = C.STOLEN_RATE;
+    setEntry(state, 'player', 1, entry);
+
+    const hp = state.enemies[0]!.hp;
+    resolveEntry(state, entry, coefOf(state.coefTable, 1), { isPlay: false });
+    expect(hp - state.enemies[0]!.hp).toBe(Math.floor(damage * C.STOLEN_RATE));
+  });
+
+  it('跨泳道交换与窃取走同一套折扣', () => {
+    let state = stack(setup(), ['threadbind', 'borrowed-form']);
+    state.player.energy = 9;
+    state = reduce(state, {
+      type: 'playCard',
+      uid: handUidOf(state, 'threadbind'),
+      targetIndex: 0,
+    });
+
+    const intentSlot = entriesOf(state, 'enemy').at(-1)!.slot;
+    // 借形要求同一格位两侧都有条目
+    const mine = entryAt(state, 'player', 1)!;
+    setEntry(state, 'player', 1, null);
+    setEntry(state, 'player', intentSlot, mine);
+
+    const stolenUid = entryAt(state, 'enemy', intentSlot)!.uid;
+    state = reduce(state, {
+      type: 'playCard',
+      uid: handUidOf(state, 'borrowed-form'),
+      targetIndex: 0,
+      slot: intentSlot,
+      laneTarget: 'enemy',
+    });
+
+    const stolen = entriesOf(state, 'player').find((e) => e.entry.uid === stolenUid)?.entry;
+    expect(stolen).toBeDefined();
+    expect(stolen!.rateMod).toBe(C.STOLEN_RATE);
+    expect(stolen!.echoBudget).toBe(1);
+    // 送出去的己方条目落在敌轨上，同样只还回一半
+    const given = entriesOf(state, 'enemy').find((e) => e.entry.uid === mine.uid)?.entry;
+    expect(given?.rateMod).toBe(C.STOLEN_RATE);
+  });
+});
+
+describe('蓄力', () => {
+  it('只有指向玩家的意图才花掉蓄力', () => {
+    const state = setup({
+      enemies: [
+        {
+          defId: 'mote-gnaw',
+          name: '时蚀虫',
+          maxHp: 200,
+          intentsPerTurn: 1,
+          intentScript: [{ intentId: 'harden', preferredSlot: 4, weight: 1 }],
+        },
+      ],
+    });
+    const enemy = state.enemies[0]!;
+    expect(intentAim(INTENTS.find((i) => i.id === 'harden')!)).toBe('self');
+
+    state.track.enemy.fill(null);
+    enemy.charge = 3;
+    scheduleIntents(state);
+
+    expect(enemy.charge).toBe(3);
+    expect(entriesOf(state, 'enemy')[0]!.entry.snapshot.damageScale).toBe(1);
+  });
+
+  it('攻击意图吃下蓄力并清空计数', () => {
+    const state = setup();
+    const enemy = state.enemies[0]!;
+
+    state.track.enemy.fill(null);
+    enemy.charge = 2;
+    scheduleIntents(state);
+
+    expect(enemy.charge).toBe(0);
+    expect(entriesOf(state, 'enemy')[0]!.entry.snapshot.damageScale).toBe(
+      1 + 2 * C.CHARGE_BONUS,
+    );
+  });
 });
 
 describe('伤害机制', () => {
@@ -506,6 +777,37 @@ describe('伤害机制', () => {
     expect(result.hpLoss).toBe(6);
     expect(result.overkill).toBe(4);
     expect(enemy.hp).toBe(0);
+  });
+});
+
+describe('状态结算边界', () => {
+  it('敌方在回合末施加的 1 层虚弱会保留到玩家回合', () => {
+    let state = setup({
+      enemies: [
+        {
+          defId: 'mote-gnaw',
+          name: '时蚀虫',
+          maxHp: 200,
+          intentsPerTurn: 1,
+          intentScript: [{ intentId: 'sap', preferredSlot: 4, weight: 1 }],
+        },
+      ],
+    });
+
+    state = reduce(state, { type: 'endTurn' });
+    expect(state.player.statuses.weak).toBe(1);
+  });
+
+  it('持续伤害致命后不会被同一次状态结算中的再生复活', () => {
+    const state = setup();
+    state.player.hp = 2;
+    state.player.statuses.poison = 3;
+    state.player.statuses.regen = 5;
+
+    tickStatusStartOfTurn(state, state.player);
+    expect(state.player.hp).toBe(0);
+    expect(state.player.statuses.regen).toBe(5);
+    expect(state.events.some((event) => event.type === 'regenTick')).toBe(false);
   });
 });
 
@@ -655,6 +957,22 @@ describe('敌人形态转换', () => {
     expect(state.enemies[0]!.statuses.thorns).toBe((thorns ?? 0) - 1);
     expect(state.enemies[0]!.phases?.length ?? 0).toBe(0);
   });
+
+  it('致命伤直接击杀，不再触发已经来不及进入的形态', () => {
+    let state = stack(bossFight(), ['traced-blade']);
+    state.player.energy = 9;
+    state.enemies[0]!.hp = 5;
+
+    state = reduce(state, {
+      type: 'playCard',
+      uid: handUidOf(state, 'traced-blade'),
+      targetIndex: 0,
+    });
+
+    expect(state.enemies[0]!.alive).toBe(false);
+    expect(state.enemies[0]!.phaseName).toBeUndefined();
+    expect(state.events.some((event) => event.type === 'phase')).toBe(false);
+  });
 });
 
 describe('多格延后', () => {
@@ -680,12 +998,16 @@ describe('多格延后', () => {
     const ok = rewind(state, 'enemy', before.slot, 2);
     expect(ok).toBe(true);
     expect(slotOfEntry(state, 'enemy', before.entry.uid)).toBe(C.TRACK_SLOTS - 2);
+    expect(state.delaysThisTurn).toBe(1);
   });
 
-  it('每回合的延后额度用尽后推不动', () => {
+  it('每回合的延后次数用尽后推不动', () => {
     const state = enemyTrack(1);
     const entry = entriesOf(state, 'enemy')[0]!;
-    rewind(state, 'enemy', entry.slot, C.INTENT_DELAY_PER_TURN);
+    for (let i = 0; i < C.INTENT_DELAY_PER_TURN; i++) {
+      const at = slotOfEntry(state, 'enemy', entry.entry.uid)!;
+      rewind(state, 'enemy', at, 1);
+    }
     expect(state.delaysThisTurn).toBe(C.INTENT_DELAY_PER_TURN);
 
     const at = slotOfEntry(state, 'enemy', entry.entry.uid)!;
@@ -697,8 +1019,11 @@ describe('多格延后', () => {
     const list = entriesOf(state, 'enemy');
     expect(list.length).toBeGreaterThanOrEqual(2);
 
-    // 第一个意图吃满整回合的额度，第二个就一格也推不动了
-    rewind(state, 'enemy', list[0]!.slot, C.INTENT_DELAY_PER_TURN);
+    // 第一个意图用两次操作吃满整回合的额度，第二个就一格也推不动了
+    for (let i = 0; i < C.INTENT_DELAY_PER_TURN; i++) {
+      const at = slotOfEntry(state, 'enemy', list[0]!.entry.uid)!;
+      rewind(state, 'enemy', at, 1);
+    }
     expect(delayBudgetLeft(state)).toBe(0);
 
     const other = slotOfEntry(state, 'enemy', list[1]!.entry.uid)!;
@@ -715,6 +1040,29 @@ describe('多格延后', () => {
 
     state = reduce(state, { type: 'endTurn' });
     expect(delayBudgetLeft(state)).toBe(C.INTENT_DELAY_PER_TURN);
+  });
+
+  it('连带顶动多个意图也只消耗一次', () => {
+    const state = enemyTrack(2);
+    const list = entriesOf(state, 'enemy');
+    const target = list[list.length - 1]!;
+    const before = state.track.enemy.map((entry) => entry?.uid ?? null);
+
+    expect(rewind(state, 'enemy', target.slot, 1, () => {})).toBe(true);
+    expect(state.delaysThisTurn).toBe(1);
+    expect(state.track.enemy.map((entry) => entry?.uid ?? null)).not.toEqual(before);
+  });
+
+  it('连锁前方有不可延后意图时不移动也不扣次数', () => {
+    const state = enemyTrack(2);
+    const list = entriesOf(state, 'enemy');
+    const target = list[list.length - 1]!;
+    list[0]!.entry.undelayable = true;
+    const before = state.track.enemy.map((entry) => entry?.uid ?? null);
+
+    expect(rewind(state, 'enemy', target.slot, 1, () => {})).toBe(false);
+    expect(state.delaysThisTurn).toBe(0);
+    expect(state.track.enemy.map((entry) => entry?.uid ?? null)).toEqual(before);
   });
 
   it('不可延后的意图剩余次数直接为零', () => {
@@ -737,6 +1085,49 @@ describe('多格延后', () => {
     state = reduce(state, { type: 'playCard', uid, slot: target.slot, laneTarget: 'enemy' });
     const now = slotOfEntry(state, 'enemy', target.entry.uid);
     expect(now === null || now < target.slot).toBe(true);
+  });
+
+  it('双泳道扰牌在敌轨空、己方有条目时仍可打出', () => {
+    let state = setup();
+    state.track.enemy.fill(null);
+    state = stack(state, ['threadbind', 'paired-arrest']);
+    const weave = state.hand.find((c) => c.defId === 'threadbind')!.uid;
+    state = reduce(state, { type: 'playCard', uid: weave });
+    const arrest = state.hand.find((c) => c.defId === 'paired-arrest')!.uid;
+    expect(countEntries(state, 'enemy')).toBe(0);
+    expect(countEntries(state, 'player')).toBeGreaterThan(0);
+    expect(canPlay(state, arrest)).toBe(true);
+  });
+});
+
+describe('预览与结算一致', () => {
+  it('THRESHOLD 在系数不足时预览为 0，rateMod 会压低伤害', () => {
+    const state = setup();
+    const entry: TrackEntry = {
+      uid: 1,
+      cardId: 'preview',
+      owner: 'player',
+      effects: [
+        { kind: 'damage', amount: 4, scaleMode: 'THRESHOLD', threshold: 0.7 },
+        { kind: 'damage', amount: 8, scaleMode: 'SCALAR' },
+      ],
+      echoBudget: 2,
+      resolvedHere: false,
+      rewindCount: 0,
+      delayCount: 0,
+      copyDepth: 0,
+      anchored: false,
+      stolen: true,
+      frozen: false,
+      rateMod: 0.5,
+      snapshot: { strength: 0, weak: false, damageScale: 1, statusPotency: 0 },
+    };
+    expect(previewYield(entry, 0.45).map((part) => [part.kind, part.value, part.hits])).toEqual([['damage', 1, 1]]);
+    expect(previewYield(entry, 0.7).map((part) => [part.kind, part.value, part.hits])).toEqual([
+      ['damage', 2, 1],
+      ['damage', 2, 1],
+    ]);
+    void state;
   });
 });
 

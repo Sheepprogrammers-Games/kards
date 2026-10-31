@@ -474,9 +474,9 @@ export const WEAVE_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'shell-winding': [
     {
-      text: '获得 3 点护甲。获得 1 层护盾。',
+      text: '获得 1 点护甲。获得 1 层护盾。',
       effects: [
-        { kind: 'block', amount: 3, scaleMode: 'SCALAR', target: 'self' },
+        { kind: 'block', amount: 1, scaleMode: 'SCALAR', target: 'self' },
         { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'ward', target: 'self' },
       ],
     },
@@ -716,16 +716,16 @@ export const WEAVE_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'mirror-stance': [
     {
-      text: '获得 4 点护甲。获得 1 层转嫁。',
+      text: '获得 1 点护甲。获得 1 层转嫁。',
       effects: [
-        { kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' },
+        { kind: 'block', amount: 1, scaleMode: 'SCALAR', target: 'self' },
         { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'reflect', target: 'self' },
       ],
     },
     {
-      text: '获得 3 层转嫁。打出时使你获得 1 层虚弱。',
+      text: '获得 2 层转嫁。打出时使你获得 1 层虚弱。',
       effects: [
-        { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'reflect', target: 'self' },
+        { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'reflect', target: 'self' },
         { kind: 'selfStatus', amount: 1, scaleMode: 'ONCE', status: 'weak', target: 'self' },
       ],
     },
@@ -760,9 +760,9 @@ export const WEAVE_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'eternal-warp': [
     {
-      text: '留存。每次结算使你获得 3 层灼烧。',
+      text: '留存。每次结算使你获得 9 层灼烧。',
       effects: [
-        { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'burn', target: 'self' },
+        { kind: 'selfStatus', amount: 9, scaleMode: 'SCALAR', status: 'burn', target: 'self' },
       ],
     },
   ],

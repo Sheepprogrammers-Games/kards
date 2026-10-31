@@ -12,9 +12,9 @@ export const C = raw as {
   IGNITE_MIN_ENTRIES: number;
   IGNITE_RESIDUAL: number;
   IGNITE_COST_ESCALATION: number;
-  /** 玩家每回合可以延后敌方意图的总格数。 */
+  /** 玩家每回合可以延后敌方意图的操作次数。 */
   INTENT_DELAY_PER_TURN: number;
-  /** 单个意图累计可被延后的格数，防止同一击被无限推回。 */
+  /** 单个意图累计可被延后的操作次数，防止同一击被无限推回。 */
   INTENT_DELAY_CAP: number;
   PREEMPT_RATE: number;
   STOLEN_RATE: number;
@@ -22,6 +22,7 @@ export const C = raw as {
   CHARGE_BONUS: number;
   ENERGY_PER_TURN: number;
   HAND_SIZE: number;
+  DRAW_PER_TURN: number;
   /** 装备槽位数量。 */
   EQUIP_SLOTS: number;
   /** 单个节点允许的重挑次数上限。 */

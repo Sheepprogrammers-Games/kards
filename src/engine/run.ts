@@ -2,13 +2,14 @@
 
 import { C } from './constants';
 import { allEquipment, equipmentDef } from './equipment';
-import { generateMap, nodeAt, type ActMap, type NodeKind } from './map';
+import { availableNodes, generateMap, nodeAt, type ActMap, type NodeKind } from './map';
 import { allCards } from './registry';
 import { nextFloat, nextInt, seedFrom, shuffle, weightedPick, type RngHolder } from './rng';
 import {
   EQUIP_SLOT_ORDER,
   type EquipSlot,
   type EquipmentLoadout,
+  type GrowthKind,
   type RewardKind,
   type RewardOffer,
 } from './types';
@@ -39,6 +40,10 @@ export interface RunState extends RngHolder {
 
   hp: number;
   maxHp: number;
+  /** 战斗奖励带来的永久局内成长。 */
+  energyBonus: number;
+  handSizeBonus: number;
+  drawBonus: number;
   gold: number;
   deck: DeckCard[];
   relics: string[];
@@ -96,6 +101,9 @@ export function createRun(setup: RunSetup): RunState {
     phase: 'map',
     hp: setup.maxHp,
     maxHp: setup.maxHp,
+    energyBonus: 0,
+    handSizeBonus: 0,
+    drawBonus: 0,
     gold: 99,
     deck: setup.deck.map((defId) => ({ defId, upgraded: false })),
     relics: setup.relics ?? [],
@@ -119,7 +127,14 @@ const PHASE_BY_KIND: Record<NodeKind, RunPhase> = {
 
 export function enterNode(run: RunState, nodeId: string): RunState {
   const node = nodeAt(run.map, nodeId);
-  if (!node) return run;
+  if (!node || run.phase !== 'map') return run;
+  if (!availableNodes(run.map, run.currentNode).includes(nodeId)) return run;
+
+  if (run.currentNode === nodeId && !node.visited && run.checkpoint) {
+    const resumed = structuredClone(run);
+    resumed.phase = PHASE_BY_KIND[node.kind];
+    return resumed;
+  }
 
   // 快照自身不再携带快照，否则每进一个节点都会多嵌套一层
   const snapshot: RunState = structuredClone({ ...run, checkpoint: null, retries: 0 });
@@ -169,9 +184,12 @@ export function abandonRun(run: RunState): RunState {
 
 /** 节点结算完成后回到地图，走完一幕则推进到下一幕。 */
 export function completeNode(run: RunState): RunState {
+  const current = run.currentNode ? nodeAt(run.map, run.currentNode) : null;
+  if (!current || current.visited) return run;
+
   const next = structuredClone(run);
-  const node = next.currentNode ? nodeAt(next.map, next.currentNode) : null;
-  if (node) node.visited = true;
+  const node = nodeAt(next.map, next.currentNode!);
+  node!.visited = true;
   next.cleared += 1;
   next.checkpoint = null;
   next.retries = 0;
@@ -198,6 +216,7 @@ export function addCard(run: RunState, defId: string): RunState {
 }
 
 export function removeCard(run: RunState, index: number): RunState {
+  if (run.deck.length <= 1 || index < 0 || index >= run.deck.length) return run;
   const next = structuredClone(run);
   next.deck.splice(index, 1);
   return next;
@@ -222,6 +241,37 @@ export function damage(run: RunState, amount: number): RunState {
   if (next.hp <= 0) {
     next.phase = 'gameOver';
     next.result = 'defeat';
+  }
+  return next;
+}
+
+export const ENERGY_GROWTH_CAP = 3;
+export const DRAW_GROWTH_CAP = 3;
+
+/** 当前仍可选择的成长方向；生命上限始终可以继续提升。 */
+export function growthOptions(run: RunState): GrowthKind[] {
+  const options: GrowthKind[] = ['maxHp'];
+  if ((run.energyBonus ?? 0) < ENERGY_GROWTH_CAP) options.push('energy');
+  if ((run.drawBonus ?? 0) < DRAW_GROWTH_CAP) options.push('draw');
+  return options;
+}
+
+/** 战斗胜利后的永久成长，持续到本局结束。 */
+export function growRun(run: RunState, kind: GrowthKind): RunState {
+  if (!growthOptions(run).includes(kind)) return run;
+  const next = structuredClone(run);
+  switch (kind) {
+    case 'maxHp':
+      next.maxHp += 10;
+      next.hp = Math.min(next.maxHp, next.hp + 10);
+      break;
+    case 'energy':
+      next.energyBonus = (next.energyBonus ?? 0) + 1;
+      break;
+    case 'draw':
+      next.drawBonus = (next.drawBonus ?? 0) + 1;
+      next.handSizeBonus = (next.handSizeBonus ?? 0) + 1;
+      break;
   }
   return next;
 }
@@ -371,7 +421,8 @@ function rollCommon(
 }
 
 /**
- * 战斗结算后的奖励。返回 1 到 2 项，精英与守时者必定含遗物或装备。
+ * 战斗结算后的奖励。战利品返回 1 到 2 项，另固定附带一次角色成长；
+ * 精英与守时者的战利品必定含遗物或装备。
  * 随机数从当前进程状态派生，同一节点重复调用结果一致。
  */
 export function rollRewards(run: RunState, nodeKind: NodeKind): RewardOffer[] {
@@ -397,5 +448,6 @@ export function rollRewards(run: RunState, nodeKind: NodeKind): RewardOffer[] {
     taken.add(offer.kind);
   }
 
+  offers.push({ kind: 'growth', growthOptions: growthOptions(run) });
   return offers;
 }

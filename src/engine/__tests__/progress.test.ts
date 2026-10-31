@@ -16,6 +16,9 @@ import {
   defeatRun,
   enterNode,
   equipItem,
+  growRun,
+  growthOptions,
+  removeCard,
   retryNode,
   rollRewards,
   setRelicPool,
@@ -23,6 +26,7 @@ import {
   type RunState,
 } from '../run';
 import type { NodeKind } from '../map';
+import { availableNodes } from '../map';
 import { NO_MODIFIERS, type CombatModifiers, type EquipmentDef, type RewardOffer } from '../types';
 
 const FIXTURES: EquipmentDef[] = [
@@ -99,6 +103,31 @@ describe('进程：初始状态', () => {
     expect(Object.keys(run.equipment)).toHaveLength(C.EQUIP_SLOTS);
     expect(run.checkpoint).toBeNull();
     expect(run.retries).toBe(0);
+    expect(run.energyBonus).toBe(0);
+    expect(run.handSizeBonus).toBe(0);
+    expect(run.drawBonus).toBe(0);
+  });
+});
+
+describe('进程：角色成长', () => {
+  it('生命、能量和摸牌成长会永久写入本局状态', () => {
+    const hurt = { ...newRun(), hp: 40 };
+    const tougher = growRun(hurt, 'maxHp');
+    const charged = growRun(tougher, 'energy');
+    const learned = growRun(charged, 'draw');
+
+    expect(tougher.maxHp).toBe(hurt.maxHp + 10);
+    expect(tougher.hp).toBe(hurt.hp + 10);
+    expect(charged.energyBonus).toBe(1);
+    expect(learned.drawBonus).toBe(1);
+    expect(learned.handSizeBonus).toBe(1);
+  });
+
+  it('能量与摸牌成长达到上限后不再出现，生命成长仍保留', () => {
+    const capped = { ...newRun(), energyBonus: 3, drawBonus: 3, handSizeBonus: 3 };
+    expect(growthOptions(capped)).toEqual(['maxHp']);
+    expect(growRun(capped, 'energy')).toBe(capped);
+    expect(growRun(capped, 'draw')).toBe(capped);
   });
 });
 
@@ -117,7 +146,7 @@ describe('进程：检查点与重挑', () => {
     const run = newRun();
     let current = enterNode(run, run.map.entries[0]!);
     current = completeNode(current);
-    const nextId = Object.values(current.map.nodes).find((n) => !n.visited)!.id;
+    const nextId = availableNodes(current.map, current.currentNode)[0]!;
     current = enterNode(current, nextId);
 
     expect(current.checkpoint?.checkpoint).toBeNull();
@@ -166,6 +195,30 @@ describe('进程：检查点与重挑', () => {
     const done = completeNode(enterNode(run, run.map.entries[0]!));
     expect(done.checkpoint).toBeNull();
     expect(done.retries).toBe(0);
+  });
+
+  it('同一节点不能重复结算刷取进度', () => {
+    const run = enterNode(newRun(), newRun().map.entries[0]!);
+    const done = completeNode(run);
+    const again = completeNode(done);
+
+    expect(again).toBe(done);
+    expect(again.cleared).toBe(done.cleared);
+  });
+
+  it('未完成当前节点时不能跳到后继节点，重新进入也不重置重挑次数', () => {
+    const run = newRun();
+    let entered = enterNode(run, run.map.entries[0]!);
+    entered = { ...entered, phase: 'map', retries: 1 };
+    const nextId = entered.map.nodes[entered.currentNode!]!.next[0]!;
+
+    expect(availableNodes(entered.map, entered.currentNode)).toEqual([entered.currentNode]);
+    expect(enterNode(entered, nextId)).toBe(entered);
+
+    const again = enterNode(entered, entered.currentNode!);
+    expect(again.phase).toBe('combat');
+    expect(again.retries).toBe(1);
+    expect(again.checkpoint).toEqual(entered.checkpoint);
   });
 });
 
@@ -218,6 +271,17 @@ describe('进程：装备穿脱', () => {
     const run = newRun();
     equipItem(run, 'test-blade');
     expect(run.equipment.weapon).toBeNull();
+  });
+});
+
+describe('进程：牌组边界', () => {
+  it('非法下标和最后一张牌都不能被移除', () => {
+    const run = newRun();
+    expect(removeCard(run, -1)).toBe(run);
+    expect(removeCard(run, run.deck.length)).toBe(run);
+
+    const single = { ...run, deck: run.deck.slice(0, 1) };
+    expect(removeCard(single, 0)).toBe(single);
   });
 });
 
@@ -287,12 +351,13 @@ describe('进程：战斗奖励', () => {
     });
   }
 
-  it('每次返回 1 到 2 项，种类不重复', () => {
+  it('每次返回 1 到 2 项战利品和 1 项成长，种类不重复', () => {
     for (const kind of ['combat', 'elite', 'boss'] as NodeKind[]) {
       for (const offers of offersFor(kind)) {
-        expect(offers.length).toBeGreaterThanOrEqual(C.REWARD_OFFERS_MIN);
-        expect(offers.length).toBeLessThanOrEqual(C.REWARD_OFFERS_MAX);
+        expect(offers.length).toBeGreaterThanOrEqual(C.REWARD_OFFERS_MIN + 1);
+        expect(offers.length).toBeLessThanOrEqual(C.REWARD_OFFERS_MAX + 1);
         expect(new Set(offers.map((o) => o.kind)).size).toBe(offers.length);
+        expect(offers.filter((o) => o.kind === 'growth')).toHaveLength(1);
       }
     }
   });
@@ -343,6 +408,9 @@ describe('进程：战斗奖励', () => {
         if (offer.kind === 'gold') expect(offer.amount).toBeGreaterThan(0);
         if (offer.kind === 'heal') expect(offer.amount).toBe(C.REWARD_HEAL);
         if (offer.kind === 'card') expect(offer.options?.length).toBe(C.REWARD_CARD_OPTIONS);
+        if (offer.kind === 'growth') {
+          expect(offer.growthOptions).toEqual(['maxHp', 'energy', 'draw']);
+        }
       }
     }
   });

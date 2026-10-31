@@ -5,3 +5,5 @@ dist
 assets/art/*/raw/
 assets/audio/source/
 echoes-web.zip
+.claude/
+.cursor/

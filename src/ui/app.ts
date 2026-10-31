@@ -18,6 +18,7 @@ import {
   enterNode,
   equipItem,
   gainGold,
+  growRun,
   heal,
   removeCard,
   retryNode,
@@ -111,7 +112,7 @@ export class App {
   private freshRun(): RunState {
     const seedText = String(Date.now());
     const holder = { rng: seedFrom(seedText) };
-    return createRun({ seedText, deck: buildStarterDeck(holder), maxHp: 70 });
+    return createRun({ seedText, deck: buildStarterDeck(holder), maxHp: 90 });
   }
 
   private setRun(next: RunState): void {
@@ -256,10 +257,15 @@ export class App {
 
   /** 遗物与装备的修正叠加在一起，装备在后，系数表由装备覆盖。 */
   private combatModifiers() {
-    return mergeModifiers(
+    const gear = mergeModifiers(
       collectModifiers(this.run.relics),
       collectEquipModifiers(this.run.equipment),
     );
+    return mergeModifiers(gear, {
+      energyPerTurn: this.run.energyBonus ?? 0,
+      handSize: this.run.handSizeBonus ?? 0,
+      drawPerTurn: this.run.drawBonus ?? 0,
+    });
   }
 
   /** 节点类型决定敌人组成与难度。 */
@@ -393,9 +399,16 @@ export class App {
         }
       },
       (to) => {
-        if (to === 'title') this.showTitle(true);
-        else this.setRun({ ...this.run, phase: 'map' });
+        const interrupted = defeatRun(this.run);
+        if (to === 'title') {
+          this.run = interrupted;
+          this.save();
+          this.showTitle(true);
+        } else {
+          this.setRun(interrupted);
+        }
       },
+      true,
     );
   }
 
@@ -418,6 +431,11 @@ export class App {
       } else if (offer.kind === 'heal') {
         pending.set(offer, () => {
           this.run = heal(this.run, amount);
+        });
+      } else if (offer.kind === 'growth') {
+        // 玩家直接继续时默认选生命成长，保证每场胜利都有角色提升。
+        pending.set(offer, () => {
+          this.run = growRun(this.run, 'maxHp');
         });
       }
     }
@@ -499,6 +517,21 @@ export class App {
               claim();
             },
           });
+        },
+        onPickGrowth: (kind, claim) => {
+          for (const offer of pending.keys()) {
+            if (offer.kind === 'growth') pending.delete(offer);
+          }
+          this.run = growRun(this.run, kind);
+          const note =
+            kind === 'maxHp'
+              ? '生命上限 +10'
+              : kind === 'energy'
+                ? '每回合能量 +1'
+                : '手牌上限与每回合摸牌 +1';
+          toast(this.root, note);
+          sfx.play('relic');
+          claim();
         },
         onSimple: (offer, claim) => {
           pending.get(offer)?.();
@@ -1244,13 +1277,45 @@ export function loadSavedRun(): RunState | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as RunState;
-    return {
+    const legacyHealthBonus =
+      saved.energyBonus === undefined &&
+      saved.handSizeBonus === undefined &&
+      saved.drawBonus === undefined
+        ? 20
+        : 0;
+    const checkpointHealthBonus =
+      saved.checkpoint &&
+      saved.checkpoint.energyBonus === undefined &&
+      saved.checkpoint.handSizeBonus === undefined &&
+      saved.checkpoint.drawBonus === undefined
+        ? 20
+        : 0;
+    const hydrated: RunState = {
       ...saved,
+      hp: Math.min(saved.maxHp + legacyHealthBonus, saved.hp + legacyHealthBonus),
+      maxHp: saved.maxHp + legacyHealthBonus,
+      energyBonus: saved.energyBonus ?? 0,
+      handSizeBonus: saved.handSizeBonus ?? 0,
+      drawBonus: saved.drawBonus ?? 0,
       equipment: { ...emptyLoadout(), ...(saved.equipment ?? {}) },
-      checkpoint: saved.checkpoint ?? null,
+      checkpoint: saved.checkpoint
+        ? {
+            ...saved.checkpoint,
+            hp: Math.min(
+              saved.checkpoint.maxHp + checkpointHealthBonus,
+              saved.checkpoint.hp + checkpointHealthBonus,
+            ),
+            maxHp: saved.checkpoint.maxHp + checkpointHealthBonus,
+            energyBonus: saved.checkpoint.energyBonus ?? 0,
+            handSizeBonus: saved.checkpoint.handSizeBonus ?? 0,
+            drawBonus: saved.checkpoint.drawBonus ?? 0,
+            equipment: { ...emptyLoadout(), ...(saved.checkpoint.equipment ?? {}) },
+          }
+        : null,
       retries: saved.retries ?? 0,
       variants: saved.variants ?? {},
     };
+    return hydrated.phase === 'combat' ? defeatRun(hydrated) : hydrated;
   } catch {
     return null;
   }

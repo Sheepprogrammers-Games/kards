@@ -200,13 +200,20 @@ export const IGNITE_VARIANTS: Record<string, CardVariant[]> = {
 
   'deep-channel': [
     {
-      text: '引爆全部条目。将一张停梭置入你的弃牌堆。',
-      cost: 1,
+      text: '引爆全部条目。使你获得 2 层虚弱。将一张停梭置入你的弃牌堆。',
+      cost: 2,
       ignite: { filter: 'all' },
+      effects: [
+        { kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak', target: 'self' },
+        { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'patient-weft', pile: 'discard' },
+      ],
     },
     {
-      text: '引爆最旧的 2 个条目。使你获得 2 层虚弱。',
-      effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak', target: 'self' }],
+      text: '引爆最旧的 2 个条目。使你获得 1 层虚弱。将一张停梭置入你的弃牌堆。',
+      effects: [
+        { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'weak', target: 'self' },
+        { kind: 'createCard', amount: 1, scaleMode: 'ONCE', cardId: 'patient-weft', pile: 'discard' },
+      ],
     },
   ],
 
@@ -263,16 +270,32 @@ export const IGNITE_VARIANTS: Record<string, CardVariant[]> = {
 
   'last-toll': [
     {
-      text: '引爆全部条目。造成 12 点伤害。使你获得 3 层虚弱。',
+      text: '引爆全部条目。造成 12 点伤害。使你获得 3 层虚弱。将一张静滞机芯置入你的弃牌堆。',
       effects: [
         { kind: 'damage', amount: 12, scaleMode: 'SCALAR', target: 'target' },
         { kind: 'selfStatus', amount: 3, scaleMode: 'SCALAR', status: 'weak', target: 'self' },
+        {
+          kind: 'createCard',
+          amount: 1,
+          scaleMode: 'ONCE',
+          cardId: 'quiet-movement',
+          pile: 'discard',
+        },
       ],
     },
     {
-      text: '引爆全部条目。造成 12 点伤害。',
+      text: '引爆全部条目。造成 10 点伤害。将一张静滞机芯置入你的弃牌堆。',
       cost: 3,
-      effects: [{ kind: 'damage', amount: 12, scaleMode: 'SCALAR', target: 'target' }],
+      effects: [
+        { kind: 'damage', amount: 10, scaleMode: 'SCALAR', target: 'target' },
+        {
+          kind: 'createCard',
+          amount: 1,
+          scaleMode: 'ONCE',
+          cardId: 'quiet-movement',
+          pile: 'discard',
+        },
+      ],
     },
   ],
 

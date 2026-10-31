@@ -12,6 +12,7 @@ export function tickStatusStartOfTurn(state: CombatState, who: Combatant): void 
     const left = poison - 1;
     if (left <= 0) delete who.statuses.poison;
     else who.statuses.poison = left;
+    if (who.hp <= 0) return;
   }
 
   const burn = who.statuses.burn ?? 0;
@@ -19,6 +20,7 @@ export function tickStatusStartOfTurn(state: CombatState, who: Combatant): void 
     who.hp = Math.max(0, who.hp - burn);
     state.events.push({ type: 'burnTick', targetId: who.id, amount: burn, hp: who.hp });
     delete who.statuses.burn;
+    if (who.hp <= 0) return;
   }
 
   const regen = who.statuses.regen ?? 0;
@@ -34,17 +36,23 @@ export function tickStatusStartOfTurn(state: CombatState, who: Combatant): void 
 /** 回合结束：目前只作为扩展点，灼烧类持续伤害统一在回合开始结算。 */
 export function tickStatusEndOfTurn(_state: CombatState, _who: Combatant): void {}
 
+/** 玩家行动阶段结束后，虚弱才减少，敌方刚施加的虚弱会留到下一回合。 */
+export function decayPlayerWeak(state: CombatState): void {
+  decayOne(state.player, 'weak');
+}
+
+function decayOne(who: Combatant, id: 'vulnerable' | 'weak' | 'thorns'): void {
+  const n = who.statuses[id] ?? 0;
+  if (n <= 0) return;
+  if (n - 1 <= 0) delete who.statuses[id];
+  else who.statuses[id] = n - 1;
+}
+
 /** 时限状态每回合末 -1。 */
 export function decayStatusStacks(state: CombatState): void {
-  const decaying: Array<'vulnerable' | 'weak' | 'thorns'> = ['vulnerable', 'weak', 'thorns'];
-  const all: Combatant[] = [state.player, ...state.enemies];
-  for (const who of all) {
-    for (const id of decaying) {
-      const n = who.statuses[id] ?? 0;
-      if (n <= 0) continue;
-      if (n - 1 <= 0) delete who.statuses[id];
-      else who.statuses[id] = n - 1;
-    }
+  for (const id of ['vulnerable', 'thorns'] as const) decayOne(state.player, id);
+  for (const enemy of state.enemies) {
+    for (const id of ['vulnerable', 'weak', 'thorns'] as const) decayOne(enemy, id);
   }
   state.events.push({ type: 'statusDecay' });
 }

@@ -13,13 +13,6 @@ export interface TitleActions {
 }
 
 export function renderTitle(actions: TitleActions): HTMLElement {
-  // 浏览器在无用户手势时禁止自动播放，把初次播放推迟到用户交互
-  void import('@audio/music').then((m) => {
-    const wake = () => m.music.resumeAfterGesture();
-    document.addEventListener('click', wake, { once: true });
-    document.addEventListener('keydown', wake, { once: true });
-  });
-
   const screen = el('div', 'screen title-screen');
 
   const bg = el('div', 'title-bg');

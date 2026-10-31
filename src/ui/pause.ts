@@ -10,6 +10,9 @@ export interface PauseActions {
   /** 只在战斗内提供，非战斗界面本身就在地图上。 */
   onMap?: () => void;
   onTitle: () => void;
+  mapLabel?: string;
+  titleLabel?: string;
+  hint?: string;
 }
 
 let open = false;
@@ -47,7 +50,7 @@ export function openPause(host: HTMLElement, actions: PauseActions): void {
   const config = el('button', 'title-button', '设置');
   config.addEventListener('click', () => openSettings(host));
 
-  const title = el('button', 'title-button', '回到标题');
+  const title = el('button', 'title-button', actions.titleLabel ?? '回到标题');
   title.addEventListener('click', () => {
     close();
     actions.onTitle();
@@ -55,7 +58,7 @@ export function openPause(host: HTMLElement, actions: PauseActions): void {
 
   menu.append(resume, book, config);
   if (actions.onMap) {
-    const map = el('button', 'title-button', '返回地图');
+    const map = el('button', 'title-button', actions.mapLabel ?? '返回地图');
     map.addEventListener('click', () => {
       close();
       actions.onMap?.();
@@ -68,9 +71,10 @@ export function openPause(host: HTMLElement, actions: PauseActions): void {
     el(
       'div',
       'pause-hint',
-      actions.onMap
-        ? '进度随时自动保存。离开战斗后，这个节点可以重新进入。'
-        : '进度随时自动保存。回到标题后可以从这里继续。',
+      actions.hint ??
+        (actions.onMap
+          ? '进度随时自动保存。离开战斗后，这个节点可以重新进入。'
+          : '进度随时自动保存。回到标题后可以从这里继续。'),
     ),
   );
   overlay.append(panel);

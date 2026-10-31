@@ -206,7 +206,6 @@ export const INTENTS: IntentDef[] = [
     aim: 'player',
     art: 'flare-burst',
     effects: [{ kind: 'damage', amount: 15, scaleMode: 'SCALAR' }],
-    undelayable: true,
   },
   {
     id: 'drain-hour',
@@ -722,7 +721,7 @@ export const ENEMIES: EnemyDef[] = [
     name: '迟影',
     tier: 'minion',
     act: [3],
-    maxHp: [46, 54],
+    maxHp: [42, 48],
     intentsPerTurn: 1,
     art: 'late-shade',
     intentScript: [
@@ -752,7 +751,7 @@ export const ENEMIES: EnemyDef[] = [
     name: '冢绞者',
     tier: 'minion',
     act: [3],
-    maxHp: [50, 58],
+    maxHp: [46, 52],
     intentsPerTurn: 1,
     art: 'grave-winder',
     startingStatuses: [
@@ -968,7 +967,7 @@ export const ENEMIES: EnemyDef[] = [
     name: '垂锤执政官',
     tier: 'boss',
     act: [1],
-    maxHp: [152, 152],
+    maxHp: [140, 140],
     intentsPerTurn: 2,
     art: 'plumb-magistrate',
     intentScript: [
@@ -982,7 +981,7 @@ export const ENEMIES: EnemyDef[] = [
     name: '逆位天仪',
     tier: 'boss',
     act: [2],
-    maxHp: [330, 330],
+    maxHp: [280, 280],
     intentsPerTurn: 2,
     art: 'orrery-reversed',
     intentScript: [
@@ -1002,7 +1001,7 @@ export const ENEMIES: EnemyDef[] = [
         ],
       },
       {
-        atHpRatio: 0.3,
+        atHpRatio: 0.5,
         name: '归位',
         intentsPerTurn: 3,
         onEnter: [{ status: 'strength', amount: 3 }],
@@ -1019,7 +1018,7 @@ export const ENEMIES: EnemyDef[] = [
     name: '静默指挥者',
     tier: 'boss',
     act: [2, 3],
-    maxHp: [164, 164],
+    maxHp: [156, 156],
     intentsPerTurn: 2,
     art: 'silent-conductor',
     startingStatuses: [{ status: 'strength', amount: 2 }],
@@ -1048,7 +1047,7 @@ export const ENEMIES: EnemyDef[] = [
     name: '初代织时者',
     tier: 'boss',
     act: [3],
-    maxHp: [152, 152],
+    maxHp: [144, 144],
     intentsPerTurn: 2,
     art: 'first-weaver',
     intentScript: [

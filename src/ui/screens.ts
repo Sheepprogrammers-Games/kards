@@ -4,11 +4,13 @@ import { availableNodes, type MapNode, type NodeKind } from '@engine/map';
 import type { RunState } from '@engine/run';
 import { cardDef } from '@engine/registry';
 import { effectsOf, upgradedCost } from '@engine/combat';
+import { C } from '@engine/constants';
 import {
   EQUIP_SLOT_ORDER,
   type CardDef,
   type EquipSlot,
   type EquipmentDef,
+  type GrowthKind,
   type RewardOffer,
   type ShopItem,
 } from '@engine/types';
@@ -116,6 +118,12 @@ export function renderRunBar(run: RunState, host?: HTMLElement): HTMLElement {
   bar.append(
     el('span', '', `第 ${run.act} 幕`),
     el('span', '', `♥ ${run.hp}/${run.maxHp}`),
+    el('span', '', `⚡ ${C.ENERGY_PER_TURN + (run.energyBonus ?? 0)}`),
+    el(
+      'span',
+      '',
+      `手 ${C.HAND_SIZE + (run.handSizeBonus ?? 0)} · 摸 ${C.DRAW_PER_TURN + (run.drawBonus ?? 0)}`,
+    ),
     el('span', '', `◈ ${run.gold}`),
     deckButton,
     relicButton,
@@ -340,7 +348,12 @@ export function renderMap(
       if (node.id === run.currentNode) dot.classList.add('current');
       if (reachable.has(node.id)) {
         dot.classList.add('reachable');
-        dot.addEventListener('click', () => {
+        dot.addEventListener('click', (ev) => {
+          if (mapDragDistance() > 8) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            return;
+          }
           sfx.pick();
           onPick(node.id);
         });
@@ -380,6 +393,11 @@ export function renderMap(
   return screen;
 }
 
+let lastMapDrag = 0;
+function mapDragDistance(): number {
+  return lastMapDrag;
+}
+
 /** 按住地图拖动平移，松手后按残余速度滑行。 */
 function attachPanning(scroll: HTMLElement): void {
   let dragging = false;
@@ -387,6 +405,7 @@ function attachPanning(scroll: HTMLElement): void {
   let velocity = 0;
   let lastTime = 0;
   let glide = 0;
+  let traveled = 0;
 
   const stopGlide = () => {
     if (glide) cancelAnimationFrame(glide);
@@ -394,11 +413,12 @@ function attachPanning(scroll: HTMLElement): void {
   };
 
   scroll.addEventListener('pointerdown', (ev) => {
-    if ((ev.target as HTMLElement).closest('.map-node')) return;
     dragging = true;
     lastX = ev.clientX;
     lastTime = ev.timeStamp;
     velocity = 0;
+    traveled = 0;
+    lastMapDrag = 0;
     stopGlide();
     scroll.classList.add('grabbing');
     scroll.setPointerCapture(ev.pointerId);
@@ -408,6 +428,8 @@ function attachPanning(scroll: HTMLElement): void {
     if (!dragging) return;
     const dx = ev.clientX - lastX;
     const dt = Math.max(1, ev.timeStamp - lastTime);
+    traveled += Math.abs(dx);
+    lastMapDrag = traveled;
     scroll.scrollLeft -= dx;
     velocity = dx / dt;
     lastX = ev.clientX;
@@ -484,6 +506,7 @@ export interface RewardHandlers {
   onPickEquipment: (id: string, claim: () => void) => void;
   onRemoveCard: (claim: () => void) => void;
   onUpgradeCard: (claim: () => void) => void;
+  onPickGrowth: (kind: GrowthKind, claim: () => void) => void;
   /** 时砂、回血这类无需挑选的项，玩家按下收取后触发。 */
   onSimple?: (offer: RewardOffer, claim: () => void) => void;
   onDone: () => void;
@@ -493,6 +516,7 @@ const REWARD_TITLE: Record<string, string> = {
   card: '取一张牌织入牌组',
   relic: '一件遗物',
   equipment: '取一件装备穿上',
+  growth: '织时者成长',
   gold: '时砂',
   heal: '伤口收拢',
   removeCard: '洗去一张牌',
@@ -554,6 +578,25 @@ export function renderReward(offers: RewardOffer[], handlers: RewardHandlers): H
           });
           block.append(row);
         }
+        break;
+      }
+      case 'growth': {
+        const row = el('div', 'portrait-row');
+        const copy: Record<GrowthKind, { title: string; body: string }> = {
+          maxHp: { title: '强健', body: '生命上限 +10，并回复 10 点生命' },
+          energy: { title: '蓄能', body: '每回合能量永久 +1' },
+          draw: { title: '扩思', body: '手牌上限与每回合摸牌永久 +1' },
+        };
+        for (const kind of offer.growthOptions ?? []) {
+          const choice = el('button', 'ghost-button');
+          choice.append(
+            el('div', 'choice-title', copy[kind].title),
+            el('div', 'choice-desc', copy[kind].body),
+          );
+          choice.addEventListener('click', () => handlers.onPickGrowth(kind, claim));
+          row.append(choice);
+        }
+        block.append(row);
         break;
       }
       case 'gold': {

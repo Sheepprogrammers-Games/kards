@@ -377,7 +377,7 @@ export interface CombatState {
   mods: CombatModifiers;
 
   weavePlays: number;
-  /** 本回合已经用掉的延后格数。 */
+  /** 本回合已经用掉的敌方意图延后操作次数。 */
   delaysThisTurn: number;
   igniteCountThisTurn: number;
   advanceCount: number;
@@ -393,17 +393,22 @@ export type RewardKind =
   | 'card'
   | 'relic'
   | 'equipment'
+  | 'growth'
   | 'gold'
   | 'heal'
   | 'removeCard'
   | 'upgradeCard'
   | 'nothing';
 
+export type GrowthKind = 'maxHp' | 'energy' | 'draw';
+
 /** 战斗结算后提供的一项奖励。 */
 export interface RewardOffer {
   kind: RewardKind;
   /** card / relic / equipment 的候选 id。 */
   options?: string[];
+  /** growth 的三选一候选。 */
+  growthOptions?: GrowthKind[];
   amount?: number;
 }
 

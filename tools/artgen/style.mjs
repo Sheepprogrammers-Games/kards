@@ -22,8 +22,10 @@ export const PALETTE =
   'never as a background wash, never as fog, plasma cloud, nebula or atmospheric haze';
 
 export const NEGATIVE =
-  'NO text, NO words, NO letters, NO numbers, NO signature, NO watermark, ' +
-  'NO card frame, NO border, NO UI elements, NO health bars, NO buttons';
+  'NO text, NO lettering, NO calligraphy, NO typography, NO words, NO alphabet, ' +
+  'NO runes, NO glyphs, NO ornamental script, NO engraved writing, NO inscribed characters, ' +
+  'NO card border, NO UI elements, NO health bars, NO buttons, NO watermark, NO signature, ' +
+  'NO logo, NO brand mark, NO web address, NO URL';
 
 /**
  * 抠像背景。用纯绿而非品红：品红是画面主色之一，作色键会连同角色辉光一起被抠掉。

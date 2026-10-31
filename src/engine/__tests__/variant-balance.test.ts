@@ -3,7 +3,7 @@ import { loadContent, STARTER_DECK } from '@content/index';
 import { ENEMIES } from '@content/enemies';
 import { allCards, applyVariants, baseCardDef, cardDef } from '../registry';
 import { rollVariants } from '../run';
-import { canPlay, createCombat, reduce } from '../combat';
+import { canPlay, createCombat, manipulationLane, reduce } from '../combat';
 import { countEntries } from '../track';
 import { seedFrom, type RngHolder } from '../rng';
 import type { CombatState } from '../types';
@@ -22,16 +22,27 @@ function takeTurn(state: CombatState): CombatState {
         t === 'weave' ? 3 : t === 'ignite' && countEntries(current, 'player') >= 3 ? 2 : 1;
       return score(db.type) - score(da.type) || db.cost - da.cost;
     });
-    const pick = ranked[0];
-    if (!pick) break;
-    const def = cardDef(pick.defId);
-    const next = reduce(current, {
-      type: 'playCard',
-      uid: pick.uid,
-      targetIndex: 0,
-      slot: def.needsSlot ? 4 : undefined,
-      laneTarget: def.needsSlot ? 'enemy' : undefined,
-    });
+    let next = current;
+    for (const pick of ranked) {
+      const def = cardDef(pick.defId);
+      if (!def.needsSlot) {
+        next = reduce(current, { type: 'playCard', uid: pick.uid, targetIndex: 0 });
+      } else {
+        const lane = manipulationLane(def) ?? 'player';
+        const occupied = [5, 4, 3, 2, 1].filter((slot) => current.track[lane][slot - 1]);
+        for (const slot of occupied) {
+          next = reduce(current, {
+            type: 'playCard',
+            uid: pick.uid,
+            targetIndex: 0,
+            slot,
+            laneTarget: lane,
+          });
+          if (next !== current) break;
+        }
+      }
+      if (next !== current) break;
+    }
     if (next === current) break;
     current = next;
     if (current.result !== 'ongoing') return current;
@@ -130,7 +141,7 @@ const PROBE_FRAME = [
   'foresight',
 ];
 
-it('每张牌的各个版本都应当贴着自己的基础版', { timeout: 120_000 }, () => {
+it('每张牌的各个版本都应当贴着自己的基础版', { timeout: 300_000 }, () => {
   const cards = allCards()
     .map((def) => baseCardDef(def.id)!)
     .filter((def) => (def.variants?.length ?? 0) > 0);

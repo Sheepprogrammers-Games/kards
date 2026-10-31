@@ -240,5 +240,7 @@ export function nodeAt(map: ActMap, id: string): MapNode | null {
 /** 当前可进入的节点。未开始时为全部入口。 */
 export function availableNodes(map: ActMap, currentId: string | null): string[] {
   if (!currentId) return map.entries;
-  return nodeAt(map, currentId)?.next ?? [];
+  const current = nodeAt(map, currentId);
+  if (!current) return [];
+  return current.visited ? current.next : [current.id];
 }

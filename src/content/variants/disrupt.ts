@@ -46,9 +46,9 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'dead-tick': [
     {
-      text: '冻结一个己方条目，本回合末不推进，并消耗其 1 点预算。获得 3 点护甲。抽 1 张牌。',
+      text: '冻结一个己方条目，本回合末不推进，并消耗其 1 点预算。获得 5 点护甲。抽 1 张牌。',
       effects: [
-        { kind: 'block', amount: 3, scaleMode: 'SCALAR', target: 'self' },
+        { kind: 'block', amount: 5, scaleMode: 'SCALAR', target: 'self' },
         { kind: 'draw', amount: 1, scaleMode: 'ONCE' },
       ],
       manipulations: [{ kind: 'freeze', lane: 'player' }],
@@ -61,7 +61,9 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'jam-escapement': [
     {
-      text: '冻结一个敌方意图，本回合末不推进。',
+      text: '冻结一个敌方意图，本回合末不推进。使你获得 2 层虚弱。',
+      cost: 2,
+      effects: [{ kind: 'selfStatus', amount: 2, scaleMode: 'SCALAR', status: 'weak', target: 'self' }],
       manipulations: [{ kind: 'freeze', lane: 'enemy' }],
     },
     {
@@ -121,7 +123,11 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'off-beat': [
     {
-      text: '抽 1 张牌。冻结一个己方条目，本回合末不推进，并消耗其 1 点预算。',
+      text: '抽 1 张牌。获得 3 点护甲。冻结一个己方条目，本回合末不推进，并消耗其 1 点预算。',
+      effects: [
+        { kind: 'draw', amount: 1, scaleMode: 'ONCE' },
+        { kind: 'block', amount: 3, scaleMode: 'SCALAR', target: 'self' },
+      ],
       manipulations: [{ kind: 'freeze', lane: 'player' }],
     },
     {
@@ -153,8 +159,9 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   ],
   desync: [
     {
-      text: '将一个敌方意图延后一格，并将同一格位上的己方条目向末位推 1 格；被顶出末位的己方条目烧毁，拿不到走完全程的赌注。获得 4 点护甲。',
-      effects: [{ kind: 'block', amount: 4, scaleMode: 'SCALAR', target: 'self' }],
+      text: '将一个敌方意图延后一格，并将同一格位上的己方条目向末位推 1 格；被顶出末位的己方条目烧毁，拿不到走完全程的赌注。',
+      cost: 3,
+      effects: [],
       manipulations: [
         { kind: 'rewind', lane: 'enemy', amount: 1 },
         { kind: 'push', lane: 'player', amount: 1 },
@@ -163,9 +170,11 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'fracture-line': [
     {
-      text: '复制一个己方条目到最靠前的空格位，副本只结算一次且不可再被复制。使你获得 1 层虚弱。',
+      text: '复制一个己方条目到最靠前的空格位，副本只结算一次且不可再被复制。使你获得 1 层易伤。',
       cost: 1,
-      effects: [{ kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'weak', target: 'self' }],
+      effects: [
+        { kind: 'selfStatus', amount: 1, scaleMode: 'SCALAR', status: 'vulnerable', target: 'self' },
+      ],
     },
   ],
   'cross-cut': [
@@ -182,6 +191,7 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
     },
     {
       text: '将一个己方条目回溯一格并可在新格位重新结算，每个条目仅限一次。将一张停梭置入你的弃牌堆。',
+      cost: 2,
       manipulations: [{ kind: 'rewind', lane: 'player', amount: 1 }],
     },
   ],
@@ -215,7 +225,6 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   'thread-theft': [
     {
       text: '复制一个己方条目到最靠前的空格位，副本只结算一次且不可再被复制。',
-      effects: [],
       manipulations: [{ kind: 'copy', lane: 'player' }],
     },
   ],
@@ -233,8 +242,11 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
       manipulations: [{ kind: 'freeze', lane: 'enemy' }],
     },
     {
-      text: '获得 2 层护盾。冻结一个己方条目，本回合末不推进，并消耗其 1 点预算。',
-      manipulations: [{ kind: 'freeze', lane: 'player' }],
+      text: '获得 2 层护盾。将一个己方条目的预算 +1，再冻结它，本回合末不推进并消耗其 1 点预算。',
+      manipulations: [
+        { kind: 'sustain', lane: 'player', amount: 1 },
+        { kind: 'freeze', lane: 'player' },
+      ],
     },
   ],
   'blood-wedge': [
@@ -268,15 +280,17 @@ export const DISRUPT_VARIANTS: Record<string, CardVariant[]> = {
   ],
   'ledger-lock': [
     {
-      text: '将一个己方条目的预算 +2，并用当前状态刷新其施法快照。',
+      text: '将一个己方条目的预算 +1，并用当前状态刷新其施法快照。',
+      cost: 2,
       manipulations: [
-        { kind: 'sustain', lane: 'player', amount: 2 },
+        { kind: 'sustain', lane: 'player', amount: 1 },
         { kind: 'rerecord', lane: 'player' },
       ],
     },
     {
-      text: '将一个己方条目的预算 +1，再冻结它，本回合末不推进并消耗其 1 点预算。抽 1 张牌。',
-      effects: [{ kind: 'draw', amount: 1, scaleMode: 'ONCE' }],
+      text: '将一个己方条目的预算 +1，再冻结它，本回合末不推进并消耗其 1 点预算。获得 3 点护甲。',
+      cost: 2,
+      effects: [{ kind: 'block', amount: 3, scaleMode: 'SCALAR', target: 'self' }],
       manipulations: [
         { kind: 'sustain', lane: 'player', amount: 1 },
         { kind: 'freeze', lane: 'player' },

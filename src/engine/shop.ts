@@ -51,7 +51,11 @@ export function rollShop(run: RunState, rerolls: number): ShopItem[] {
     holder,
     allRelics().filter((def) => def.rarity !== 'boss' && !owned.has(def.id)),
   );
-  const equipPool = shuffle(holder, equipmentDefs());
+  const wornEquipment = new Set(Object.values(run.equipment));
+  const equipPool = shuffle(
+    holder,
+    equipmentDefs().filter((def) => !wornEquipment.has(def.id)),
+  );
 
   const relicCount = Math.min(1, relicPool.length);
   const equipCount = Math.min(2, equipPool.length);

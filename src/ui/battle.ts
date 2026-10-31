@@ -1,7 +1,15 @@
 /** 战斗场景的 DOM 渲染与输入处理。 */
 
 import { canPlay, costOf, manipulationLane as targetLaneOf, reduce } from '@engine/combat';
-import { countEntries, delayBudgetLeft, entriesOf, rewindsLeft } from '@engine/track';
+import { previewYield } from '@engine/effects';
+import {
+  canRewindAt,
+  canRewindPlayerAt,
+  countEntries,
+  delayBudgetLeft,
+  entriesOf,
+  rewindsLeft,
+} from '@engine/track';
 import { C, coefOf } from '@engine/constants';
 import { intentAim } from '@engine/intents';
 import { cardDef, intentDef } from '@engine/registry';
@@ -111,6 +119,7 @@ export class BattleScene {
     state: CombatState,
     private onFinish: (r: string, hp: number) => void,
     private onExit: (to: 'map' | 'title') => void = () => {},
+    private exitCountsAsDefeat = false,
   ) {
     this.root = root;
     this.state = state;
@@ -220,11 +229,7 @@ export class BattleScene {
     this.unbindSettings = onSettingsChange(() => this.applyDisplay());
     window.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('pointerup', this.onPointerUp);
-    this.unbindPause = bindPauseKey(this.root, {
-      onResume: () => {},
-      onMap: () => this.onExit('map'),
-      onTitle: () => this.onExit('title'),
-    });
+    this.unbindPause = bindPauseKey(this.root, this.pauseActions());
   }
 
   /** 关掉产出预估时轨上只留图形与名字；敌方泳道可以钉住常驻展开。 */
@@ -504,16 +509,17 @@ export class BattleScene {
     return node;
   }
 
-  /** 完全推不动的意图挂一个锁标，可延后的不占角标。 */
+  /** 规则锁定或累计次数用尽的意图挂一个锁标。 */
   private delayMeter(entry: TrackEntry): HTMLElement | null {
-    if (!entry.undelayable) return null;
+    if (!entry.undelayable && entry.delayCount < C.INTENT_DELAY_CAP) return null;
     const meter = el('div', 'entry-delay');
     meter.dataset.state = 'locked';
     meter.textContent = '⊘';
+    meter.title = entry.undelayable ? '不可延后' : '这个意图的延后次数已用尽';
     return meter;
   }
 
-  /** 本回合的公共延后额度，点亮的点表示还没用掉的格数。 */
+  /** 本回合的公共延后额度，点亮的点表示还没用掉的次数。 */
   private renderDelayBudget(): void {
     const total = C.INTENT_DELAY_PER_TURN + this.state.mods.delayBonus;
     const left = delayBudgetLeft(this.state);
@@ -530,8 +536,8 @@ export class BattleScene {
     this.elDelay.append(dots);
     withTip(
       this.elDelay,
-      `本回合还能延后 ${left} 格`,
-      '把敌方意图往回推的公共额度，每格消耗一点，回合开始时补满。带 ⊘ 的意图完全推不动。',
+      `本回合还能延后 ${left} 次`,
+      '把敌方意图往回推的公共额度，每次操作消耗一点；延后多格或连带顶动其他意图仍只算一次。回合开始时补满。带 ⊘ 的意图完全推不动。',
     );
   }
 
@@ -542,14 +548,10 @@ export class BattleScene {
     if (coef <= 0 || entry.echoBudget <= 0) return null;
 
     const parts: string[] = [];
-    for (const effect of entry.effects) {
-      if (effect.scaleMode === 'ONCE') continue;
-      const base = effect.amount + (effect.kind === 'damage' ? entry.snapshot.strength : 0);
-      const value = Math.floor(base * coef);
-      if (value <= 0) continue;
-      if (effect.kind === 'damage') parts.push(`${value * (effect.hits ?? 1)}`);
-      else if (effect.kind === 'block') parts.push(`◈${value}`);
-      else if (effect.kind === 'applyStatus') parts.push(`${effect.status === 'poison' ? '毒' : '×'}${value}`);
+    for (const part of previewYield(entry, coef)) {
+      if (part.kind === 'damage') parts.push(part.hits > 1 ? `${part.value}×${part.hits}` : `${part.value}`);
+      else if (part.kind === 'block') parts.push(`◈${part.value}`);
+      else if (part.kind === 'applyStatus') parts.push(`${part.status === 'poison' ? '毒' : '×'}${part.value}`);
     }
     if (!parts.length) return null;
 
@@ -745,19 +747,23 @@ export class BattleScene {
       withTip(
         this.elBlock,
         `护甲 ${armor}`,
-        '受到伤害时先扣护甲，扣完才掉生命。回合开始时清零。',
+        '受到伤害时先扣护甲，扣完才掉生命。回合开始时保留一半，可以继续叠加。',
       );
       this.elBlock.classList.add('active');
     } else {
       this.elBlock.classList.remove('active', 'has-tip');
     }
-    this.elPiles.draw.textContent = `抽牌 ${this.state.drawPile.length}`;
+    this.elPiles.draw.textContent =
+      `手牌 ${this.state.hand.length}/${p.handSize} · 抽牌 ${this.state.drawPile.length}`;
     this.elPiles.discard.textContent = `弃牌 ${this.state.discardPile.length}`;
     this.renderDelayBudget();
   }
 
   private startDrag(ev: PointerEvent, card: CardInstance, node: HTMLElement): void {
-    if (this.busy) return;
+    if (this.busy) {
+      toast(this.root, '结算还在演出');
+      return;
+    }
     if (!canPlay(this.state, card.uid)) {
       node.classList.remove('refused');
       void node.offsetWidth;
@@ -805,9 +811,18 @@ export class BattleScene {
       return `时间轨上至少要有 ${C.IGNITE_MIN_ENTRIES} 个条目才能引爆`;
     }
     if (def.needsSlot) {
-      const lane = targetLaneOf(def);
-      if (lane === 'enemy' && countEntries(this.state, 'enemy') === 0) return '敌方轨道上没有意图可以操作';
-      if (lane === 'player' && countEntries(this.state, 'player') === 0) return '你的时间轨上还没有条目';
+      const lanes = [...new Set((def.manipulations ?? []).map((op) => op.lane).filter(Boolean))] as Lane[];
+      if (!lanes.length) {
+        const lane = targetLaneOf(def);
+        if (lane === 'enemy' && countEntries(this.state, 'enemy') === 0) return '敌方轨道上没有意图可以操作';
+        if (lane === 'player' && countEntries(this.state, 'player') === 0) return '你的时间轨上还没有条目';
+      } else if (lanes.every((lane) => countEntries(this.state, lane) === 0)) {
+        return lanes.includes('enemy') && lanes.includes('player')
+          ? '两边轨道上都没有可以操作的条目'
+          : lanes[0] === 'enemy'
+            ? '敌方轨道上没有意图可以操作'
+            : '你的时间轨上还没有条目';
+      }
     }
     return '现在无法打出这张牌';
   }
@@ -829,26 +844,59 @@ export class BattleScene {
         reasons.push(opLane === 'enemy' ? '这一格没有意图' : '这一格没有条目');
         continue;
       }
-      const reason = this.opBlockReason(op, entry, opLane);
+      const reason = this.opBlockReason(op, entry, opLane, at);
       if (!reason) return null;
       reasons.push(reason);
     }
 
-    if (def.effects.length) return null;
     return reasons[0] ?? null;
   }
 
   /** 单个位移操作落在这个条目上会不会落空。 */
-  private opBlockReason(op: Manipulation, entry: TrackEntry, lane: Lane): string | null {
+  private opBlockReason(
+    op: Manipulation,
+    entry: TrackEntry,
+    lane: Lane,
+    slot: number,
+  ): string | null {
     const name = nameOfEntry(entry, lane);
     switch (op.kind) {
       case 'rewind':
-        if (rewindsLeft(this.state, entry, lane) > 0) return null;
-        return lane === 'enemy' ? '本回合的延后额度已经用尽' : `${name} 不能再向前回溯`;
+        if (
+          rewindsLeft(this.state, entry, lane) > 0 &&
+          (lane === 'enemy'
+            ? canRewindAt(this.state, slot, op.amount ?? 1, true)
+            : canRewindPlayerAt(this.state, slot, op.amount ?? 1))
+        ) {
+          return null;
+        }
+        if (lane === 'enemy') {
+          if (delayBudgetLeft(this.state) <= 0) return '本回合的延后次数已经用尽';
+          if (entry.undelayable || entry.delayCount >= C.INTENT_DELAY_CAP) {
+            return `${name} 不能再延后`;
+          }
+          return '前方有不可延后的意图阻挡';
+        }
+        return `${name} 不能再向前回溯`;
+      case 'swap': {
+        const otherLane: Lane = lane === 'enemy' ? 'player' : 'enemy';
+        const other = entriesOf(this.state, otherLane).find((item) => item.slot === slot)?.entry;
+        if (!other) return `另一侧同格没有${otherLane === 'enemy' ? '意图' : '条目'}`;
+        return entry.unstealable || other.unstealable ? `${name} 无法跨轨交换` : null;
+      }
+      case 'copy':
+        if (entry.copyDepth > 0) return `${name} 已经是副本`;
+        return countEntries(this.state, 'player') >= C.TRACK_SLOTS ? '己方轨道已经占满' : null;
       case 'steal':
         return entry.unstealable ? `${name} 无法被窃取` : null;
       case 'freeze':
+        if (entry.frozen) return `${name} 已经被冻结`;
+        if (lane === 'enemy' && (entry.undelayable || rewindsLeft(this.state, entry, lane) <= 0)) {
+          return entry.undelayable ? `${name} 不能被冻结` : '本回合的延后次数已经用尽';
+        }
         return entry.echoBudget <= 0 ? `${name} 已经没有结算次数可冻结` : null;
+      case 'sustain':
+        return entry.echoBudget >= C.ECHO_BUDGET_MAX ? `${name} 的结算次数已满` : null;
       default:
         return null;
     }
@@ -880,8 +928,11 @@ export class BattleScene {
     }
 
     const wantLane = targetLaneOf(def);
+    const wantLanes = new Set((def.manipulations ?? []).map((op) => op.lane).filter(Boolean) as Lane[]);
+    if (!wantLanes.size && wantLane) wantLanes.add(wantLane);
+    const hoverOk = Boolean(def.needsSlot && this.hoverSlot && wantLanes.has(this.hoverSlot.lane));
     const slot =
-      def.needsSlot && this.hoverSlot && this.hoverSlot.lane === wantLane
+      hoverOk && this.hoverSlot && !this.slotBlockReason(def, this.hoverSlot.lane, this.hoverSlot.slot)
         ? this.slotCell(this.hoverSlot.lane, this.hoverSlot.slot)
         : null;
     if (slot !== drag.litSlot) {
@@ -992,10 +1043,20 @@ export class BattleScene {
   };
 
   private dispatch(action: Parameters<typeof reduce>[1]): void {
-    if (this.busy || this.state.result !== 'ongoing') return;
+    if (this.busy) {
+      toast(this.root, '结算还在演出');
+      return;
+    }
+    if (this.state.result !== 'ongoing') return;
     const before = this.state;
     const next = reduce(before, action);
-    if (next === before) return;
+    if (next === before) {
+      if (action.type === 'playCard') {
+        toast(this.root, '这次操作没有生效');
+        sfx.blocked();
+      }
+      return;
+    }
 
     // 播放期间先按结算前的数值显示，再由事件逐步推到最终值
     this.shownHp.set('player', before.player.hp);
@@ -1631,11 +1692,20 @@ export class BattleScene {
   }
 
   private pause(): void {
-    openPause(this.root, {
+    openPause(this.root, this.pauseActions());
+  }
+
+  private pauseActions() {
+    return {
       onResume: () => {},
       onMap: () => this.onExit('map'),
       onTitle: () => this.onExit('title'),
-    });
+      mapLabel: this.exitCountsAsDefeat ? '结束本次战斗' : '返回地图',
+      titleLabel: this.exitCountsAsDefeat ? '结束战斗并回到标题' : '回到标题',
+      hint: this.exitCountsAsDefeat
+        ? '离开当前战斗视为战败；之后可以消耗时砂重挑，或结束本局。'
+        : undefined,
+    };
   }
 
   destroy(): void {
@@ -1838,16 +1908,11 @@ function intentKindOf(entry: TrackEntry): string {
 }
 
 function intentValueOf(entry: TrackEntry): string {
-  const damage = entry.effects.find((e) => e.kind === 'damage');
-  if (damage) {
-    const per = Math.floor(
-      (damage.amount + entry.snapshot.strength) * entry.snapshot.damageScale,
-    );
-    const hits = damage.hits ?? 1;
-    return hits > 1 ? `${per}×${hits}` : String(per);
-  }
-  const block = entry.effects.find((e) => e.kind === 'block');
-  if (block) return String(block.amount);
+  const parts = previewYield(entry, 1);
+  const damage = parts.find((part) => part.kind === 'damage');
+  if (damage) return damage.hits > 1 ? `${damage.value}×${damage.hits}` : String(damage.value);
+  const block = parts.find((part) => part.kind === 'block');
+  if (block) return String(block.value);
   return '';
 }
 
@@ -1860,8 +1925,9 @@ function intentTitle(state: CombatState, entry: TrackEntry, slot: number): strin
 
   const left = rewindsLeft(state, entry, 'enemy');
   if (entry.undelayable) flags.push('不可延后');
-  else if (left > 0) flags.push(`本回合还能延后 ${left} 格`);
-  else flags.push('本回合额度已用尽');
+  else if (left > 0) flags.push(`还能延后 ${left} 次`);
+  else if (delayBudgetLeft(state) <= 0) flags.push('本回合次数已用尽');
+  else flags.push('这个意图不能再延后');
 
   return `${turns} 回合后落地　${flags.join('・')}`;
 }
